@@ -1,0 +1,169 @@
+{
+	"name": "AccessPanel",
+	"details": {
+		"description": "A browser extension for API access and token management in WFM",
+		"version": "1.0.0",
+		"release_date": "2025-12-12",
+		"author": "Christopher Smith",
+		"contact": "chris.dm.smith@gmail.com",
+		"urls": {
+			"authenticationDoc": "https://adp-developer.mykronos.com/wfmgr/docs/authentication-and-security-doc",
+			"developerPortal": "https://adp-developer.mykronos.com/wfmgr/reference/welcome-to-the-adp-workforce-manager-api",
+			"boomiPortal": "https://*.mykronos.com/ihub#/integrationTemplatesDesigner?ctxt=designIntegrationTemplates&pageId=58",
+			"installIntegrations": "https://*.mykronos.com/metaui#/list/integration/?ctxt=configureIntegrations&pageId=57"
+		},
+		"working_directory": {
+			"apiaccesspanel": {
+				"type": "directory",
+				"path": "/apiaccesspanel",
+				"contents": {
+					"apilibrary": {
+						"type": "directory",
+						"path": "/apiaccesspanel/apilibrary",
+						"contents": {
+							"apilibrary.json": {
+								"type": "file",
+								"path": "/apiaccesspanel/apilibrary/apilibrary.json"
+							},
+							"exampleapilibrary.json": {
+								"type": "file",
+								"path": "/apiaccesspanel/apilibrary/exampleapilibrary.json"
+							}
+						}
+					},
+					"fonts": {
+						"type": "directory",
+						"path": "/apiaccesspanel/fonts",
+						"contents": {
+							"Inter_28pt-Black.ttf": {
+								"type": "file",
+								"path": "/apiaccesspanel/apilibrary/Inter_28pt-Black.ttf"
+							}
+						}
+					},
+					"icons": {
+						"type": "directory",
+						"path": "/apiaccesspanel/icons",
+						"contents": {
+							"apiaccesspanel.png": {
+								"type": "file",
+								"path": "/apiaccesspanel/icons/apiaccesspanel.png"
+							},
+							"apiaccesspanellogo.png": {
+								"type": "file",
+								"path": "/apiaccesspanel/icons/apiaccesspanellogo.png"
+							},
+							"apiaccesspanellogo.svg": {
+								"type": "file",
+								"path": "/apiaccesspanel/icons/apiaccesspanellogo.svg"
+							},
+							"export-csv.png": {
+								"type": "file",
+								"path": "/apiaccesspanel/icons/export-csv.png"
+							},
+							"external-link.png": {
+								"type": "file",
+								"path": "/apiaccesspanel/icons/external-link.png"
+							},
+							"eyeclosed.png": {
+								"type": "file",
+								"path": "/apiaccesspanel/icons/eyeclosed.png"
+							},
+							"eyeopen.png": {
+								"type": "file",
+								"path": "/apiaccesspanel/icons/eyeopen.png"
+							},
+							"icon16.png": {
+								"type": "file",
+								"path": "/apiaccesspanel/icons/icon16.png"
+							},
+							"icon32.png": {
+								"type": "file",
+								"path": "/apiaccesspanel/icons/icon32.png"
+							},
+							"icon64.png": {
+								"type": "file",
+								"path": "/apiaccesspanel/icons/icon64.png"
+							},
+							"icon128.png": {
+								"type": "file",
+								"path": "/apiaccesspanel/icons/icon128.png"
+							},
+							"icon256.png": {
+								"type": "file",
+								"path": "/apiaccesspanel/icons/icon256.png"
+							},
+							"icon512.png": {
+								"type": "file",
+								"path": "/apiaccesspanel/icons/icon512.png"
+							},
+							"icon-styleready.svg": {
+								"type": "file",
+								"path": "/apiaccesspanel/icons/icon-styleready.svg"
+							},
+							"icon-styleready-bkup": {
+								"type": "file",
+								"path": "/apiaccesspanel/icons/icon-styleready-bkup"
+							}
+						}
+					},
+					"scripts": {
+						"type": "directory",
+						"path": "/apiaccesspanel/scripts",
+						"contents": {
+							"main.js": {
+								"type": "file",
+								"path": "/apiaccesspanel/scripts/main.js"
+							},
+							"bg.js": {
+								"type": "file",
+								"path": "/apiaccesspanel/scripts/bg.js"
+							}
+						}
+					},
+					"styles": {
+						"type": "directory",
+						"path": "/apiaccesspanel/styles",
+						"contents": {
+							"uistyles.css": {
+								"type": "file",
+								"path": "/apiaccesspanel/styles/uistyles.css"
+							}
+						}
+					},
+					"themes": {
+						"type": "directory",
+						"path": "/apiaccesspanel/themes",
+						"contents": {
+							"themes.html": {
+								"type": "file",
+								"path": "/apiaccesspanel/themes/themes.html"
+							},
+							"themes.json": {
+								"type": "file",
+								"path": "/apiaccesspanel/themes/themes.json"
+							}
+						}
+					},
+					"apiaccesspanel.html": {
+						"type": "file",
+						"path": "/apiaccesspanel/apiaccesspanel.html"
+					},
+					"apiaccesspanel.json": {
+						"type": "file",
+						"path": "/apiaccesspanel/apiaccesspanel.json"
+					},
+					"manifest.json": {
+						"type": "file",
+						"path": "/apiaccesspanel/manifest.json"
+					}
+				}
+			}
+		},
+		"releasenotes": {
+			"1.0.0": {
+				"0": "Initial release after Hermes proto-type"
+			}
+		}
+	}
+}
