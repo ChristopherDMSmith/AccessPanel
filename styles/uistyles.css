@@ -2,7 +2,31 @@
    Font Definitions
    ================= */
 @font-face {
-  font-family: "InterLocalBlack";
+  font-family: "InterLocal";
+  src: url("../fonts/Inter_28pt-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "InterLocal";
+  src: url("../fonts/Inter_28pt-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "InterLocal";
+  src: url("../fonts/Inter_28pt-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "InterLocal";
   src: url("../fonts/Inter_28pt-Black.ttf") format("truetype");
   font-weight: 900;
   font-style: normal;
@@ -23,9 +47,8 @@
   --highlight-color: #5FAEFF;  /* Button Hover */
   --buttontext-color: #F5F5F5; /* Button Text */
   --divider-color: #A6A6A6;
-
+  --title-font: "InterLocal", "Trebuchet MS", "Lucida Sans Unicode", sans-serif;
   --font-family: "Trebuchet MS", sans-serif;
-  --title-font: "InterLocalBlack", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --title-font-size: 1.25rem;
 }
 
