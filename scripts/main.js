@@ -545,7 +545,7 @@ function themeSelection(event) {
 // Restore the last selected theme on load
 async function restoreSelectedTheme() {
   chrome.storage.local.get("selectedTheme", async (result) => {
-    const themeKey = result.selectedTheme || "Access Panel";
+    const themeKey = result.selectedTheme || "accessPanel";
     await applyTheme(themeKey);
 
     const dropdown = document.getElementById("theme-selector");
