@@ -1,7 +1,7 @@
 {
 	"themes": {
-		"default": {
-			"name": "Workforce Manager (default)",
+		"accessPanel": {
+			"name": "Access Panel",
 			"colors": {
 				"primary-color": "#E0E0E0",
 				"secondary-color": "#C8C8C8",
