@@ -1,0 +1,1288 @@
+/* =================
+   Font Definitions
+   ================= */
+@font-face {
+  font-family: "InterLocalBlack";
+  src: url("../fonts/Inter_28pt-Black.ttf") format("truetype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* =================
+   Theme Variables
+   ================= */
+:root {
+  --link-banner-height: 28px;
+  --title-bar-height: 64px;
+  --logo-size: 48px;
+
+  --primary-color: #E0E0E0;    /* UI Background & Button Text */
+  --secondary-color: #C8C8C8;  /* Menu Background */
+  --accent-color: #09407C;     /* Button Background & UI Text */
+  --highlight-color: #5FAEFF;  /* Button Hover */
+  --buttontext-color: #F5F5F5; /* Button Text */
+  --divider-color: #A6A6A6;
+
+  --font-family: "Trebuchet MS", sans-serif;
+  --title-font: "InterLocalBlack", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --title-font-size: 1.25rem;
+}
+
+/* =================
+   Base / Layout
+   ================= */
+html,
+body {
+  width: 100%;
+  min-width: 0;
+}
+
+body {
+  max-height: 80vh;
+  margin: 0 auto;
+  font-family: var(--font-family);
+  background-color: var(--primary-color);
+  color: var(--accent-color);
+  overflow: hidden; /*auto x3*/
+  font-size: 0.6em;
+}
+
+.main-body {
+  margin-top: 0;
+  font-size: 1.2em;
+  font-weight: bold;
+  scroll-margin-top: calc(var(--title-bar-height) + var(--link-banner-height));
+
+  /* New: make main-body the scroll region */
+  max-height: calc(
+    100vh
+    - var(--title-bar-height)
+    - var(--link-banner-height)
+    - 40px            /* approximate menu-bar height */
+  );
+  overflow-y: auto;
+}
+
+
+/* Sections that span full width */
+.title-bar,
+#hermes-link-banner,
+.menu-bar,
+.main-body,
+.collapsible-api-section,
+.collapsible-rto-section,
+.response-section {
+  width: 100%;
+  max-width: 100vw;
+  margin-left: 0;
+  margin-right: 0;
+  border-radius: 0;
+}
+
+.main-body,
+.collapsible-api-section,
+.collapsible-rto-section {
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+/* =================
+   Header / Title Bar
+   ================= */
+.title-bar {
+  display: flex;
+  position: sticky;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--accent-color);
+  color: var(--buttontext-color);
+  padding: 0 10px;
+  height: var(--title-bar-height);
+  top: 0;
+  z-index: 10002;
+  box-sizing: border-box;
+  align-items: flex-start;
+  padding-top: 10px;
+  padding-bottom: 0;
+}
+
+.app-title,
+.header-title,
+.app-title-section {
+  font-family: var(--title-font);
+  font-weight: 900;
+  color: var(--buttontext-color);
+  font-size: var(--title-font-size);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Header icon / logo */
+.header-icon {
+  align-self: center;
+  width: auto;
+  margin: 0;
+  transform: none;
+  scale: 1;
+  display: block;
+  inline-size: var(--logo-size);
+  block-size: var(--logo-size);
+  flex: 0 0 auto;
+}
+
+.header-icon.icon-api {
+  overflow: visible;
+}
+
+.title-bar .header-icon {
+  max-block-size: var(--title-bar-height);
+}
+
+/* Color the groups by theme vars, matching the actual SVG in the DOM */
+.header-icon.icon-api #keyhole * {
+  fill: var(--highlight-color) !important;
+}
+.header-icon.icon-api #brackets * {
+  fill: var(--secondary-color) !important;
+}
+.header-icon.icon-api #innercircle * {
+  fill: var(--accent-color) !important;
+}
+.header-icon.icon-api #outercircle * {
+  fill: var(--secondary-color) !important;
+}
+.header-icon.icon-api * {
+  stroke: none !important;
+}
+
+/* Title-bar actions (top-right) */
+.title-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+/* Title Action Buttons */
+.title-actions .icon-btn {
+  width: 32px;
+  height: 32px;
+  border: none !important;
+  box-shadow: none;
+  background: transparent;
+  padding: 0;
+}
+
+.title-actions .icon-btn:hover {
+  background: var(--highlight-color);
+  border: none !important;
+  box-shadow: none;
+}
+
+.title-actions .icon-btn:focus-visible {
+  outline: 2px solid var(--highlight-color);
+  outline-offset: 2px;
+}
+
+/* =================
+   Link Banner
+   ================= */
+#hermes-link-banner {
+  position: sticky;
+  top: var(--title-bar-height);
+  box-sizing: border-box;
+  height: var(--link-banner-height);
+  z-index: 10001;
+  background-color: var(--secondary-color);
+  padding: 5px;
+  border-radius: 0 !important;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 1.1em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#hermes-link-target {
+  display: none;
+  margin-top: 2px;
+  word-break: break-word;
+}
+
+.devlink-container {
+  margin: 8px 0 6px 0;
+}
+
+.devlink-banner {
+  display: inline-block;
+  text-decoration: underline;
+  font-style: italic;
+  font-size: 0.85em;
+  font-weight: 600;
+  color: var(--accent-color);
+}
+
+.devlink-banner:hover {
+  text-decoration: none;
+}
+
+/* =================
+   Menu Bar / Dropdowns
+   ================= */
+.menu-bar {
+  display: flex;
+  background-color: var(--secondary-color);
+  padding: 5px;
+  position: sticky;
+  top: calc(var(--link-banner-height) + var(--title-bar-height));
+  z-index: 10000;
+  border-bottom: 2px solid var(--divider-color, rgba(0, 0, 0, 0.08));
+}
+
+.menu-bar .dropdown {
+  position: relative;
+}
+
+.menu-bar .dropdown .dropdown-content {
+  position: absolute;
+  top: calc(100% - 1px);
+  left: 0;
+  margin-top: 0;
+  z-index: 10001;
+}
+
+/* Reveal dropdown on open class (for JS control) */
+.menu-bar .dropdown .dropdown-content {
+  display: none;
+}
+
+.menu-bar .dropdown.open .dropdown-content {
+  display: block;
+}
+
+/* Menu Buttons */
+.menu-btn {
+  margin: 0 5px;
+  padding: 3px 12px;
+  background-color: var(--accent-color);
+  color: var(--primary-color);
+  border-style: outset;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 1.1em;
+  font-weight: normal;
+}
+
+.menu-btn:hover {
+  background-color: var(--highlight-color);
+  font-weight: bold;
+}
+
+/* Dropdown hover styling */
+.dropdown:hover > .menu-btn {
+  background-color: var(--primary-color);
+  color: var(--accent-color);
+  font-weight: 800;
+  font-size: 1.1em;
+}
+
+/* Dropdown Menus */
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: var(--buttontext-color);
+  color: var(--accent-color);
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+  width: 180px;
+  border: 1px solid var(--accent-color);
+  border-radius: 4px;
+  font-size: 1.1em;
+  white-space: nowrap;
+}
+
+.dropdown-content a {
+  color: var(--accent-color);
+  padding: 8px 12px;
+  text-decoration: none;
+  display: block;
+  font-weight: normal;
+  background-color: var(--buttontext-color);
+  border-radius: 4px;
+}
+
+.dropdown-content a:hover {
+  background-color: var(--highlight-color);
+  color: var(--buttontext-color);
+  font-size: inherit;
+  font-weight: bold;
+}
+
+/* Theme Selector (hidden select) */
+#theme-selector {
+  width: 100%;
+  padding: 5px;
+  margin-top: 5px;
+  border-radius: 4px;
+  border: 1px solid var(--accent-color);
+  background-color: var(--primary-color);
+  color: var(--accent-color);
+}
+
+/* Theme menu look & feel */
+.theme-menu {
+  min-width: 180px;
+  padding: 6px;
+  background: var(--buttontext-color);
+  color: var(--accent-color);
+  border: 1px solid var(--accent-color);
+  border-radius: 6px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  z-index: 10000;
+}
+
+.theme-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 8px 10px;
+  border-radius: 4px;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.theme-item:hover,
+.theme-item:focus {
+  background: var(--highlight-color);
+  color: var(--buttontext-color);
+  outline: none;
+}
+
+/* =================
+   Main Content / Collapsibles
+   ================= */
+.main-body {
+  margin-top: 0;
+  font-size: 1.2em;
+  font-weight: bold;
+  scroll-margin-top: calc(var(--title-bar-height) + var(--link-banner-height));
+}
+
+/* Common Collapsible Section Styles */
+.collapsible-tenant-section,
+.collapsible-access-section,
+.collapsible-rto-section,
+.collapsible-api-section {
+  font-size: 1.1em;
+  padding: 0;
+  margin: 10px 0 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  border: 1px solid var(--accent-color);
+  border-radius: 8px;
+  background: transparent;
+}
+
+/* Common Collapsible Toggle Button Styles */
+.collapsible-tenant-toggle,
+.collapsible-access-toggle,
+.collapsible-rto-toggle,
+.collapsible-api-toggle {
+  width: 100%;
+  text-align: center;
+  background-color: var(--accent-color);
+  color: var(--buttontext-color);
+  border: none;
+  border-radius: 8px 8px 0 0;
+  padding: 5px;
+  font-size: 1em;
+  font-weight: bold;
+  cursor: pointer;
+  margin: 0 0 6px;
+}
+
+.collapsible-tenant-toggle:hover,
+.collapsible-access-toggle:hover,
+.collapsible-rto-toggle:hover,
+.collapsible-api-toggle:hover {
+  background-color: var(--highlight-color);
+}
+
+/* Common Collapsible Content Styles */
+.collapsible-tenant-content,
+.collapsible-access-content,
+.collapsible-rto-content,
+.collapsible-api-content {
+  height: 0;
+  overflow: hidden;
+  padding: 0;
+  border: none;
+  background: transparent;
+  transition: height 0.3s ease-in-out, padding 0.3s ease-in-out;
+}
+
+.collapsible-tenant-content.expanded,
+.collapsible-access-content.expanded,
+.collapsible-rto-content.expanded,
+.collapsible-api-content.expanded {
+  height: auto;
+  padding: 0 10px 10px;
+  overflow-y: auto;
+  transition: height 0.3s ease-in-out, padding 0.3s ease-in-out;
+}
+
+.collapsible-tenant-content.expanded > :last-child,
+.collapsible-access-content.expanded > :last-child,
+.collapsible-rto-content.expanded > :last-child {
+  margin-bottom: 0;
+}
+
+/* Divider line directly under header */
+.collapsible-tenant-toggle + .collapsible-tenant-content,
+.collapsible-access-toggle + .collapsible-access-content,
+.collapsible-rto-toggle + .collapsible-rto-content,
+.collapsible-api-toggle + .collapsible-api-content {
+  border-top: 1px solid var(--divider-color, rgba(0, 0, 0, 0.08));
+}
+
+/* Make expanded sections auto-size fully using :has(...) */
+.collapsible-tenant-section:has(.collapsible-tenant-content.expanded),
+.collapsible-access-section:has(.collapsible-access-content.expanded),
+.collapsible-rto-section:has(.collapsible-rto-content.expanded),
+.collapsible-api-section:has(.collapsible-api-content.expanded) {
+  height: auto !important;
+}
+
+/* Let expanded content grow naturally */
+.collapsible-tenant-content.expanded,
+.collapsible-access-content.expanded,
+.collapsible-rto-content.expanded,
+.collapsible-api-content.expanded {
+  height: auto !important;
+  overflow: visible;
+}
+
+/* Prevent margin collapse inside content */
+.collapsible-tenant-content,
+.collapsible-access-content,
+.collapsible-rto-content,
+.collapsible-api-content {
+  display: flow-root;
+  box-sizing: border-box;
+}
+
+/* =================
+   Form Groups / Inputs
+   ================= */
+.form-group-client-id,
+.form-group-access-token,
+.form-group-refresh-token,
+.form-group-client-secret,
+.form-group-tenant-id {
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+
+/* Input Boxes */
+.input-box,
+#access-token,
+#client-id,
+#client-secret,
+#refresh-token,
+#tenant-id {
+  width: 80%;
+  padding: 8px;
+  padding-right: 40px;
+  border: 1px solid var(--accent-color);
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+#client-url {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--accent-color);
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+/* Input Container with Icon */
+.client-secret-container {
+  position: relative;
+  width: 100%;
+}
+
+.input-icon {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  opacity: 0.8;
+}
+
+.input-icon:hover {
+  opacity: 1;
+}
+
+/* Position icons for different inputs */
+#client-secret ~ .input-icon,
+#client-id ~ .input-icon,
+#access-token ~ .input-icon,
+#refresh-token ~ .input-icon,
+#tenant-id ~ .input-icon {
+  right: 25%;
+}
+
+#client-url ~ .input-icon {
+  right: 10px;
+}
+
+/* =================
+   Buttons
+   ================= */
+.btn {
+  margin-top: 5px;
+  padding: 8px 6px;
+  background-color: var(--accent-color);
+  color: var(--buttontext-color);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: bold;
+}
+
+.btn:hover {
+  background-color: var(--highlight-color);
+}
+
+/* Smaller action buttons (e.g., in overlays) */
+.btn2 {
+  margin-top: 5px;
+  padding: 8px 6px;
+  background-color: var(--accent-color);
+  color: var(--buttontext-color);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.7em;
+  font-weight: bold;
+}
+
+.btn2:hover {
+  background-color: var(--highlight-color);
+}
+
+/* Popout Response Button */
+.btn3 {
+  margin-top: 5px;
+  margin-left: 5px;
+  padding: 8px 6px;
+  background-color: var(--accent-color);
+  color: var(--buttontext-color);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.7em;
+  font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn3:hover {
+  background-color: var(--highlight-color);
+}
+
+.btn3 .btn-icon {
+  width: 12px;
+  height: 12px;
+  filter: brightness(0) saturate(100%) invert(100%);
+}
+
+/* Button Groups with timers */
+.btn-timer-group,
+.refresh-btn-timer-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* =================
+   API Library / Actions
+   ================= */
+.form-group-api {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.api-selector {
+  font-size: 1.2em;
+  font-weight: bold;
+}
+
+.api-selector-box {
+  width: 100%;
+  padding: 3px;
+  border: 2px solid var(--accent-color);
+  border-radius: 4px;
+  box-sizing: border-box;
+  margin-bottom: 10px;
+}
+
+/* Legacy multi-row layout (kept for reference) */
+.api-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 12px;
+}
+
+.api-actions-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Single-row API toolbar */
+.api-actions-toolbar {
+  display: grid;
+  grid-template-columns: auto 1fr; /* Send button | icon cluster */
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0 12px;
+  padding: 6px 8px;
+  border-top: 1px solid var(--divider-color, rgba(0, 0, 0, 0.08));
+  border-bottom: 1px solid var(--divider-color, rgba(0, 0, 0, 0.08));
+}
+
+/* Primary button in toolbar */
+.btn--primary {
+  background-color: var(--accent-color);
+  color: var(--buttontext-color);
+  font-weight: 800;
+  padding: 5px 10px;
+  font-size: 1em;
+  border-radius: 6px;
+}
+
+.btn--primary:hover {
+  filter: brightness(1.05);
+}
+
+/* Icon cluster (right side of toolbar) */
+.api-actions-icons {
+  display: inline-flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+
+/* Icon-only buttons */
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--divider-color);
+  border-radius: 6px;
+  background: var(--accent-color);
+  cursor: pointer;
+}
+
+.icon-btn:hover {
+  background: var(--highlight-color);
+}
+
+.icon-btn:hover img {
+  filter: brightness(0) saturate(100%) invert(100%); /* turn white on hover */
+}
+
+/* Icon images inside icon buttons */
+.icon-btn img {
+  width: 24px;
+  height: 24px;
+  display: block;
+  filter: brightness(0) saturate(100%) invert(100%);
+}
+
+/* Disabled state for icon buttons (e.g., until a response exists) */
+.icon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Small-screen layout for toolbar */
+@media (max-width: 720px) {
+  .api-actions-toolbar {
+    grid-template-columns: 1fr;
+    row-gap: 8px;
+  }
+  .api-actions-icons {
+    justify-content: center;
+  }
+}
+
+/* DevLink styling */
+.api-devlink {
+  text-decoration: underline;
+  font-style: italic;
+  font-size: 0.9em;
+  font-weight: 600;
+  background: var(--secondary-color);
+  display: inline-flex;
+  padding: 6px 10px;
+  border-radius: 9999px;
+  color: var(--accent-color);
+  white-space: nowrap;
+}
+
+.api-devlink:hover {
+  text-decoration: none;
+  filter: brightness(0.96);
+}
+
+/* =================
+   Parameters
+   ================= */
+/* Base parameter bucket */
+.parameter-container {
+  border-radius: 0;
+  padding: 6px;
+  margin-bottom: 5px;
+  background-color: var(--primary-color);
+  border: 2px solid var(--buttontext-color);
+}
+
+/* Hide parameter buckets when JS leaves them empty */
+.parameter-container:empty {
+  display: none;
+  border: none;
+  padding: 0;
+  background-color: transparent;
+}
+
+.parameter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 1em;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  margin: 2px 0;
+  color: var(--accent-color);
+}
+
+.body-font-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.parameter-help-text {
+  font-size: 0.9em;
+  font-weight: 500;
+  font-style: italic;
+  margin-top: 6px;
+  color: var(--accent-color);
+}
+
+/* Parameter Wrappers */
+.query-param-wrapper,
+.body-param-wrapper,
+.body-text-wrapper,
+.body-int-wrapper,
+.body-boolean-wrapper,
+.body-select-wrapper {
+  display: grid;
+  grid-template-columns: minmax(160px, 35%) 1fr; /* label | control */
+  align-items: center;
+  gap: 8px 8px;
+  margin: 4px 0;
+}
+
+/* Left column label alignment */
+.query-param-wrapper > label,
+.body-param-label {
+  justify-self: start;
+  align-self: start;
+  line-height: 1.2;
+  font-size: 0.95em;
+}
+
+/* Parameter Inputs */
+.query-param-input,
+.body-text-input,
+.body-int-input,
+.body-boolean-input,
+.body-select-input,
+input[type="date"].body-param-input {
+  justify-self: end;
+  width: 70%;
+  max-width: 70%;
+  padding: 4px 4px;
+  border: 1px solid var(--accent-color);
+  border-radius: 4px;
+  height: 1.8em;
+  font-size: 1em;
+  font-weight: 600;
+  background: var(--buttontext-color);
+  color: var(--accent-color);
+  box-sizing: border-box;
+}
+
+/* Placeholder styling in selects */
+.query-param-input .placeholder-option {
+  color: var(--secondary-color) !important;
+  font-style: italic;
+}
+
+.query-param-input option:not(.placeholder-option) {
+  color: var(--accent-color);
+  font-style: normal;
+}
+
+/* Date pickers */
+input[type="date"].query-param-input,
+input[type="date"].body-param-input {
+  border: 1px solid var(--accent-color);
+  border-radius: 4px;
+  padding: 4px 4px;
+  background: var(--buttontext-color);
+  color: var(--accent-color);
+  height: 2em;
+  box-sizing: border-box;
+  font-size: 1.2em;
+  font-weight: 600;
+  width: 75%;
+}
+
+/* Ad-Hoc Endpoint spans full width */
+#adhoc-endpoint.query-param-input {
+  width: 100% !important;
+  max-width: 100% !important;
+  justify-self: stretch;
+  display: block;
+  box-sizing: border-box;
+}
+
+/* Multi-select styling */
+.multi-select-container {
+  grid-column: 1 / 3;
+  border: 1px solid var(--accent-color);
+  border-radius: 4px;
+  padding: 8px;
+  background: var(--buttontext-color);
+  box-sizing: border-box;
+  font-size: 0.9em;
+}
+
+/* Ensure the row top-aligns when multi-select is present */
+.body-param-wrapper:has(.multi-select-container) {
+  align-items: start;
+}
+
+/* Checkbox rows inside multi-select */
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: 1px 0;
+}
+
+/* Multi-text styling */
+.multi-text-container {
+  grid-column: 4 / 3;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid var(--accent-color);
+  border-radius: 4px;
+  padding: 8px;
+  background: var(--buttontext-color);
+  box-sizing: border-box;
+}
+
+/* Button at top of multi-text group */
+.multi-text-container .btn.btn-add-item {
+  align-self: start;
+  margin: 0 0 4px 0;
+  padding: 6px 6px;
+  font-size: 0.9em;
+}
+
+/* Inputs added into multi-text should match other controls */
+.multi-text-container .body-param-input {
+  width: 50%;
+  padding: 4px 4px;
+  border: 1px solid var(--accent-color);
+  border-radius: 4px;
+  font-size: 0.9em;
+  font-weight: 600;
+  background: var(--buttontext-color);
+  color: var(--accent-color);
+  box-sizing: border-box;
+}
+
+/* Top-align row when multi-text exists */
+.body-param-wrapper:has(.multi-text-container) {
+  align-items: start;
+}
+
+/* Selects match text inputs visually */
+select.query-param-input,
+select.body-select-input,
+select.body-boolean-input {
+  appearance: auto;
+  background-color: var(--buttontext-color);
+}
+
+/* Placeholder option style in selects */
+.query-param-input .placeholder-option,
+.body-select-input .placeholder-option {
+  color: var(--secondary-color) !important;
+  font-style: italic;
+}
+
+.query-param-input option:not(.placeholder-option),
+.body-select-input option:not(.placeholder-option) {
+  color: var(--accent-color);
+  font-size: 0.9em;
+  font-weight: 600;
+  background-color: var(--buttontext-color);
+}
+
+/* Prevent labels from stretching control column */
+.query-param-wrapper > label,
+.body-param-label {
+  min-width: 0;
+  white-space: normal;
+}
+
+/* Ad-hoc POST JSON editor */
+.json-textarea {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+
+  height: 260px;
+  min-height: 200px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 1.1em;
+  line-height: 1.4;
+
+  padding: 8px;
+  border: 1px solid var(--accent-color);
+  border-radius: 6px;
+  background: var(--buttontext-color);
+  color: var(--accent-color);
+
+  resize: vertical;
+  overflow: auto;
+}
+
+/* =================
+   Response Section
+   ================= */
+.response-section {
+  border-radius: 0;
+  padding: 10px;
+  margin-top: 10px;
+  margin-bottom: 5px;
+  background-color: var(--primary-color);
+  border: 2px solid var(--buttontext-color);
+  overflow: auto;
+  word-wrap: break-word;
+}
+
+.response-section pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin: 0;
+  font-size: 1.1em;
+  color: var(--accent-color);
+}
+
+/* =================
+   JSON Tree View
+   ================= */
+.json-tree {
+  font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.json-tree details {
+  margin-left: 0.75rem;
+}
+
+.json-tree summary {
+  cursor: pointer;
+  outline: none;
+}
+
+.json-tree .json-leaf {
+  margin-left: 1.5rem;
+  white-space: pre-wrap;
+}
+
+/* =================
+   Loading / Spinners
+   ================= */
+.loading::after {
+  content: " ⏳";
+  animation: spin 1s linear infinite;
+}
+
+.spinner {
+  display: inline-block;
+  width: 8px;
+  height: 5px;
+  margin-left: 3px;
+  border: 2px solid transparent;
+  border-top-color: var(--buttontext-color);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* =================
+   Overlays (Hermes / Modals)
+   ================= */
+/* Main Hermes inactive overlay */
+.hermes-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: transparent;
+  z-index: 10000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.hermes-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.overlay-content {
+  background-color: var(--primary-color);
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  max-width: 80%;
+  color: var(--accent-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Manage My APIs & Settings overlays share base styling */
+#manage-myapis-overlay,
+#settings-overlay {
+  position: fixed;
+  inset: 0;
+  display: none;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.15);
+  z-index: 100000;
+}
+
+#manage-myapis-overlay:not([hidden]),
+#settings-overlay:not([hidden]) {
+  display: grid;
+}
+
+#manage-myapis-overlay .overlay-card,
+#settings-overlay .overlay-card {
+  background: var(--primary-color, #fff);
+  color: var(--accent-color, #000);
+  padding: 12px 14px;
+  border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  max-width: 680px;
+  width: min(680px, calc(100% - 32px));
+  max-height: min(80vh, 720px);
+  overflow: auto;
+}
+
+/* ========= Settings / Preferences Overlay ========= */
+#settings-overlay .settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+#settings-overlay .settings-header h4 {
+  margin: 0;
+}
+
+/* Section wrapper for groups of settings */
+#settings-overlay .settings-section {
+  margin-top: 4px;
+}
+
+/* Title + small description for the boxed group */
+#settings-overlay .settings-section-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+#settings-overlay .settings-section-help {
+  margin: 0 0 8px 0;
+  font-size: 0.75rem;
+  opacity: 1;
+  font-weight: 400;
+}
+
+/* Box around the Postman/Bruno-related settings */
+#settings-overlay .settings-box {
+  border: 1px solid var(--divider-color, rgba(0, 0, 0, 0.12));
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--secondary-color, #f5f5f5);
+}
+
+/* Layout for the rows inside the box */
+#settings-overlay .settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#settings-overlay .settings-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#settings-overlay .settings-row label {
+  flex: 0 0 170px;
+}
+
+#settings-overlay .settings-row .input-box {
+  flex: 1;
+}
+
+/* ========= My APIs Overlay ========= */
+.myapis-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 6px 0 10px;
+  flex-wrap: wrap;
+}
+
+.myapis-toolbar .spacer {
+  flex: 1;
+}
+
+.myapis-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+
+.myapis-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+  align-items: start;
+  padding: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  background: var(--primary-color, #fafafa);
+}
+
+.myapis-row .meta {
+  display: grid;
+  gap: 2px;
+}
+
+.myapis-row .title {
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.myapis-row .subtitle {
+  font-size: 12px;
+  opacity: 0.85;
+  word-break: break-all;
+}
+
+.myapis-row .stamp {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+/* =================
+   Inactive Tab States
+   ================= */
+html.hermes-dim,
+body.hermes-dim {
+  filter: grayscale(0.6);
+  opacity: 0.7;
+}
+
+body.tab-inactive {
+  pointer-events: none;
+}
+
+body.tab-inactive::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  z-index: 9998;
+  pointer-events: none;
+}
+
+/* =================
+   Icon Feedback States
+   ================= */
+/* Gentle visual feedback for icon buttons without removing their <img> */
+.icon-btn.flash-ok {
+  outline: 2px solid var(--highlight-color);
+  outline-offset: 2px;
+}
+
+.icon-btn.flash-fail {
+  outline: 2px solid #d9534f;
+  outline-offset: 2px;
+}
