@@ -9,10 +9,6 @@
          />
       <title>AccessPanel</title>
       <link rel="stylesheet" href="styles/uistyles.css" />
-      <link
-         href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;900&display=swap"
-         rel="stylesheet"
-         />
       <script src="scripts/main.js"></script>
    </head>
    <body>
@@ -95,12 +91,12 @@
          </div>
       </div>
       <!-- Overlay for non-linked tabs -->
-<!--      <div id="hermes-overlay" class="hermes-overlay hidden">
+      <div id="hermes-overlay" class="hermes-overlay hidden">
          <div class="overlay-content">
-            <h3>Session Active in Another Tab</h3>
-            <p>Return to the linked WFM session tab to use AccessPanel.</p>
-            <button id="hermes-return-to-tab" class="btn">
-            Return to Linked Tab
+            <h3>Session Status</h3>
+            <p>Click "Check Connection" to re-validate your session.</p>
+            <button id="hermes-check-connection" class="btn">
+            Check Connection
             </button>
             <button id="hermes-relink-tab" class="btn">
             Link This Tab Instead
@@ -113,30 +109,7 @@
             <span class="small" id="hermes-link-target"></span>
          </div>
          <div class="small" id="hermes-link-hint"></div>
-      </div>-->
-<!-- Overlay for non-linked tabs -->
-<div id="hermes-overlay" class="hermes-overlay hidden">
-  <div class="overlay-content">
-    <h3>Session Status</h3>
-    <p>Click "Check Connection" to re-validate your session.</p>
-
-    <button id="hermes-check-connection" class="btn">
-      Check Connection
-    </button>
-
-    <button id="hermes-relink-tab" class="btn">
-      Link This Tab Instead
-    </button>
-  </div>
-</div>
-
-<div id="hermes-link-banner" data-show="false">
-  <div class="row row-status">
-    <strong id="hermes-link-status">Linked</strong>
-    <span class="small" id="hermes-link-target"></span>
-  </div>
-  <div class="small" id="hermes-link-hint"></div>
-</div>
+      </div>
       <!-- Menu Bar -->
       <div class="menu-bar">
          <!-- Admin Dropdown -->
@@ -151,9 +124,9 @@
          <div class="dropdown">
             <button class="menu-btn">Links ▾</button>
             <div class="dropdown-content">
+               <a href="#" id="links-developer-portal">Developer Portal</a>
                <a href="#" id="links-boomi">Boomi</a>
                <a href="#" id="links-install-integrations">Install Integrations</a>
-               <a href="#" id="links-developer-portal">Developer Portal</a>
             </div>
          </div>
          <!-- Theme Selector (click menu + hidden select) -->
