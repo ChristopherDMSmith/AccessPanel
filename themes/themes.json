@@ -1,0 +1,166 @@
+{
+	"themes": {
+		"default": {
+			"name": "Workforce Manager (default)",
+			"colors": {
+				"primary-color": "#E0E0E0",
+				"secondary-color": "#C8C8C8",
+				"accent-color": "#09407C",
+				"highlight-color": "#5FAEFF",
+				"buttontext-color": "#F5F5F5",
+				"divider-color": "#A6A6A6"
+			},
+			"fonts": {
+				"font-family-primary": "Trebuchet MS, sans-serif",
+				"font-family-fallback": "Helvetica",
+				"title-font-primary": "\"InterLocalBlack\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+				"title-font-fallback": "cursive"
+			},
+			"paletteUrl": "https://colordesigner.io/color-palette-builder?mode=lch&steps=10&him=constant#E0E0E0-C8C8C8-09407C-5FAEFF-F5F5F5-A6A6A6"
+		},
+		"arcticCircle": {
+			"name": "Arctic Circle",
+			"colors": {
+				"primary-color": "#FFFFFF",
+				"secondary-color": "#F7FAFC",
+				"accent-color": "#1A365D",
+				"highlight-color": "#57C7D6",
+				"buttontext-color": "#FFFFFF",
+				"divider-color": "#2F2F3C"
+			},
+			"fonts": {
+				"font-family-primary": "Trebuchet MS, sans-serif",
+				"font-family-fallback": "Helvetica",
+				"title-font-primary": "\"InterLocalBlack\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+				"title-font-fallback": "cursive"
+			},
+			"paletteUrl": "https://colordesigner.io/color-palette-builder?mode=lch&steps=10&him=constant#FFFFFF-F7FAFC-1A365D-2B6CB0-FFFFFF-57C7D6"
+		},
+		"crimsonLedger": {
+			"name": "Crimson Ledger",
+			"colors": {
+				"primary-color": "#F5F5F5",
+				"secondary-color": "#D9D9D9",
+				"accent-color": "#7C0909",
+				"highlight-color": "#FF5F5F",
+				"buttontext-color": "#F5F5F5",
+				"divider-color": "#A6A6A6"
+			},
+			"fonts": {
+				"font-family-primary": "Trebuchet MS, sans-serif",
+				"font-family-fallback": "Helvetica",
+				"title-font-primary": "\"InterLocalBlack\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+				"title-font-fallback": "cursive"
+			},
+			"paletteUrl": "https://colordesigner.io/color-palette-builder?mode=lch&steps=10&him=constant#F5F5F5-D9D9D9-7C0909-FF5F5F-FFFFFF-A6A6A6"
+		},
+		"graphiteTablet": {
+			"name": "Graphite Tablet",
+			"colors": {
+				"primary-color": "#181818",
+				"secondary-color": "#2B2B2B",
+				"accent-color": "#627894",
+				"highlight-color": "#E5E7EB",
+				"buttontext-color": "#111827",
+				"divider-color": "#C3E9FF"
+			},
+			"fonts": {
+				"font-family-primary": "Trebuchet MS, sans-serif",
+				"font-family-fallback": "Helvetica",
+				"title-font-primary": "\"InterLocalBlack\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+				"title-font-fallback": "cursive"
+			},
+			"paletteUrl": "https://colordesigner.io/color-palette-builder?mode=lch&steps=10&him=constant#3A3A3A-2B2B2B-E5E7EB-B8C4D1-111827"
+		},
+		"honeyMustard": {
+			"name": "Honey Mustard",
+			"colors": {
+				"primary-color": "#FFFFFF",
+				"secondary-color": "#F9F5F2",
+				"accent-color": "#C28F00",
+				"highlight-color": "#FFD933",
+				"buttontext-color": "#212121",
+				"divider-color": "#CFB77C"
+			},
+			"fonts": {
+				"font-family-primary": "Trebuchet MS, sans-serif",
+				"font-family-fallback": "Helvetica",
+				"title-font-primary": "\"InterLocalBlack\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+				"title-font-fallback": "cursive"
+			},
+			"paletteUrl": "https://colordesigner.io/color-palette-builder?mode=lch&steps=10&him=constant#FFFFFF-F9F5F2-C28F00-FFD933-212121-CFB77C"
+		},
+		"ivorySandstone": {
+			"name": "Ivory Sandstone",
+			"colors": {
+				"primary-color": "#FFFFFF",
+				"secondary-color": "#F3F0E7",
+				"accent-color": "#6B4F2A",
+				"highlight-color": "#DAAA58",
+				"buttontext-color": "#FFFFFF",
+				"divider-color": "#A2886D"
+			},
+			"fonts": {
+				"font-family-primary": "Trebuchet MS, sans-serif",
+				"font-family-fallback": "Helvetica",
+				"title-font-primary": "\"InterLocalBlack\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+				"title-font-fallback": "cursive"
+			},
+			"paletteUrl": "https://colordesigner.io/color-palette-builder?mode=lch&steps=10&him=constant#FFFFFF-F3F0E7-6B4F2A-8B6C3E-FFFFFF"
+		},
+		"mossyForest": {
+			"name": "Mossy Forest",
+			"colors": {
+				"primary-color": "#F3F7F4",
+				"secondary-color": "#E9F3EE",
+				"accent-color": "#0C4228",
+				"highlight-color": "#48BE86",
+				"buttontext-color": "#FFFFFF",
+				"divider-color": "#6EA26D"
+			},
+			"fonts": {
+				"font-family-primary": "Trebuchet MS, sans-serif",
+				"font-family-fallback": "Helvetica",
+				"title-font-primary": "\"InterLocalBlack\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+				"title-font-fallback": "cursive"
+			},
+			"paletteUrl": "https://colordesigner.io/color-palette-builder?mode=lch&steps=10&him=constant#F3F7F4-E9F3EE-0C4228-48BE86-FFFFFF-6EA26D"
+		},
+		"plumAura": {
+			"name": "Plum Aura",
+			"colors": {
+				"primary-color": "#FFFFFF",
+				"secondary-color": "#F6F0FA",
+				"accent-color": "#4C3565",
+				"highlight-color": "#A167FF",
+				"buttontext-color": "#FFFFFF",
+				"divider-color": "#7A688F"
+			},
+			"fonts": {
+				"font-family-primary": "Trebuchet MS, sans-serif",
+				"font-family-fallback": "Helvetica",
+				"title-font-primary": "\"InterLocalBlack\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+				"title-font-fallback": "cursive"
+			},
+			"paletteUrl": "https://colordesigner.io/color-palette-builder?mode=lch&steps=10&him=constant#FFFFFF-F6F0FA-4C3565-A167FF-FFFFFF-7A688F"
+		},
+		"tangerineGlow": {
+			"name": "Tangerine Glow",
+			"colors": {
+				"primary-color": "#FFFFFF",
+				"secondary-color": "#FFF7E6",
+				"accent-color": "#C2410C",
+				"highlight-color": "#FFA34F",
+				"buttontext-color": "#FFFFFF",
+				"divider-color": "#A2886D"
+			},
+			"fonts": {
+				"font-family-primary": "Trebuchet MS, sans-serif",
+				"font-family-fallback": "Helvetica",
+				"title-font-primary": "\"InterLocalBlack\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+				"title-font-fallback": "cursive"
+			},
+			"paletteUrl": "https://colordesigner.io/color-palette-builder?mode=lch&steps=10&him=constant#FFFFFF-FFF7E6-C2410C-FFA34F-FFFFFF-A2886D"
+		}
+	}
+}
