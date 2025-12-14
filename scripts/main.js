@@ -31,7 +31,13 @@ function onAsync(id, event, handler, options = {}) {
     id,
     event,
     (e) => {
-      handler(e).catch((err) => console.error(`${id} handler failed:`, err));
+      try {
+        Promise.resolve(handler(e)).catch((err) =>
+          console.error(`${id} handler failed:`, err)
+        );
+      } catch (err) {
+        console.error(`${id} handler failed:`, err);
+      }
     },
     options
   );
@@ -47,7 +53,6 @@ function adminSettingsClick(e) {
 function downloadFile(filename, content, mimeType) {
   downloadFileWithContext(document, URL, filename, content, mimeType);
 }
-
 
 // Download utility that can run in either the panel window or a popup window
 function downloadFileWithContext(doc, urlApi, filename, content, mimeType) {
@@ -65,7 +70,6 @@ function downloadFileWithContext(doc, urlApi, filename, content, mimeType) {
 
   setTimeout(() => urlApi.revokeObjectURL(url), 0);
 }
-
 
 // Format local date as YYYY-MM-DD with optional day offset.
 function formatLocalYMD(daysOffset = 0, base = new Date()) {
@@ -97,41 +101,6 @@ function ensureMasked(inputId) {
   if (el.type !== "password") el.type = "password";
 }
 
-// Determine whether the current context is incognito
-/*function isIncognitoContext() {
-  return new Promise((resolve) => {
-    try {
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        if (chrome.runtime.lastError) {
-          // fallback to window context
-          chrome.windows.getCurrent({ populate: false }, (win) => {
-            if (chrome.runtime.lastError || !win) return resolve(false);
-            return resolve(!!win.incognito);
-          });
-          return;
-        }
-
-        const tab = tabs && tabs[0];
-        if (tab && typeof tab.incognito === "boolean") {
-          return resolve(tab.incognito);
-        }
-
-        // fallback if tab is missing or incognito flag unavailable
-        chrome.windows.getCurrent({ populate: false }, (win) => {
-          if (chrome.runtime.lastError || !win) return resolve(false);
-          return resolve(!!win.incognito);
-        });
-      });
-    } catch (e) {
-      // defensive fallback
-      chrome.windows.getCurrent({ populate: false }, (win) => {
-        if (chrome.runtime.lastError || !win) return resolve(false);
-        return resolve(!!win.incognito);
-      });
-    }
-  });
-}*/
-
 // Determine whether the current extension context is incognito
 function isIncognitoContext() {
   try {
@@ -141,7 +110,26 @@ function isIncognitoContext() {
   }
 }
 
+// Helper to coorelate panel URL from template or path
+function resolvePanelUrl(templateOrPath, ssoClientUrl) {
+  if (!templateOrPath || typeof templateOrPath !== "string") return "";
 
+  const raw = templateOrPath.trim();
+  if (!raw) return "";
+
+  // Absolute URL: allows links from accesspanel.json to full URLs
+  if (/^https?:\/\//i.test(raw)) return raw;
+
+  // Backward compatibility: old templated format
+  const templatePrefix = "https://*.mykronos.com/";
+  if (raw.startsWith(templatePrefix)) {
+    console.warn("[AccessPanel] Deprecated URL template in config. Use a relative path instead:", raw);
+    return ssoClientUrl + raw.slice(templatePrefix.length);
+  }
+
+  // Relative: normalize slashes and join
+  return ssoClientUrl + raw.replace(/^\/+/, "");
+}
 // ===================== //
 
 
@@ -378,10 +366,39 @@ async function clearClientData() {
 
 
 // ===== MENU BAR | LINKS FUNCTIONS ===== //
+// Developer portal
+async function linksDeveloperPortal() {
+  try {
+    const panelMeta = await fetch("accesspanel.json").then((res) => res.json());
+    const developerPortalTemplate = panelMeta?.details?.urls?.developerPortal;
 
+    if (!developerPortalTemplate) {
+      console.error("Developer Portal URL not found in accesspanel.json.");
+      return;
+    }
+
+    const developerPortalURL = resolvePanelUrl(developerPortalTemplate, "");
+
+    if (!developerPortalURL) {
+      console.error("Developer Portal URL could not be resolved.");
+      return;
+    }
+
+    const incognito = await isIncognitoContext();
+    if (incognito) {
+      chrome.tabs.create({ url: developerPortalURL, active: true });
+    } else {
+      openURLNormally(developerPortalURL);
+    }
+  } catch (error) {
+    console.error("Failed to load Developer Portal URL:", error);
+  }
+}
+
+// Boomi button
 async function linksBoomi() {
   if (!(await isValidSession())) {
-    alert("Requires a valid ADP WorkForce Manager session.");
+    alert("Requires a valid ADP Workforce Manager session.");
     return;
   }
 
@@ -401,20 +418,12 @@ async function linksBoomi() {
     return;
   }
 
-  const ssoClientUrl = createSsoUrl(clienturl); // expected to end with '/'
+  const ssoClientUrl = createSsoUrl(clienturl);
+  const boomiURL = resolvePanelUrl(boomiTemplate, ssoClientUrl);
 
-  // If config is a template like "https://*.mykronos.com/ihub#..."
-  // replace the host+slash with the real ssoClientUrl.
-  let boomiURL = "";
-  const templatePrefix = "https://*.mykronos.com/";
-  if (boomiTemplate.startsWith(templatePrefix)) {
-    boomiURL = ssoClientUrl + boomiTemplate.slice(templatePrefix.length);
-  } else if (/^https?:\/\//i.test(boomiTemplate)) {
-    // Full URL but not templated; use as-is
-    boomiURL = boomiTemplate;
-  } else {
-    // Relative path (with or without leading slash)
-    boomiURL = ssoClientUrl + boomiTemplate.replace(/^\/+/, "");
+  if (!boomiURL) {
+    alert("Boomi link could not be resolved.");
+    return;
   }
 
   const incognito = await isIncognitoContext();
@@ -425,7 +434,7 @@ async function linksBoomi() {
   }
 }
 
-// Install integrations button
+// Install Integrations button
 async function linksInstallIntegrations() {
   if (!(await isValidSession())) {
     alert("Requires a valid ADP Workforce Manager session.");
@@ -448,16 +457,12 @@ async function linksInstallIntegrations() {
     return;
   }
 
-  const ssoClientUrl = createSsoUrl(clienturl); // expected to end with '/'
+  const ssoClientUrl = createSsoUrl(clienturl);
+  const installIntegrationsURL = resolvePanelUrl(installTemplate, ssoClientUrl);
 
-  let installIntegrationsURL = "";
-  const templatePrefix = "https://*.mykronos.com/";
-  if (installTemplate.startsWith(templatePrefix)) {
-    installIntegrationsURL = ssoClientUrl + installTemplate.slice(templatePrefix.length);
-  } else if (/^https?:\/\//i.test(installTemplate)) {
-    installIntegrationsURL = installTemplate;
-  } else {
-    installIntegrationsURL = ssoClientUrl + installTemplate.replace(/^\/+/, "");
+  if (!installIntegrationsURL) {
+    alert("Install Integrations link could not be resolved.");
+    return;
   }
 
   const incognito = await isIncognitoContext();
@@ -467,29 +472,6 @@ async function linksInstallIntegrations() {
     openURLNormally(installIntegrationsURL);
   }
 }
-
-// Developer portal
-async function linksDeveloperPortal() {
-  try {
-    const panelMeta = await fetch("accesspanel.json").then((res) => res.json());
-    const developerPortalURL = panelMeta?.details?.urls?.developerPortal;
-
-    if (!developerPortalURL) {
-      console.error("Developer Portal URL not found in accesspanel.json.");
-      return;
-    }
-
-    const incognito = await isIncognitoContext();
-    if (incognito) {
-      chrome.tabs.create({ url: developerPortalURL, active: true });
-    } else {
-      openURLNormally(developerPortalURL);
-    }
-  } catch (error) {
-    console.error("Failed to load Developer Portal URL:", error);
-  }
-}
-
 // ====================================== //
 
 // ===== MENU BAR | THEMES FUNCTIONS ===== //
@@ -563,7 +545,7 @@ function themeSelection(event) {
 // Restore the last selected theme on load
 async function restoreSelectedTheme() {
   chrome.storage.local.get("selectedTheme", async (result) => {
-    const themeKey = result.selectedTheme || "WorkForce MGR"; // default theme
+    const themeKey = result.selectedTheme || "Workforce MGR"; // default theme
     await applyTheme(themeKey);
 
     const dropdown = document.getElementById("theme-selector");
@@ -618,31 +600,39 @@ function wireThemeMenuClicks() {
 // About button
 async function helpAbout() {
   try {
-    const hermesData = await fetch("accesspanel.json").then((res) =>
-      res.json()
-    );
-    const aboutMessage = `
-            Name: ${hermesData.name}
-            Description: ${hermesData.details.description}
-            Version: ${hermesData.details.version}
-            Release Date: ${hermesData.details.release_date}
-            Author: ${hermesData.details.author}`;
+    const cfg = await fetch("accesspanel.json").then((res) => res.json());
 
-    // clean up the message to remove tabs
-    const cleansedAboutMessage = aboutMessage.replace(/\t/g, "");
-    alert(cleansedAboutMessage);
+    const name = cfg?.name ?? "AccessPanel";
+    const description = (cfg?.details?.description ?? "").replace(/\s+/g, " ").trim();
+    const version = cfg?.details?.version ?? "";
+    const releaseDate = cfg?.details?.release_date ?? "";
+    const author = cfg?.details?.author ?? "";
+    const descMax = 120;
+    const descShort =
+      description.length > descMax ? description.slice(0, descMax - 1) + "…" : description;
+
+    const message = [
+      `Name: ${name}`,
+      `Description: ${descShort}`,
+      `Version: ${version}`,
+      `Release Date: ${releaseDate}`,
+      `Author: ${author}`,
+    ].join("\n");
+
+    alert(message);
   } catch (error) {
     console.error("Failed to load About information:", error);
+    alert("Failed to load About information.");
   }
 }
 
-// Support: open GitHub Issues (from accesspanel.json)
+// Support: open GitHub Issues
 async function helpSupport() {
   try {
     const cfg = await fetch("accesspanel.json").then((res) => res.json());
-    const issuesUrl = cfg?.details?.urls?.reportIssues;
+    const issuesTemplate = cfg?.details?.urls?.reportIssues;
 
-    if (!issuesUrl) {
+    if (!issuesTemplate) {
       alert("Support link is not configured.");
       return;
     }
@@ -650,14 +640,19 @@ async function helpSupport() {
     const ok = confirm("Open AccessPanel support (GitHub Issues) in a new tab?");
     if (!ok) return;
 
-    // Open in a new tab from the extension UI context
-    window.open(issuesUrl, "_blank", "noopener,noreferrer");
+    const issuesUrl = resolvePanelUrl(issuesTemplate, "");
+    if (!issuesUrl) {
+      alert("Support link could not be resolved.");
+      return;
+    }
+
+    // Consistent behavior with the rest of the app
+    openURLNormally(issuesUrl);
   } catch (error) {
     console.error("Failed to open support link:", error);
     alert("Failed to open support link.");
   }
 }
-
 
 // ===== LOCAL STORAGE FUNCTIONS ===== //
 // Load client data from local storage
@@ -1535,27 +1530,32 @@ async function populateClientUrlField() {
 // Refresh URL button
 async function refreshClientUrlClick() {
   const btn = document.getElementById("refresh-client-url");
+  const originalText = btn?.textContent || "Refresh";
+
   try {
     await populateClientUrlField();
-    const val = (document.getElementById("client-url") || {}).value || "";
+
+    const val = document.getElementById("client-url")?.value || "";
     if (val) {
-      setButtonTempText(btn, "URL Refreshed");
+      setButtonTempText(btn, "URL Refreshed", 2000, originalText);
     } else {
-      setButtonFailText(btn, "No URL Detected");
+      setButtonFailText(btn, "No URL Detected", 2000, originalText);
     }
   } catch (e) {
     console.error(e);
-    setButtonFailText(btn, "Refresh Failed");
+    setButtonFailText(btn, "Refresh Failed", 2000, originalText);
   }
 }
 
 // Copy URL button
 async function copyClientUrlClick() {
   const btn = document.getElementById("copy-client-url");
+  const originalText = btn?.textContent || "Copy";
+
   try {
-    const val = (document.getElementById("client-url") || {}).value || "";
+    const val = document.getElementById("client-url")?.value || "";
     if (!val) {
-      setButtonFailText(btn, "No URL to Copy");
+      setButtonFailText(btn, "No URL to Copy", 2000, originalText);
       return;
     }
 
@@ -1566,16 +1566,22 @@ async function copyClientUrlClick() {
       // fallback approach
       const ta = document.createElement("textarea");
       ta.value = val;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
       document.body.appendChild(ta);
       ta.select();
-      document.execCommand("copy");
+
+      const ok = document.execCommand("copy");
       document.body.removeChild(ta);
+
+      if (!ok) throw new Error("execCommand(copy) returned false");
     }
 
-    setButtonTempText(btn, "URL Copied");
+    setButtonTempText(btn, "URL Copied", 2000, originalText);
   } catch (e) {
     console.error("Copy failed:", e);
-    setButtonFailText(btn, "Copy Failed");
+    setButtonFailText(btn, "Copy Failed", 2000, originalText);
   }
 }
 
@@ -1604,6 +1610,7 @@ async function populateClientID() {
 // Save API access client ID button
 async function saveClientIDClick() {
   const button = document.getElementById("save-client-id");
+  const originalText = button?.textContent || "Save";
 
   try {
     if (!(await isValidSession())) {
@@ -1613,12 +1620,13 @@ async function saveClientIDClick() {
 
     const clienturl = await getClientUrl();
     if (!clienturl) {
+      setButtonFailText(button, "No Client URL", 2000, originalText);
       return;
     }
 
-    const clientid = document.getElementById("client-id").value.trim();
+    const clientid = document.getElementById("client-id")?.value?.trim() || "";
     if (!clientid) {
-      alert("Client ID cannot be empty!");
+      setButtonFailText(button, "Client ID Empty", 2000, originalText);
       return;
     }
 
@@ -1632,22 +1640,22 @@ async function saveClientIDClick() {
     };
 
     await saveClientData(data);
-    setButtonTempText(button, "Client ID Saved!");
+    setButtonTempText(button, "Client ID Saved", 2000, originalText);
   } catch (error) {
     console.error("Failed to save Client ID:", error);
-    setButtonFailText(button, "Save Failed!");
+    setButtonFailText(button, "Save Failed", 2000, originalText);
   }
 }
 
 // Copy client ID button
 async function copyClientIdClick() {
   const btn = document.getElementById("copy-client-id");
-  try {
-    const input = document.getElementById("client-id");
-    const val = input && input.value ? input.value.trim() : "";
+  const originalText = btn?.textContent || "Copy";
 
+  try {
+    const val = document.getElementById("client-id")?.value?.trim() || "";
     if (!val) {
-      setButtonFailText(btn, "No Client ID");
+      setButtonFailText(btn, "No Client ID", 2000, originalText);
       return;
     }
 
@@ -1656,16 +1664,22 @@ async function copyClientIdClick() {
     } else {
       const ta = document.createElement("textarea");
       ta.value = val;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
       document.body.appendChild(ta);
       ta.select();
-      document.execCommand("copy");
+
+      const ok = document.execCommand("copy");
       document.body.removeChild(ta);
+
+      if (!ok) throw new Error("execCommand(copy) returned false");
     }
 
-    setButtonTempText(btn, "Client ID Copied");
+    setButtonTempText(btn, "Client ID Copied", 2000, originalText);
   } catch (e) {
     console.error("Copy Client ID failed:", e);
-    setButtonFailText(btn, "Copy Failed");
+    setButtonFailText(btn, "Copy Failed", 2000, originalText);
   }
 }
 
@@ -1707,6 +1721,7 @@ function toggleClientSecretVisibility() {
 // Save client secret button
 async function saveClientSecretClick() {
   const button = document.getElementById("save-client-secret");
+  const originalText = button?.textContent || "Save";
 
   try {
     if (!(await isValidSession())) {
@@ -1716,12 +1731,13 @@ async function saveClientSecretClick() {
 
     const clienturl = await getClientUrl();
     if (!clienturl) {
+      setButtonFailText(button, "No Client URL", 2000, originalText);
       return;
     }
 
-    const clientsecret = document.getElementById("client-secret").value.trim();
+    const clientsecret = document.getElementById("client-secret")?.value?.trim() || "";
     if (!clientsecret) {
-      alert("Client Secret cannot be empty!");
+      setButtonFailText(button, "Secret Empty", 2000, originalText);
       return;
     }
 
@@ -1733,22 +1749,22 @@ async function saveClientSecretClick() {
     };
 
     await saveClientData(data);
-    setButtonTempText(button, "Client Secret Saved!");
+    setButtonTempText(button, "Secret Saved", 2000, originalText);
   } catch (error) {
     console.error("Failed to save Client Secret:", error);
-    setButtonFailText(button, "Save Failed!");
+    setButtonFailText(button, "Save Failed", 2000, originalText);
   }
 }
 
 // Copy client secret button
 async function copyClientSecretClick() {
   const btn = document.getElementById("copy-client-secret");
-  try {
-    const input = document.getElementById("client-secret");
-    const val = input && input.value ? input.value.trim() : "";
+  const originalText = btn?.textContent || "Copy";
 
+  try {
+    const val = document.getElementById("client-secret")?.value?.trim() || "";
     if (!val) {
-      setButtonFailText(btn, "No Client Secret");
+      setButtonFailText(btn, "No Client Secret", 2000, originalText);
       return;
     }
 
@@ -1757,16 +1773,22 @@ async function copyClientSecretClick() {
     } else {
       const ta = document.createElement("textarea");
       ta.value = val;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
       document.body.appendChild(ta);
       ta.select();
-      document.execCommand("copy");
+
+      const ok = document.execCommand("copy");
       document.body.removeChild(ta);
+
+      if (!ok) throw new Error("execCommand(copy) returned false");
     }
 
-    setButtonTempText(btn, "Client Secret Copied");
+    setButtonTempText(btn, "Client Secret Copied", 2000, originalText);
   } catch (e) {
     console.error("Copy Client Secret failed:", e);
-    setButtonFailText(btn, "Copy Failed");
+    setButtonFailText(btn, "Copy Failed", 2000, originalText);
   }
 }
 
@@ -1802,6 +1824,7 @@ async function populateTenantId() {
 // Save Tenant ID Button
 async function saveTenantIdClick() {
   const button = document.getElementById("save-tenant-id");
+  const originalText = button?.textContent || "Save";
 
   try {
     if (!(await isValidSession())) {
@@ -1811,18 +1834,20 @@ async function saveTenantIdClick() {
 
     const clienturl = await getClientUrl();
     if (!clienturl) {
+      setButtonFailText(button, "No Client URL", 2000, originalText);
       return;
     }
 
     const tenantIdInput = document.getElementById("tenant-id");
     if (!tenantIdInput) {
       console.error("tenant-id input not found.");
+      setButtonFailText(button, "Field Missing", 2000, originalText);
       return;
     }
 
     const tenantId = tenantIdInput.value.trim();
     if (!tenantId) {
-      alert("Tenant ID cannot be empty.");
+      setButtonFailText(button, "Tenant ID Empty", 2000, originalText);
       return;
     }
 
@@ -1834,22 +1859,22 @@ async function saveTenantIdClick() {
     };
 
     await saveClientData(data);
-    setButtonTempText(button, "Tenant ID Saved!");
+    setButtonTempText(button, "Tenant ID Saved", 2000, originalText);
   } catch (error) {
     console.error("Failed to save Tenant ID:", error);
-    setButtonFailText(button, "Save Failed!");
+    setButtonFailText(button, "Save Failed", 2000, originalText);
   }
 }
 
 // Copy tenant ID button
 async function copyTenantIdClick() {
   const btn = document.getElementById("copy-tenant-id");
-  try {
-    const input = document.getElementById("tenant-id");
-    const val = input && input.value ? input.value.trim() : "";
+  const originalText = btn?.textContent || "Copy";
 
+  try {
+    const val = document.getElementById("tenant-id")?.value?.trim() || "";
     if (!val) {
-      setButtonFailText(btn, "No Tenant ID");
+      setButtonFailText(btn, "No Tenant ID", 2000, originalText);
       return;
     }
 
@@ -1858,16 +1883,22 @@ async function copyTenantIdClick() {
     } else {
       const ta = document.createElement("textarea");
       ta.value = val;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
       document.body.appendChild(ta);
       ta.select();
-      document.execCommand("copy");
+
+      const ok = document.execCommand("copy");
       document.body.removeChild(ta);
+
+      if (!ok) throw new Error("execCommand(copy) returned false");
     }
 
-    setButtonTempText(btn, "Tenant ID Copied");
+    setButtonTempText(btn, "Tenant ID Copied", 2000, originalText);
   } catch (e) {
     console.error("Copy Tenant ID failed:", e);
-    setButtonFailText(btn, "Copy Failed");
+    setButtonFailText(btn, "Copy Failed", 2000, originalText);
   }
 }
 // ==================================== //
@@ -1955,29 +1986,37 @@ async function populateAccessToken() {
   }
 }
 
-// Get access token button
+// Get access token button (returns true if token retrieval was initiated)
 async function fetchToken() {
-  const clienturl = await getClientUrl();
-  if (!clienturl || !(await isValidSession())) {
-    alert("Requires a valid ADP Workforce Manager session.");
-    return;
-  }
+    const clienturl = await getClientUrl();
+    if (!clienturl) {
+        alert("Client URL is required. Please refresh or set the Client URL first.");
+        return false;
+    }
 
-  const clientID = document.getElementById("client-id").value.trim();
-  if (!clientID) {
-    alert("Please enter a Client ID first.");
-    return;
-  }
+    if (!(await isValidSession())) {
+        alert("Requires a valid ADP Workforce Manager session.");
+        return false;
+    }
 
-  const tokenurl = `${clienturl}accessToken?clientId=${clientID}`;
+    const clientID = document.getElementById("client-id")?.value?.trim() || "";
+    if (!clientID) {
+        alert("Please enter a Client ID first.");
+        return false;
+    }
 
-  const incognito = await isIncognitoContext();
-  if (incognito) {
-    retrieveTokenViaNewTab(tokenurl);
-  } else {
-    fetchTokenDirectly(tokenurl, clienturl, clientID);
-  }
+    const tokenurl = `${clienturl}accessToken?clientId=${clientID}`;
+
+    const incognito = await isIncognitoContext();
+    if (incognito) {
+        retrieveTokenViaNewTab(tokenurl);
+    } else {
+        fetchTokenDirectly(tokenurl, clienturl, clientID);
+    }
+
+    return true;
 }
+
 
 // Get access token normal mode (used by fetchToken())
 async function fetchTokenDirectly(tokenurl, clienturl, clientID) {
@@ -1985,20 +2024,22 @@ async function fetchTokenDirectly(tokenurl, clienturl, clientID) {
     const response = await fetch(tokenurl, {
       method: "GET",
       credentials: "include",
-      headers: {
-        Accept: "application/json",
-      },
+      headers: { Accept: "application/json" },
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch token. HTTP status: ${response.status}`);
+      alert(`Failed to fetch token. HTTP status: ${response.status}`);
+      return false;
     }
 
     const result = await response.json();
-    processTokenResponse(result, clienturl, clientID, tokenurl);
+    await processTokenResponse(result, clienturl, clientID, tokenurl);
+    return true;
   } catch (error) {
+    // This is a real runtime/network failure, so keeping console.error is appropriate
     console.error("Error fetching token:", error);
     alert(`Failed to fetch token: ${error.message || error}`);
+    return false;
   }
 }
 
@@ -2244,6 +2285,9 @@ async function resumeTokenTimersFromStorage() {
 
 // Copy access token button
 function copyAccessToken() {
+  const button = document.getElementById("copy-token");
+  const originalText = button?.textContent || "Copy";
+
   const accessTokenBox = document.getElementById("access-token");
   const accessToken = accessTokenBox?.value;
 
@@ -2254,27 +2298,19 @@ function copyAccessToken() {
     accessToken === "Get New Access Token" ||
     accessToken === "Access Token Expired"
   ) {
+    // User clicked copy but there is no valid token
+    setButtonFailText(button, "No Token", 2000, originalText);
     return;
   }
 
-  // copy token to clipboard
   navigator.clipboard
     .writeText(accessToken)
     .then(() => {
-      // visual feedback: change button text
-      const button = document.getElementById("copy-token");
-      const originalText = button.textContent;
-
-      button.textContent = "Copied!";
-      button.disabled = true; // disable temporarily
-
-      setTimeout(() => {
-        button.textContent = originalText;
-        button.disabled = false; // re-enable
-      }, 2000);
+      setButtonTempText(button, "Copied!", 2000, originalText);
     })
     .catch((error) => {
       console.error("Failed to copy Access Token:", error);
+      setButtonFailText(button, "Copy Failed", 2000, originalText);
     });
 }
 
@@ -2460,6 +2496,8 @@ function stopRefreshTokenTimer(timerBox) {
 // Copy refresh token button
 function copyRefreshToken() {
   const button = document.getElementById("copy-refresh-token");
+  const originalText = button?.textContent || "Copy";
+
   const refreshTokenBox = document.getElementById("refresh-token");
   const refreshToken = refreshTokenBox?.value;
 
@@ -2470,7 +2508,7 @@ function copyRefreshToken() {
     refreshToken === "Get New Access Token" ||
     refreshToken === "Refresh Token Expired"
   ) {
-    setButtonFailText(button, "No Token!");
+    setButtonFailText(button, "No Token", 2000, originalText);
     return;
   }
 
@@ -2478,11 +2516,11 @@ function copyRefreshToken() {
   navigator.clipboard
     .writeText(refreshToken)
     .then(() => {
-      setButtonTempText(button, "Copied!");
+      setButtonTempText(button, "Copied!", 2000, originalText);
     })
     .catch((error) => {
       console.error("Failed to copy Refresh Token:", error);
-      setButtonFailText(button, "Copy Failed!");
+      setButtonFailText(button, "Copy Failed", 2000, originalText);
     });
 }
 
@@ -3757,23 +3795,86 @@ function pruneRequestBody(node) {
   return false;
 }
 
+// Check if token is expired or near expiry
+function isTokenExpiredOrNear(expirationIso, bufferSeconds = 10) {
+  if (!expirationIso) return true;
+  const exp = new Date(expirationIso).getTime();
+  if (!Number.isFinite(exp)) return true;
+  const now = Date.now();
+  return exp - now <= bufferSeconds * 1000;
+}
+
+// Ensure API context is ready: client URL, client ID, access token
+async function ensureApiReadyContext() {
+  // 1) client URL
+  const clienturl = await getClientUrl();
+  if (!clienturl) {
+    alert("Client URL is required. Please set/refresh the Client URL first.");
+    return { ok: false };
+  }
+
+  // load current data snapshot
+  const data = await loadClientData();
+  const clientData = data[clienturl] || {};
+
+  // 2) client ID (needed for token acquisition)
+  const clientId =
+    clientData.clientid ||
+    document.getElementById("client-id")?.value?.trim() ||
+    "";
+
+  if (!clientId) {
+    alert("Client ID is required to request an access token. Please enter and save a Client ID.");
+    return { ok: false };
+  }
+
+  // 3) access token (refresh if missing/expired/near-expiry)
+  const tokenMissing = !clientData.accesstoken;
+  const tokenStale = isTokenExpiredOrNear(clientData.expirationdatetime, 10);
+
+  if (tokenMissing || tokenStale) {
+    if (!clientData.clientid && clientId) {
+      // persist minimal fields to avoid a later token fetch failure
+      data[clienturl] = {
+        ...(data[clienturl] || {}),
+        clientid: clientId,
+        tokenurl: `${clienturl}accessToken?clientId=${clientId}`,
+        apiurl: `${clienturl}api`,
+        editdatetime: new Date().toISOString(),
+      };
+      await saveClientData(data);
+    }
+
+    try {
+      await fetchToken();
+
+      // wait for token to appear; treat failure as a user-facing issue
+      const updatedClientData = await waitForUpdatedToken(clienturl, 5, 1000);
+      return { ok: true, clienturl, clientData: updatedClientData };
+    } catch (e) {
+      alert(
+        "Unable to retrieve a valid access token. Please verify Client ID/Secret/Tenant settings and try again."
+      );
+      return { ok: false };
+    }
+  }
+  // token already valid
+  return { ok: true, clienturl, clientData };
+}
+
 // Wait for new access token if needed
 async function waitForUpdatedToken(clienturl, maxRetries = 5, delayMs = 1000) {
   for (let i = 0; i < maxRetries; i++) {
-    await new Promise((resolve) => setTimeout(resolve, delayMs)); // wait for storage update
-    let updatedData = await loadClientData();
-    let updatedClientData = updatedData[clienturl] || {};
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    const updatedData = await loadClientData();
+    const updatedClientData = updatedData[clienturl] || {};
 
     if (updatedClientData.accesstoken) {
       return updatedClientData;
     }
-
-    // console.info(`Retry ${i + 1}/${maxRetries}: Token not available yet...`);
   }
 
-  throw new Error(
-    "Failed to retrieve updated access token after multiple attempts."
-  );
+  return null; // <-- no throw
 }
 
 // Clear response UI for new data V1
@@ -4102,51 +4203,103 @@ async function resetCurrentApiParameters() {
 // Execute API call with multi-call support (such as for paginated requests)
 async function executeApiCall() {
   const button = document.getElementById("execute-api");
+  const originalText = button?.textContent || "Execute";
   let animation;
+
+  const stopAnimation = () => {
+    if (animation?.interval) clearInterval(animation.interval);
+  };
 
   try {
     clearApiResponse();
 
-    // start loading animation and store both interval and original text
+    // start loading animation
     animation = startLoadingAnimation(button);
 
+    // Session check first
     if (!(await isValidSession())) {
       alert("Requires a valid ADP Workforce Manager session.");
-      throw new Error("Invalid session");
+      stopAnimation();
+      setButtonFailText(button, "Invalid Session", 2000, animation?.originalText || originalText);
+      return;
     }
 
+    // Ensure client URL exists
+    const clienturl = await getClientUrl();
+    if (!clienturl) {
+      alert("Client URL is required. Please refresh or set the Client URL first.");
+      stopAnimation();
+      setButtonFailText(button, "Missing Client URL", 2000, animation?.originalText || originalText);
+      return;
+    }
+
+    // Ensure API selection exists
     const apiDropdown = document.getElementById("api-selector");
     const selectedApiKey = apiDropdown?.value;
     if (!selectedApiKey || selectedApiKey === "Select API...") {
       alert("Please select an API to execute.");
-      throw new Error("No API selected");
+      stopAnimation();
+      setButtonFailText(button, "No API Selected", 2000, animation?.originalText || originalText);
+      return;
     }
 
-    // detect saved my api entry (myapi:<id>)
-    let savedEntry = null;
-    if (selectedApiKey.startsWith("myapi:")) {
-      const id = selectedApiKey.slice(6);
-      const { hermes_myapis } = await new Promise((resolve) =>
-        chrome.storage.local.get(["hermes_myapis"], resolve)
-      );
-      const list = hermes_myapis || [];
-      savedEntry = list.find((x) => x.id === id) || null;
-      if (!savedEntry) {
-        alert("Saved request not found.");
-        throw new Error("Saved request not found");
-      }
-    }
-
-    const clienturl = await getClientUrl();
+    // Load current tenant data
     let data = await loadClientData();
     let clientData = data[clienturl] || {};
 
-    if (
-      !clientData.accesstoken ||
-      new Date(clientData.expirationdatetime) < new Date()
-    ) {
-      await fetchToken();
-      clientData = await waitForUpdatedToken(clienturl);
+    // Ensure Client ID exists
+    // Prefer saved, fallback to field
+    const clientId =
+      clientData.clientid ||
+      document.getElementById("client-id")?.value?.trim() ||
+      "";
+
+    if (!clientId) {
+      alert("Client ID is required. Please enter and save a Client ID.");
+      stopAnimation();
+      setButtonFailText(button, "Missing Client ID", 2000, animation?.originalText || originalText);
+      return;
+    }
+
+    // Token check
+    const tokenMissing = !clientData.accesstoken;
+    const tokenNearOrExpired = isTokenExpiredOrNear(clientData.expirationdatetime, 10);
+
+    if (tokenMissing || tokenNearOrExpired) {
+      // Ensure minimal fields exist in storage so token retrieval doesn’t fail
+      if (!clientData.clientid) {
+        data[clienturl] = {
+          ...(data[clienturl] || {}),
+          clientid: clientId,
+          tokenurl: `${clienturl}accessToken?clientId=${clientId}`,
+          apiurl: `${clienturl}api`,
+          editdatetime: new Date().toISOString(),
+        };
+        await saveClientData(data);
+
+        // reload snapshot
+        data = await loadClientData();
+        clientData = data[clienturl] || {};
+      }
+
+      // Initiate token retrieval (returns false if missing prerequisites)
+      const initiated = await fetchToken();
+      if (!initiated) {
+        // fetchToken already alerted the user; just exit cleanly
+        stopAnimation();
+        setButtonFailText(button, "Token Needed", 2000, animation?.originalText || originalText);
+        return;
+      }
+
+      const updatedClientData = await waitForUpdatedToken(clienturl, 5, 1000);
+      if (!updatedClientData?.accesstoken) {
+        alert("Unable to retrieve a valid access token. Please verify your settings and try again.");
+        stopAnimation();
+        setButtonFailText(button, "Token Failed", 2000, animation?.originalText || originalText);
+        return;
+      }
+
+      clientData = updatedClientData;
     }
 
     const accessToken = clientData.accesstoken;
@@ -4163,6 +4316,23 @@ async function executeApiCall() {
       Authorization: "Bearer <AccessToken>",
     };
 
+    // detect saved my api entry (myapi:<id>)
+    let savedEntry = null;
+    if (selectedApiKey.startsWith("myapi:")) {
+      const id = selectedApiKey.slice(6);
+      const { hermes_myapis } = await new Promise((resolve) =>
+        chrome.storage.local.get(["hermes_myapis"], resolve)
+      );
+      const list = hermes_myapis || [];
+      savedEntry = list.find((x) => x.id === id) || null;
+      if (!savedEntry) {
+        alert("Saved request not found.");
+        stopAnimation();
+        setButtonFailText(button, "Request Missing", 2000, animation?.originalText || originalText);
+        return;
+      }
+    }
+
     // shared variables
     let fullUrl = "";
     let requestBody = null;
@@ -4172,35 +4342,37 @@ async function executeApiCall() {
     if (savedEntry) {
       requestMethod = String(savedEntry.method || "GET").toUpperCase();
 
-      // prefer current ui values (if user modified), fallback to saved values
       const epUi = document.getElementById("adhoc-endpoint")?.value?.trim();
       const bodyUi = document.getElementById("adhoc-body")?.value;
 
       const endpoint = (epUi || savedEntry.endpoint || "").trim();
       if (!endpoint) {
         alert("Please provide an endpoint URL.");
-        throw new Error("Empty saved endpoint");
+        stopAnimation();
+        setButtonFailText(button, "Missing Endpoint", 2000, animation?.originalText || originalText);
+        return;
       }
       fullUrl = clientData.apiurl + endpoint;
 
       if (requestMethod === "POST") {
-        const raw = (
-          typeof bodyUi === "string" ? bodyUi : savedEntry.body || ""
-        ).trim();
+        const raw = (typeof bodyUi === "string" ? bodyUi : savedEntry.body || "").trim();
         if (!raw) {
           alert("Please provide a JSON body.");
-          throw new Error("Empty JSON body (saved)");
+          stopAnimation();
+          setButtonFailText(button, "Missing Body", 2000, animation?.originalText || originalText);
+          return;
         }
         try {
           requestBody = JSON.parse(raw);
           pruneRequestBody(requestBody);
         } catch {
           alert("Invalid JSON body. Please correct it.");
-          throw new Error("Invalid JSON format (saved)");
+          stopAnimation();
+          setButtonFailText(button, "Bad JSON", 2000, animation?.originalText || originalText);
+          return;
         }
       }
 
-      // Save request details for UI (redacted)
       lastRequestDetails = {
         method: requestMethod,
         url: fullUrl,
@@ -4212,7 +4384,7 @@ async function executeApiCall() {
 
       const response = await fetch(fullUrl, {
         method: requestMethod,
-        headers: requestHeaders, // REAL token used here
+        headers: requestHeaders,
         body: lastRequestDetails.body,
       });
 
@@ -4226,12 +4398,12 @@ async function executeApiCall() {
 
       displayApiResponse(result, selectedApiKey);
 
-      if (animation?.interval) clearInterval(animation.interval);
-      if (response.ok)
-        setButtonTempText(button, "Success!", 2000, animation.originalText);
-      else setButtonFailText(button, "Failed!", 2000, animation.originalText);
+      stopAnimation();
+      const baseText = animation?.originalText || originalText;
+      if (response.ok) setButtonTempText(button, "Success!", 2000, baseText);
+      else setButtonFailText(button, "Failed!", 2000, baseText);
 
-      return; // done with saved branch
+      return;
     }
 
     // branch B: public library path
@@ -4239,7 +4411,9 @@ async function executeApiCall() {
     const selectedApi = apiLibrary[selectedApiKey];
     if (!selectedApi) {
       alert("Selected API not found in the library.");
-      throw new Error("API not found");
+      stopAnimation();
+      setButtonFailText(button, "API Missing", 2000, animation?.originalText || originalText);
+      return;
     }
 
     requestMethod = (selectedApi.method || "GET").toUpperCase();
@@ -4268,7 +4442,9 @@ async function executeApiCall() {
       const endpointInput = document.getElementById("adhoc-endpoint");
       if (!endpointInput || !endpointInput.value.trim()) {
         alert("Please provide an endpoint URL.");
-        throw new Error("Empty ad-hoc endpoint");
+        stopAnimation();
+        setButtonFailText(button, "Missing Endpoint", 2000, animation?.originalText || originalText);
+        return;
       }
       fullUrl = clientData.apiurl + endpointInput.value.trim();
     }
@@ -4280,42 +4456,35 @@ async function executeApiCall() {
 
       const preResponse = await fetch(preRequestUrl, {
         method: "GET",
-        headers: { Authorization: `Bearer ${accessToken}` }, // real token required
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
 
       if (!preResponse.ok) {
         const errorText = await preResponse.text();
         displayApiResponse({ error: errorText }, selectedApiKey);
-        throw new Error(
-          `Pre-request failed. HTTP status: ${preResponse.status}`
-        );
+        stopAnimation();
+        setButtonFailText(button, "Failed!", 2000, animation?.originalText || originalText);
+        return;
       }
 
       const preResult = await preResponse.json();
 
-      const {
-        field,
-        match,
-        mapTo,
-        ["data-path"]: dataPath,
-      } = selectedApi.preRequest.responseFilter;
+      const { field, match, mapTo, ["data-path"]: dataPath } =
+        selectedApi.preRequest.responseFilter;
 
       let mappedValues = preResult
         .filter((item) => item[field] === match)
         .map((item) => item[mapTo]);
 
       const maxLimit =
-        selectedApi.bodyParameters.find((p) => p.name === "qualifiers")
-          ?.validation?.maxEntered || 1000;
+        selectedApi.bodyParameters.find((p) => p.name === "qualifiers")?.validation?.maxEntered ||
+        1000;
 
       if (mappedValues.length > maxLimit) {
-        alert(
-          `Only the first ${maxLimit} entries will be used due to API limitations.`
-        );
+        alert(`Only the first ${maxLimit} entries will be used due to API limitations.`);
         mappedValues = mappedValues.slice(0, maxLimit);
       }
 
-      // dynamically insert mapped values into requestBody using the correct datapath
       requestBody = {};
       const pathParts = dataPath.split(".");
       let currentLevel = requestBody;
@@ -4333,24 +4502,22 @@ async function executeApiCall() {
           const bodyInput = document.getElementById("adhoc-body");
           if (!bodyInput || !bodyInput.value.trim()) {
             alert("Please provide a JSON body.");
-            throw new Error("Empty JSON body");
+            stopAnimation();
+            setButtonFailText(button, "Missing Body", 2000, animation?.originalText || originalText);
+            return;
           }
           try {
             requestBody = JSON.parse(bodyInput.value.trim());
           } catch {
             alert("Invalid JSON body. Please correct it.");
-            throw new Error("Invalid JSON format");
+            stopAnimation();
+            setButtonFailText(button, "Bad JSON", 2000, animation?.originalText || originalText);
+            return;
           }
         } else if (selectedApi.requestProfile) {
-          const profileTemplate = JSON.parse(
-            JSON.stringify(selectedApi.requestProfile)
-          );
-          const bodyParamsContainer = document.getElementById(
-            "body-parameters-container"
-          );
-          const paramInputs = Array.from(
-            bodyParamsContainer.querySelectorAll("[data-path]")
-          );
+          const profileTemplate = JSON.parse(JSON.stringify(selectedApi.requestProfile));
+          const bodyParamsContainer = document.getElementById("body-parameters-container");
+          const paramInputs = Array.from(bodyParamsContainer.querySelectorAll("[data-path]"));
           mapUserInputsToRequestProfile(profileTemplate, paramInputs);
           pruneRequestBody(profileTemplate);
           requestBody = profileTemplate;
@@ -4370,7 +4537,7 @@ async function executeApiCall() {
 
     const response = await fetch(fullUrl, {
       method: requestMethod,
-      headers: requestHeaders, // REAL token used here
+      headers: requestHeaders,
       body: lastRequestDetails.body,
     });
 
@@ -4384,17 +4551,17 @@ async function executeApiCall() {
 
     displayApiResponse(result, selectedApiKey);
 
-    if (animation?.interval) clearInterval(animation.interval);
-    if (response.ok)
-      setButtonTempText(button, "Success!", 2000, animation.originalText);
-    else setButtonFailText(button, "Failed!", 2000, animation.originalText);
+    stopAnimation();
+    const baseText = animation?.originalText || originalText;
+    if (response.ok) setButtonTempText(button, "Success!", 2000, baseText);
+    else setButtonFailText(button, "Failed!", 2000, baseText);
   } catch (error) {
     console.error("Error executing API call:", error);
     alert(`API call failed: ${error.message}`);
     displayApiResponse({ error: error.message }, "Error");
 
-    if (animation?.interval) clearInterval(animation.interval);
-    setButtonFailText(button, "Failed!", 2000, animation.originalText);
+    stopAnimation();
+    setButtonFailText(button, "Failed!", 2000, animation?.originalText || originalText);
   }
 }
 
@@ -6073,620 +6240,6 @@ async function checkHermesConnectionClick() {
   }
 }
 
-// HermesLink: Enhanced Tab Management And Session Tracking
-/*window.HermesLink = (function () {
-  const ENFORCE_ACTIVE_TAB_OVERLAY = true; // set to true to overlay on non-linked tabs always
-  const PING_INTERVAL = 60 * 1000; // 1 minute polling
-  const SESSION_KEYS = {
-    TAB_ID: "hermesLinkedTabId",
-    WINDOW_ID: "hermesLinkedWindowId",
-    URL: "hermesLinkedUrl",
-    ORIGIN: "hermesLinkedOrigin",
-    TITLE: "hermesLinkedTitle",
-    STATUS: "hermesLinkedStatus",
-    LAST_VALIDATION: "hermesLastValidation",
-    VALIDATION_MESSAGE: "hermesValidationMessage",
-  };
-
-  const STATUS_MESSAGES = {
-    OK: {
-      banner: "Active Tab: ",
-      hint: "Session active in this tab",
-      overlay: null,
-    },
-    STALE: {
-      banner: "Session Needs Attention: ",
-      hint: "Your session may have expired. Please refresh the page.",
-      overlay:
-        "Session may have expired. Return to WFM to refresh your session.",
-    },
-    INVALID: {
-      banner: "Invalid Session: ",
-      hint: "Please return to a valid WFM page.",
-      overlay: "Invalid WFM session. Return to a valid WFM page to continue.",
-    },
-    WRONG_TAB: {
-      banner: "Not Active Tab: ",
-      hint: "Return to linked tab to use AccessPanel features.",
-      overlay: "AccessPanel is active in another tab. Click below to return.",
-    },
-    // TMS-specific states
-    TMS_OK: {
-      banner: "Active (TMS): ",
-      hint: "Using Tenant Management System for the linked WFM tenant.",
-      overlay: null,
-    },
-    TMS_NO_VANITY: {
-      banner: "TMS: Vanity URL Required",
-      hint: 'Enter or expose the "Vanity Non-SSO URL" for this tenant to use AccessPanel here.',
-      overlay:
-        'AccessPanel can only run on TMS when the "Vanity Non-SSO URL" is filled in and visible for this tenant.',
-    },
-    TMS_MISMATCH: {
-      banner: "TMS Tenant Mismatch",
-      hint: 'The "Vanity Non-SSO URL" in TMS does not match the active HerAccessPanelmes WFM session.',
-      overlay:
-        "This TMS tenant does not match your active AccessPanel session. Open the matching tenant or relink AccessPanel in WFM.",
-    },
-    // developer portal – always allow manual use
-    DEV_OK: {
-      banner: "Developer Portal: ",
-      hint: "AccessPanel UI enabled for manual copy/paste from the developer portal.",
-      overlay: null,
-    },
-  };
-
-  // ---- TMS helpers ---- //
-
-  // 1) ss this a TMS URL we should even consider?
-  const isTmsUrl = (url) => {
-    try {
-      const u = new URL(url);
-      const origin = u.origin.toLowerCase();
-      return (
-        origin.startsWith("https://adpvantage.adp.com") ||
-        origin.startsWith("https://testadpvantage.adp.com")
-      );
-    } catch {
-      return false;
-    }
-  };
-
-  // 1b) Is this a developer portal URL where AccessPanel should stay enabled?
-  const isDevPortalUrl = (url) => {
-    try {
-      const u = new URL(url);
-      const origin = u.origin.toLowerCase();
-      return (
-        origin.startsWith("https://adp-developer.mykronos.com") ||
-        origin.startsWith("https://sso-hlp02.gss-kcfn.mykronos.com")
-      );
-    } catch {
-      return false;
-    }
-  };
-
-  const isBoomiUrl = (url) => {
-    try {
-      const u = new URL(url);
-      const host = u.hostname.toLowerCase();
-      // matches platform.boomi.com and any subdomain like foo.platform.boomi.com
-      return (
-        host === "platform.boomi.com" || host.endsWith(".platform.boomi.com")
-      );
-    } catch {
-      return false;
-    }
-  };
-
-  // 2) normalize any raw vanity string into the same shape as getVanityUrl()
-  //    and compare only by protocol + host (ignore path and trailing slash).
-  const normalizeVanity = (raw) => {
-    if (!raw) return null;
-    let value = String(raw).trim();
-    if (!value) return null;
-
-    // if user didn’t include the scheme, assume https
-    if (!/^https?:\/\//i.test(value)) {
-      value = "https://" + value;
-    }
-
-    try {
-      // reuse existing logic that knows how to flip to -nosso, environment, etc.
-      const normalizedUrl = getVanityUrl(value); // e.g. "https://24hf-nosso.prd.mykronos.com/"
-
-      const parsed = new URL(normalizedUrl);
-      // compare scheme + hostname only; ignore trailing slash or path
-      return `${parsed.protocol}//${parsed.hostname}`.toLowerCase();
-    } catch (e) {
-      return null;
-    }
-  };
-
-  // 3) read the TMS "Vanity Non-SSO URL" from the page in the active tab (search all frames)
-  const getTmsVanityForTab = async (tabId) => {
-    try {
-      const results = await chrome.scripting.executeScript({
-        target: { tabId, allFrames: true },
-        func: () => {
-          // recursively search document + all shadow roots for the "Vanity Non-SSO URL" field
-          const findVanityInput = (root) => {
-            if (!root) return null;
-
-            const isVanityField = (sdfInput) => {
-              if (!sdfInput || sdfInput.tagName !== "SDF-INPUT") return false;
-
-              // 1) direct ID match
-              if (sdfInput.id === "vanityNonSSOURL") return true;
-
-              // 2) label text match inside its shadow root
-              if (!sdfInput.shadowRoot) return false;
-
-              const labelEl = sdfInput.shadowRoot.querySelector(
-                ".sdf-form-control-wrapper--label, label[part='label']"
-              );
-              if (!labelEl || !labelEl.textContent) return false;
-
-              const labelText = labelEl.textContent.trim();
-              return labelText.startsWith("Vanity Non-SSO URL");
-            };
-
-            // direct root query first
-            const direct = root.querySelector
-              ? root.querySelector("sdf-input#vanityNonSSOURL")
-              : null;
-            if (direct && direct.shadowRoot && isVanityField(direct)) {
-              const input = direct.shadowRoot.querySelector("input#input");
-              if (input) return input;
-            }
-
-            // walk all elements, dive into shadow roots
-            const walker = document.createTreeWalker(
-              root,
-              NodeFilter.SHOW_ELEMENT,
-              null
-            );
-
-            let node = walker.currentNode;
-            while (node) {
-              if (node.tagName === "SDF-INPUT" && isVanityField(node)) {
-                if (node.shadowRoot) {
-                  const input = node.shadowRoot.querySelector("input#input");
-                  if (input) return input;
-                }
-              }
-
-              if (node.shadowRoot) {
-                const fromShadow = findVanityInput(node.shadowRoot);
-                if (fromShadow) return fromShadow;
-              }
-
-              node = walker.nextNode();
-            }
-
-            return null;
-          };
-
-          try {
-            const input = findVanityInput(document);
-            return input ? input.value.trim() : null;
-          } catch (e) {
-            console.error("TMS vanity search failed:", e);
-            return null;
-          }
-        },
-      });
-
-      // results = [{frameId, result}, ...]; pick first non-null result
-      if (Array.isArray(results)) {
-        for (const r of results) {
-          if (r && r.result) {
-            return String(r.result).trim() || null;
-          }
-        }
-      }
-
-      return null;
-    } catch (e) {
-      return null;
-    }
-  };
-
-  // 4) core TMS check: does the TMS tenant match the linked WFM session?
-  const checkTmsTenantMatchesSession = async (
-    currentTab,
-    hermesLinkedOrigin
-  ) => {
-    if (!currentTab?.url || !isTmsUrl(currentTab.url)) {
-      return { ok: false, reason: "not_tms" };
-    }
-
-    if (!hermesLinkedOrigin) {
-      // No linked WFM session – TMS cannot be used yet
-      return { ok: false, reason: "no_link" };
-    }
-
-    const sessionVanity = normalizeVanity(hermesLinkedOrigin);
-    if (!sessionVanity) {
-      return { ok: false, reason: "no_link" };
-    }
-
-    const tmsVanityRaw = await getTmsVanityForTab(currentTab.id);
-    if (!tmsVanityRaw) {
-      return { ok: false, reason: "no_tms_vanity" };
-    }
-
-    const tmsVanity = normalizeVanity(tmsVanityRaw);
-    if (!tmsVanity) {
-      return { ok: false, reason: "bad_tms_vanity" };
-    }
-
-    const match = tmsVanity === sessionVanity;
-
-    if (!match) {
-      return { ok: false, reason: "vanity_mismatch" };
-    }
-
-    return { ok: true, reason: "match" };
-  };
-
-  // state management
-  const state = {
-    isInitialized: false,
-    checkingState: false,
-  };
-
-  // helper functions
-  const getActiveTab = async () => {
-    try {
-      const [tab] = await chrome.tabs.query({
-        active: true,
-        currentWindow: true,
-      });
-      return tab || null;
-    } catch (e) {
-      console.error("Failed to get active tab:", e);
-      return null;
-    }
-  };
-
-  const getLinkedState = async () => {
-    try {
-      return await chrome.storage.session.get(Object.values(SESSION_KEYS));
-    } catch (e) {
-      console.error("Failed to get linked state:", e);
-      return {};
-    }
-  };
-
-  const updateLinkedState = async (newState) => {
-    try {
-      const timestamp = new Date().toISOString();
-      await chrome.storage.session.set({
-        ...newState,
-        hermesLastValidation: timestamp,
-      });
-    } catch (e) {
-      console.error("Failed to update linked state:", e);
-    }
-  };
-
-  const updateUI = async (validationResult = null) => {
-    const {
-      hermesLinkedTabId,
-      hermesLinkedStatus,
-      hermesValidationMessage,
-      hermesLinkedOrigin,
-    } = await getLinkedState();
-
-    const currentTab = await getActiveTab();
-    const isLinkedTab = currentTab?.id === hermesLinkedTabId;
-
-    const isTms = currentTab ? isTmsUrl(currentTab.url) : false;
-    const isDevPortal = currentTab ? isDevPortalUrl(currentTab.url) : false;
-    const isBoomi = currentTab ? isBoomiUrl(currentTab.url) : false;
-
-    // reuse this for WFM-specific behavior (e.g., relink button)
-    const currentTabValidation = currentTab
-      ? validateWebPage(currentTab.url)
-      : { valid: false };
-
-    // figure out if the current WFM tab is the same tenant as the linked one.
-    // if so, we can treat it as effectively "active" even if it's not the exact linked tab.
-    let sameTenantAsLinked = false;
-    let sessionVanity = null;
-
-    if (hermesLinkedOrigin) {
-      sessionVanity = normalizeVanity(hermesLinkedOrigin);
-    }
-
-    if (currentTab && currentTabValidation.valid && sessionVanity) {
-      try {
-        const currentVanity = normalizeVanity(currentTab.url);
-        sameTenantAsLinked = !!currentVanity && currentVanity === sessionVanity;
-      } catch (e) {
-        sameTenantAsLinked = false;
-      }
-    }
-
-    // if on TMS (and NOT on the linked WFM tab), check the tenant/vanity match
-    let tmsCheck = null;
-    if (!isLinkedTab && isTms) {
-      try {
-        tmsCheck = await checkTmsTenantMatchesSession(
-          currentTab,
-          hermesLinkedOrigin
-        );
-      } catch (e) {
-        tmsCheck = { ok: false, reason: "error" };
-      }
-    }
-
-    // determine current status
-    let currentStatus = "OK";
-
-    if (isDevPortal && !isLinkedTab) {
-      // developer portal is always allowed for manual use – no overlay, no disable.
-      currentStatus = "DEV_OK";
-    } else if (isTms && tmsCheck) {
-      if (tmsCheck.ok) {
-        // TMS tenant matches the linked WFM session → allow full UI
-        currentStatus = "TMS_OK";
-      } else if (
-        tmsCheck.reason === "no_tms_vanity" ||
-        tmsCheck.reason === "bad_tms_vanity"
-      ) {
-        currentStatus = "TMS_NO_VANITY";
-      } else if (tmsCheck.reason === "vanity_mismatch") {
-        currentStatus = "TMS_MISMATCH";
-      } else if (tmsCheck.reason === "no_link") {
-        // no linked WFM session yet – behave like a normal wrong-tab state
-        currentStatus = "WRONG_TAB";
-      } else {
-        currentStatus = "WRONG_TAB";
-      }
-    } else {
-      // normal WFM-driven logic (WFM/mykronos tabs)
-      if (!isLinkedTab && sameTenantAsLinked) {
-        // different tab, but same tenant as the linked session → treat as active
-        currentStatus = "OK";
-      } else if (!isLinkedTab) {
-        currentStatus = "WRONG_TAB";
-      } else if (hermesLinkedStatus === "stale") {
-        currentStatus = "STALE";
-      } else if (validationResult && !validationResult.valid) {
-        currentStatus = "INVALID";
-      }
-    }
-
-    const statusConfig = STATUS_MESSAGES[currentStatus];
-
-    // ----- Overlay -----
-    const overlay = document.getElementById("hermes-overlay");
-    if (overlay) {
-      const overlayMessage = document.querySelector(".overlay-content p");
-      const relinkButton = document.getElementById("hermes-relink-tab");
-
-      if (overlayMessage && statusConfig.overlay) {
-        overlayMessage.textContent = statusConfig.overlay;
-      }
-
-      // relink button only makes sense on valid WFM tabs
-      if (relinkButton) {
-        if (currentTabValidation.valid) {
-          relinkButton.style.display = "inline-block";
-        } else {
-          relinkButton.style.display = "none";
-        }
-      }
-
-      // for OK, TMS_OK, DEV_OK, we never show the overlay.
-      // if ENFORCE_ACTIVE_TAB_OVERLAY is false, we also avoid overlay for WRONG_TAB
-      // so the UI stays usable even when you’re not on the linked tab.
-      const isSoftWrongTab =
-        currentStatus === "WRONG_TAB" && !ENFORCE_ACTIVE_TAB_OVERLAY;
-
-      const overlayVisible =
-        !["OK", "TMS_OK", "DEV_OK"].includes(currentStatus) &&
-        !isBoomi &&
-        !isSoftWrongTab;
-
-      overlay.classList.toggle("visible", overlayVisible);
-    }
-
-    // ----- banner -----
-    const banner = document.getElementById("hermes-link-banner");
-    if (banner) {
-      const status = document.getElementById("hermes-link-status");
-      const target = document.getElementById("hermes-link-target");
-      const hint = document.getElementById("hermes-link-hint");
-
-      if (status) status.textContent = statusConfig.banner;
-      if (target) target.textContent = currentTab?.title || "";
-      if (hint) hint.textContent = hermesValidationMessage || statusConfig.hint;
-    }
-
-    // tab is considered "active" when:
-    //   - we’re on the linked WFM tab (OK),
-    //   - we’re on a matching TMS tenant (TMS_OK),
-    //   - we’re on an allowed developer portal (DEV_OK).
-    // if ENFORCE_ACTIVE_TAB_OVERLAY is false, WRONG_TAB is treated as a soft state:
-    // banner + hints still show, but we don’t disable the UI.
-    const isSoftWrongTabForUi =
-      currentStatus === "WRONG_TAB" && !ENFORCE_ACTIVE_TAB_OVERLAY;
-
-    const shouldDisableUi =
-      !["OK", "TMS_OK", "DEV_OK"].includes(currentStatus) &&
-      !isBoomi &&
-      !isSoftWrongTabForUi;
-
-    document.body.classList.toggle("tab-inactive", shouldDisableUi);
-  };
-
-  // session validation
-  const validateSession = async () => {
-    const { hermesLinkedUrl, hermesLinkedTabId } = await getLinkedState();
-
-    if (!hermesLinkedUrl || !hermesLinkedTabId) {
-      return { ok: false, code: "nolink", message: "No linked session found" };
-    }
-
-    try {
-      const tab = await chrome.tabs.get(hermesLinkedTabId).catch(() => null);
-      if (!tab) {
-        await updateLinkedState({
-          hermesLinkedStatus: "stale",
-          hermesValidationMessage: "Linked tab was closed",
-        });
-        return { ok: false, code: "closed", message: "Linked tab was closed" };
-      }
-
-      const validation = validateWebPage(tab.url);
-      if (!validation.valid) {
-        await updateLinkedState({
-          hermesLinkedStatus: "stale",
-          hermesValidationMessage: validation.message,
-        });
-        return { ok: false, code: "invalid", validation };
-      }
-
-      // keep HermesLink in sync with whatever WFM URL is
-      // actually loaded in that tab (handles “switched tenants
-      // in the same tab”).
-      let newOrigin = null;
-      try {
-        newOrigin = new URL(tab.url).origin;
-      } catch {
-        const stored = await getLinkedState();
-        newOrigin = stored.hermesLinkedOrigin || null;
-      }
-
-      await updateLinkedState({
-        hermesLinkedUrl: tab.url,
-        hermesLinkedOrigin: newOrigin,
-        hermesLinkedTitle: tab.title || "",
-        hermesLinkedStatus: "ok",
-        hermesValidationMessage: "Session active",
-      });
-
-      return { ok: true, code: "ok", validation };
-    } catch (e) {
-      await updateLinkedState({
-        hermesLinkedStatus: "stale",
-        hermesValidationMessage: "Unable to verify session",
-      });
-      return { ok: false, code: "error", message: "Session check failed" };
-    }
-  };
-
-  // core functionality
-  const core = {
-    async validateAndUpdateState() {
-      if (state.checkingState) return;
-      state.checkingState = true;
-
-      try {
-        const validationResult = await validateSession();
-        await updateUI(validationResult.validation);
-        return validationResult;
-      } catch (e) {
-        console.error("State check failed:", e);
-      } finally {
-        state.checkingState = false;
-      }
-    },
-
-    async switchToLinkedTab() {
-      try {
-        const { hermesLinkedTabId } = await getLinkedState();
-        if (!hermesLinkedTabId) {
-          throw new Error("No linked tab found");
-        }
-
-        const tab = await chrome.tabs.get(hermesLinkedTabId).catch(() => null);
-        if (!tab) {
-          throw new Error("Linked tab no longer exists");
-        }
-
-        // get current window state
-        const currentWindow = await chrome.windows.get(tab.windowId);
-
-        // switch to window while preserving its state
-        await chrome.windows.update(tab.windowId, {
-          focused: true,
-          // only pass state if it's not 'normal' to preserve maximized/fullscreen
-          ...(currentWindow.state !== "normal" && {
-            state: currentWindow.state,
-          }),
-        });
-
-        // small delay before activating tab
-        await new Promise((resolve) => setTimeout(resolve, 100));
-
-        // activate the tab
-        await chrome.tabs.update(hermesLinkedTabId, { active: true });
-        await new Promise((resolve) => setTimeout(resolve, 250));
-        await this.validateAndUpdateState();
-      } catch (error) {
-        throw error;
-      }
-    },
-
-    async initialize() {
-      if (state.isInitialized) return;
-
-      // initial state check
-      await this.validateAndUpdateState();
-
-      // set up periodic check
-      setInterval(() => {
-        this.validateAndUpdateState().catch((e) =>
-          console.error("Periodic check failed:", e)
-        );
-      }, PING_INTERVAL);
-
-      state.isInitialized = true;
-    },
-  };
-
-  // initialize core
-  core
-    .initialize()
-    .catch((e) => console.error("Failed to initialize HermesLink:", e));
-
-  // public api
-  return {
-    checkState: () => core.validateAndUpdateState(),
-    goToLinkedTab: () => core.switchToLinkedTab(),
-    relinkToCurrentTab: async (tab) => {
-      if (!tab?.url) {
-        throw new Error("No active tab");
-      }
-
-      const validation = validateWebPage(tab.url);
-      if (!validation.valid) {
-        throw new Error(validation.message);
-      }
-
-      await updateLinkedState({
-        [SESSION_KEYS.TAB_ID]: tab.id,
-        [SESSION_KEYS.WINDOW_ID]: tab.windowId,
-        [SESSION_KEYS.URL]: tab.url,
-        [SESSION_KEYS.ORIGIN]: new URL(tab.url).origin,
-        [SESSION_KEYS.TITLE]: tab.title || "",
-        [SESSION_KEYS.STATUS]: "ok",
-        hermesValidationMessage: "Successfully linked to current tab",
-      });
-
-      await core.validateAndUpdateState();
-    },
-    getBaseUrl: async () => {
-      const { hermesLinkedOrigin, hermesLinkedStatus } = await getLinkedState();
-      return hermesLinkedStatus === "ok" ? hermesLinkedOrigin : null;
-    },
-  };
-})();*/
-
 window.HermesLink = (function () {
   const ENFORCE_ACTIVE_TAB_OVERLAY = true; // set to true to overlay on non-linked tabs always
   const PING_INTERVAL = 60 * 1000; // 1 minute polling
@@ -7310,9 +6863,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   // links menu
+  onAsync("links-developer-portal", "click", linksDeveloperPortal);
   onAsync("links-boomi", "click", linksBoomi);
   onAsync("links-install-integrations", "click", linksInstallIntegrations);
-  onAsync("links-developer-portal", "click", linksDeveloperPortal);
 
   // theme menu
   on("theme-selector", "change", themeSelection);
@@ -7347,10 +6900,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   // api tokens
   on("toggle-access-token", "click", () => toggleFieldVisibility("access-token", "toggle-access-token"), { onceKey: "reveal" });
   onAsync("get-token", "click", fetchToken);
-  onAsync("copy-token", "click", copyAccessToken);
+  on("copy-token", "click", copyAccessToken);
   on("toggle-refresh-token", "click", () => toggleFieldVisibility("refresh-token", "toggle-refresh-token"), { onceKey: "reveal" });
   onAsync("refresh-access-token", "click", refreshAccessToken);
-  onAsync("copy-refresh-token", "click", copyRefreshToken);
+  on("copy-refresh-token", "click", copyRefreshToken);
 
   // api selector (guard against duplicate wiring)
   const apiSel = document.getElementById("api-selector");
