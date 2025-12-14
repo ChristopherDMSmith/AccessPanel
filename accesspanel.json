@@ -50,15 +50,15 @@
 								"type": "file",
 								"path": "/accesspanel/apilibrary/Inter_28pt-Black.ttf"
 							},
-							"Inter_28pt-Black.ttf": {
+							"Inter_28pt-Bold.ttf": {
 								"type": "file",
 								"path": "/accesspanel/apilibrary/Inter_28pt-Bold.ttf"
 							},
-							"Inter_28pt-Black.ttf": {
+							"Inter_28pt-Medium.ttf": {
 								"type": "file",
 								"path": "/accesspanel/apilibrary/Inter_28pt-Medium.ttf"
 							},
-							"Inter_28pt-Black.ttf": {
+							"Inter_28pt-Regular.ttf": {
 								"type": "file",
 								"path": "/accesspanel/apilibrary/Inter_28pt-Regular.ttf"
 							}
