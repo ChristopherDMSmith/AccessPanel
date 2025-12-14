@@ -1,162 +1,220 @@
 {
 	"name": "AccessPanel",
 	"details": {
-		"description": "A browser extension for API access and token management in WFM",
+		"description": "WFM API Access and Token Management",
 		"version": "1.0.0",
-		"release_date": "2025-12-12",
+		"release_date": "2025-12-14",
 		"author": "Christopher Smith",
-		"contact": "chris.dm.smith@gmail.com",
+		"contact": "https://github.com/ChristopherDMSmith",
 		"urls": {
 			"authenticationDoc": "https://adp-developer.mykronos.com/wfmgr/docs/authentication-and-security-doc",
 			"developerPortal": "https://adp-developer.mykronos.com/wfmgr/reference/welcome-to-the-adp-workforce-manager-api",
-			"boomiPortal": "https://*.mykronos.com/ihub#/integrationTemplatesDesigner?ctxt=designIntegrationTemplates&pageId=58",
-			"installIntegrations": "https://*.mykronos.com/metaui#/list/integration/?ctxt=configureIntegrations&pageId=57",
-			"reportIssues": "https://github.com/ChristopherDMSmith/AccessPanel/issues"
+			"boomiPortal": "ihub#/integrationTemplatesDesigner?ctxt=designIntegrationTemplates&pageId=58",
+			"installIntegrations": "metaui#/list/integration/?ctxt=configureIntegrations&pageId=57",
+			"runIntegrations": "ihub#/integrations?pageId=593",
+			"wfmConnections": "metaui#/list/integration_connection_definition?ctxt=connections&pageId=567",
+			"wfmSftp": "ihub-setup#/sftpFilesBrowser?pageId=665",
+			"reportIssues": "https://github.com/ChristopherDMSmith/AccessPanel/issues",
+			"readMe": "https://github.com/ChristopherDMSmith/AccessPanel/blob/main/README.md",
+			"license": "https://github.com/ChristopherDMSmith/AccessPanel/blob/main/LICENSE",
+			"privacy": "https://github.com/ChristopherDMSmith/AccessPanel/blob/main/PRIVACY.md"
 		},
 		"working_directory": {
-			"apiaccesspanel": {
+			"accesspanel": {
 				"type": "directory",
-				"path": "/apiaccesspanel",
+				"path": "/accesspanel",
 				"contents": {
 					"apilibrary": {
 						"type": "directory",
-						"path": "/apiaccesspanel/apilibrary",
+						"path": "/accesspanel/apilibrary",
 						"contents": {
 							"apilibrary.json": {
 								"type": "file",
-								"path": "/apiaccesspanel/apilibrary/apilibrary.json"
+								"path": "/accesspanel/apilibrary/apilibrary.json"
 							},
 							"exampleapilibrary.json": {
 								"type": "file",
-								"path": "/apiaccesspanel/apilibrary/exampleapilibrary.json"
+								"path": "/accesspanel/apilibrary/exampleapilibrary.json"
+							},
+							"symbolicperiods.json": {
+								"type": "file",
+								"path": "/accesspanel/apilibrary/symbolicperiods.json"
 							}
 						}
 					},
 					"fonts": {
 						"type": "directory",
-						"path": "/apiaccesspanel/fonts",
+						"path": "/accesspanel/fonts",
 						"contents": {
 							"Inter_28pt-Black.ttf": {
 								"type": "file",
-								"path": "/apiaccesspanel/apilibrary/Inter_28pt-Black.ttf"
+								"path": "/accesspanel/apilibrary/Inter_28pt-Black.ttf"
+							},
+							"Inter_28pt-Black.ttf": {
+								"type": "file",
+								"path": "/accesspanel/apilibrary/Inter_28pt-Bold.ttf"
+							},
+							"Inter_28pt-Black.ttf": {
+								"type": "file",
+								"path": "/accesspanel/apilibrary/Inter_28pt-Medium.ttf"
+							},
+							"Inter_28pt-Black.ttf": {
+								"type": "file",
+								"path": "/accesspanel/apilibrary/Inter_28pt-Regular.ttf"
 							}
 						}
 					},
 					"icons": {
 						"type": "directory",
-						"path": "/apiaccesspanel/icons",
+						"path": "/accesspanel/icons",
 						"contents": {
-							"apiaccesspanel.png": {
+							"bruno-save.png": {
 								"type": "file",
-								"path": "/apiaccesspanel/icons/apiaccesspanel.png"
+								"path": "/accesspanel/icons/bruno-save.png"
 							},
-							"apiaccesspanellogo.png": {
+							"collection-save.png": {
 								"type": "file",
-								"path": "/apiaccesspanel/icons/apiaccesspanellogo.png"
+								"path": "/accesspanel/icons/collection-save.png"
 							},
-							"apiaccesspanellogo.svg": {
+							"copy.png": {
 								"type": "file",
-								"path": "/apiaccesspanel/icons/apiaccesspanellogo.svg"
+								"path": "/accesspanel/icons/copy.png"
+							},
+							"download.png": {
+								"type": "file",
+								"path": "/accesspanel/icons/download.png"
+							},
+							"env-save.png": {
+								"type": "file",
+								"path": "/accesspanel/icons/env-save.png"
 							},
 							"export-csv.png": {
 								"type": "file",
-								"path": "/apiaccesspanel/icons/export-csv.png"
+								"path": "/accesspanel/icons/export-csv.png"
 							},
 							"external-link.png": {
 								"type": "file",
-								"path": "/apiaccesspanel/icons/external-link.png"
+								"path": "/accesspanel/icons/external-link.png"
 							},
 							"eyeclosed.png": {
 								"type": "file",
-								"path": "/apiaccesspanel/icons/eyeclosed.png"
+								"path": "/accesspanel/icons/eyeclosed.png"
 							},
 							"eyeopen.png": {
 								"type": "file",
-								"path": "/apiaccesspanel/icons/eyeopen.png"
+								"path": "/accesspanel/icons/eyeopen.png"
+							},
+							"icon.png": {
+								"type": "file",
+								"path": "/accesspanel/icons/icon.png"
+							},
+							"icon.svg": {
+								"type": "file",
+								"path": "/accesspanel/icons/icon.svg"
 							},
 							"icon16.png": {
 								"type": "file",
-								"path": "/apiaccesspanel/icons/icon16.png"
+								"path": "/accesspanel/icons/icon16.png"
 							},
 							"icon32.png": {
 								"type": "file",
-								"path": "/apiaccesspanel/icons/icon32.png"
+								"path": "/accesspanel/icons/icon32.png"
 							},
 							"icon64.png": {
 								"type": "file",
-								"path": "/apiaccesspanel/icons/icon64.png"
+								"path": "/accesspanel/icons/icon64.png"
 							},
 							"icon128.png": {
 								"type": "file",
-								"path": "/apiaccesspanel/icons/icon128.png"
+								"path": "/accesspanel/icons/icon128.png"
 							},
 							"icon256.png": {
 								"type": "file",
-								"path": "/apiaccesspanel/icons/icon256.png"
+								"path": "/accesspanel/icons/icon256.png"
 							},
 							"icon512.png": {
 								"type": "file",
-								"path": "/apiaccesspanel/icons/icon512.png"
+								"path": "/accesspanel/icons/icon512.png"
 							},
-							"icon-styleready.svg": {
+							"reload-app.png": {
 								"type": "file",
-								"path": "/apiaccesspanel/icons/icon-styleready.svg"
+								"path": "/accesspanel/icons/reload-app.png"
 							},
-							"icon-styleready-bkup": {
+							"request-view.png": {
 								"type": "file",
-								"path": "/apiaccesspanel/icons/icon-styleready-bkup"
+								"path": "/accesspanel/icons/request-view.png"
+							},
+							"reset-arrow.png": {
+								"type": "file",
+								"path": "/accesspanel/icons/reset-arrow.png"
+							},
+							"save.png": {
+								"type": "file",
+								"path": "/accesspanel/icons/save.png"
 							}
 						}
 					},
 					"scripts": {
 						"type": "directory",
-						"path": "/apiaccesspanel/scripts",
+						"path": "/accesspanel/scripts",
 						"contents": {
 							"main.js": {
 								"type": "file",
-								"path": "/apiaccesspanel/scripts/main.js"
+								"path": "/accesspanel/scripts/main.js"
 							},
 							"bg.js": {
 								"type": "file",
-								"path": "/apiaccesspanel/scripts/bg.js"
+								"path": "/accesspanel/scripts/bg.js"
 							}
 						}
 					},
 					"styles": {
 						"type": "directory",
-						"path": "/apiaccesspanel/styles",
+						"path": "/accesspanel/styles",
 						"contents": {
 							"uistyles.css": {
 								"type": "file",
-								"path": "/apiaccesspanel/styles/uistyles.css"
+								"path": "/accesspanel/styles/uistyles.css"
 							}
 						}
 					},
 					"themes": {
 						"type": "directory",
-						"path": "/apiaccesspanel/themes",
+						"path": "/accesspanel/themes",
 						"contents": {
 							"themes.html": {
 								"type": "file",
-								"path": "/apiaccesspanel/themes/themes.html"
+								"path": "/accesspanel/themes/themes.html"
 							},
 							"themes.json": {
 								"type": "file",
-								"path": "/apiaccesspanel/themes/themes.json"
+								"path": "/accesspanel/themes/themes.json"
 							}
 						}
 					},
-					"apiaccesspanel.html": {
+					"accesspanel.html": {
 						"type": "file",
-						"path": "/apiaccesspanel/apiaccesspanel.html"
+						"path": "/accesspanel/accesspanel.html"
 					},
-					"apiaccesspanel.json": {
+					"accesspanel.json": {
 						"type": "file",
-						"path": "/apiaccesspanel/apiaccesspanel.json"
+						"path": "/accesspanel/accesspanel.json"
+					},
+					"LICENSE.md": {
+						"type": "file",
+						"path": "/accesspanel/LICENSE.md"
 					},
 					"manifest.json": {
 						"type": "file",
-						"path": "/apiaccesspanel/manifest.json"
+						"path": "/accesspanel/manifest.json"
+					},
+					"PRIVACY.md": {
+						"type": "file",
+						"path": "/accesspanel/PRIVACY.md"
+					},
+					"README.md": {
+						"type": "file",
+						"path": "/accesspanel/README.md"
 					}
 				}
 			}
