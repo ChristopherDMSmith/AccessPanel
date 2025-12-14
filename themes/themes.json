@@ -54,6 +54,24 @@
 			},
 			"paletteUrl": "https://colordesigner.io/color-palette-builder?mode=lch&steps=10&him=constant#F5F5F5-D9D9D9-7C0909-FF5F5F-FFFFFF-A6A6A6"
 		},
+		"gildedSlate": {
+			"name": "Gilded Slate",
+			"colors": {
+				"primary-color": "#181818",
+				"secondary-color": "#2B2B2B",
+				"accent-color": "#C28F00",
+				"highlight-color": "#E6AA00",
+				"buttontext-color": "#F9F5F2",
+				"divider-color": "#CFB77C"
+			},
+			"fonts": {
+				"font-family-primary": "Trebuchet MS, sans-serif",
+				"font-family-fallback": "Helvetica",
+				"title-font-primary": "\"InterLocalBlack\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+				"title-font-fallback": "cursive"
+			},
+			"paletteUrl": "https://colordesigner.io/color-palette-builder?mode=lch&steps=10&him=constant#181818-2B2B2B-C28F00-E6AA00-F9F5F2-CFB77C"
+		},
 		"graphiteTablet": {
 			"name": "Graphite Tablet",
 			"colors": {
@@ -71,24 +89,6 @@
 				"title-font-fallback": "cursive"
 			},
 			"paletteUrl": "https://colordesigner.io/color-palette-builder?mode=lch&steps=10&him=constant#3A3A3A-2B2B2B-E5E7EB-B8C4D1-111827"
-		},
-		"honeyMustard": {
-			"name": "Honey Mustard",
-			"colors": {
-				"primary-color": "#FFFFFF",
-				"secondary-color": "#F9F5F2",
-				"accent-color": "#C28F00",
-				"highlight-color": "#FFD933",
-				"buttontext-color": "#212121",
-				"divider-color": "#CFB77C"
-			},
-			"fonts": {
-				"font-family-primary": "Trebuchet MS, sans-serif",
-				"font-family-fallback": "Helvetica",
-				"title-font-primary": "\"InterLocalBlack\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
-				"title-font-fallback": "cursive"
-			},
-			"paletteUrl": "https://colordesigner.io/color-palette-builder?mode=lch&steps=10&him=constant#FFFFFF-F9F5F2-C28F00-FFD933-212121-CFB77C"
 		},
 		"ivorySandstone": {
 			"name": "Ivory Sandstone",
