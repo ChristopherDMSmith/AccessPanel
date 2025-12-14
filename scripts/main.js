@@ -471,10 +471,8 @@ async function linksInstallIntegrations() {
 // Developer portal
 async function linksDeveloperPortal() {
   try {
-    const hermesData = await fetch("accesspanel.json").then((res) =>
-      res.json()
-    );
-    const developerPortalURL = hermesData.details.urls.developerPortal;
+    const panelMeta = await fetch("accesspanel.json").then((res) => res.json());
+    const developerPortalURL = panelMeta?.details?.urls?.developerPortal;
 
     if (!developerPortalURL) {
       console.error("Developer Portal URL not found in accesspanel.json.");
@@ -485,12 +483,13 @@ async function linksDeveloperPortal() {
     if (incognito) {
       chrome.tabs.create({ url: developerPortalURL, active: true });
     } else {
-      window.open(developerPortalURL, "_blank");
+      openURLNormally(developerPortalURL);
     }
   } catch (error) {
     console.error("Failed to load Developer Portal URL:", error);
   }
 }
+
 // ====================================== //
 
 // ===== MENU BAR | THEMES FUNCTIONS ===== //
