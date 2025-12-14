@@ -1,0 +1,83 @@
+{
+	"apiName": {
+		"name": "Display Name",
+		"method": "METHOD",
+		"url": "/endpoint",
+		"queryParameters": [
+			{
+				"name": "qpName",
+				"type": "select",
+				"options": [
+					"false",
+					"true"
+				],
+				"defaultValue": "false"
+			}
+		],
+		"bodyParameters": [
+			{
+				"name": "textName",
+				"type": "text",
+				"defaultValue": ""
+			},
+			{
+				"name": "booleanName",
+				"type": "boolean",
+				"options": [
+					false,
+					true
+				],
+				"defaultValue": false,
+				"path": "profilePath"
+			},
+			{
+				"name": "multi-selectName",
+				"type": "multi-select",
+				"options": [
+					"OPTION1",
+					"OPTION2"
+				],
+				"defaultValue": [
+					"OPTION1"
+				],
+				"path": "profilePath",
+				"validation": {
+					"minSelected": 1,
+					"maxSelected": 10
+				}
+			},
+			{
+				"name": "selectName",
+				"type": "select",
+				"options": [
+					"OPTION1",
+					"OPTION2"
+				],
+				"defaultValue": "OPTION2",
+				"path": "profilePath"
+			},
+			{
+				"name": "dateName",
+				"type": "date",
+				"defaultValue": "today",
+				"path": "profilePath"
+			},
+			{
+				"name": "multi-textName",
+				"description": "inputBocPlaceHolder",
+				"type": "multi-text",
+				"defaultValue": [
+					""
+				],
+				"path": "profilePath",
+				"validation": {
+					"minEntered": 1,
+					"maxEntered": 10,
+					"pattern": "^[a-zA-Z0-9]+$",
+					"errorMessage": "Invalid Value."
+				}
+			}
+		],
+		"requestProfile": {}
+	}
+}

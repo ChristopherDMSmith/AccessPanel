@@ -1,0 +1,308 @@
+[
+	{
+		"id": 13,
+		"symbolicId": "Today",
+		"name": "Today",
+		"periodTypeId": "COMMON",
+		"sortOrder": 0,
+		"displayOrder": 0,
+		"default": false
+	},
+	{
+		"id": 8,
+		"symbolicId": "Yesterday",
+		"name": "Yesterday",
+		"periodTypeId": "COMMON",
+		"sortOrder": 1,
+		"displayOrder": 1,
+		"default": false
+	},
+	{
+		"id": 2001,
+		"symbolicId": "Tomorrow",
+		"name": "Tomorrow",
+		"periodTypeId": "COMMON",
+		"sortOrder": 2,
+		"displayOrder": 2,
+		"default": false
+	},
+	{
+		"id": 6,
+		"symbolicId": "Week_to_Date",
+		"name": "Week to Date",
+		"periodTypeId": "COMMON",
+		"sortOrder": 3,
+		"displayOrder": 3,
+		"default": false
+	},
+	{
+		"id": 30,
+		"symbolicId": "Month_to_Date",
+		"name": "Month to Date",
+		"periodTypeId": "COMMON",
+		"sortOrder": 4,
+		"displayOrder": 4,
+		"default": false
+	},
+	{
+		"id": 7,
+		"symbolicId": "Last_Week",
+		"name": "Last Week",
+		"periodTypeId": "COMMON",
+		"sortOrder": 5,
+		"displayOrder": 5,
+		"default": false
+	},
+	{
+		"id": 901,
+		"symbolicId": "Yesterday_Today_Tomorrow",
+		"name": "Yesterday, Today, Tomorrow",
+		"periodTypeId": "COMMON",
+		"sortOrder": 6,
+		"displayOrder": 6,
+		"default": false
+	},
+	{
+		"id": 902,
+		"symbolicId": "Yesterday_Plus_Six_Days",
+		"name": "Yesterday Plus 6 Days",
+		"periodTypeId": "COMMON",
+		"sortOrder": 7,
+		"displayOrder": 7,
+		"default": false
+	},
+	{
+		"id": 907,
+		"symbolicId": "Yesterday_Minus_Thirteen_Days",
+		"name": "Yesterday Minus 13 Days",
+		"periodTypeId": "COMMON",
+		"sortOrder": 8,
+		"displayOrder": 8,
+		"default": false
+	},
+	{
+		"id": 906,
+		"symbolicId": "Last_Seven_Days",
+		"name": "Last 7 Days",
+		"periodTypeId": "COMMON",
+		"sortOrder": 9,
+		"displayOrder": 9,
+		"default": false
+	},
+	{
+		"id": 903,
+		"symbolicId": "Last_Thirty_Days",
+		"name": "Last 30 Days",
+		"periodTypeId": "COMMON",
+		"sortOrder": 10,
+		"displayOrder": 10,
+		"default": false
+	},
+	{
+		"id": 904,
+		"symbolicId": "Current_Week",
+		"name": "Current Week",
+		"periodTypeId": "COMMON",
+		"sortOrder": 11,
+		"displayOrder": 11,
+		"default": false
+	},
+	{
+		"id": 910,
+		"symbolicId": "Last_Four_Weeks",
+		"name": "Last 4 Weeks",
+		"periodTypeId": "COMMON",
+		"sortOrder": 12,
+		"displayOrder": 12,
+		"default": false
+	},
+	{
+		"id": 908,
+		"symbolicId": "Last_Three_Months",
+		"name": "Last 3 Months",
+		"periodTypeId": "COMMON",
+		"sortOrder": 13,
+		"displayOrder": 13,
+		"default": false
+	},
+	{
+		"id": 905,
+		"symbolicId": "Last_Ninety_Days",
+		"name": "Last 90 Days",
+		"periodTypeId": "COMMON",
+		"sortOrder": 14,
+		"displayOrder": 14,
+		"default": false
+	},
+	{
+		"id": 909,
+		"symbolicId": "Last_Four_Quarters",
+		"name": "Last 4 Quarters",
+		"periodTypeId": "COMMON",
+		"sortOrder": 15,
+		"displayOrder": 15,
+		"default": false
+	},
+	{
+		"id": 33,
+		"symbolicId": "Previous_Forecast_Week",
+		"name": "Previous Forecast Week",
+		"periodTypeId": "FORECASTING",
+		"sortOrder": 0,
+		"displayOrder": 16,
+		"default": false
+	},
+	{
+		"id": 34,
+		"symbolicId": "Current_Forecast_Week",
+		"name": "Current Forecast Week",
+		"periodTypeId": "FORECASTING",
+		"sortOrder": 1,
+		"displayOrder": 17,
+		"default": false
+	},
+	{
+		"id": 35,
+		"symbolicId": "Next_Forecast_Week",
+		"name": "Next Forecast Week",
+		"periodTypeId": "FORECASTING",
+		"sortOrder": 2,
+		"displayOrder": 18,
+		"default": false
+	},
+	{
+		"id": 37,
+		"symbolicId": "Next_Forecast_Week_Plus_One",
+		"name": "Next Forecast Week + 1",
+		"periodTypeId": "FORECASTING",
+		"sortOrder": 3,
+		"displayOrder": 19,
+		"default": false
+	},
+	{
+		"id": 38,
+		"symbolicId": "Next_Forecast_Week_Plus_Two",
+		"name": "Next Forecast Week + 2",
+		"periodTypeId": "FORECASTING",
+		"sortOrder": 4,
+		"displayOrder": 20,
+		"default": false
+	},
+	{
+		"id": 36,
+		"symbolicId": "Same_Week_Last_Year",
+		"name": "Same Week Last Year",
+		"periodTypeId": "FORECASTING",
+		"sortOrder": 5,
+		"displayOrder": 21,
+		"default": false
+	},
+	{
+		"id": 3,
+		"symbolicId": "Previous_SchedPeriod",
+		"name": "Previous Schedule Period",
+		"periodTypeId": "SCHEDULING",
+		"sortOrder": 0,
+		"displayOrder": 22,
+		"default": false
+	},
+	{
+		"id": 4,
+		"symbolicId": "Current_SchedPeriod",
+		"name": "Current Schedule Period",
+		"periodTypeId": "SCHEDULING",
+		"sortOrder": 1,
+		"displayOrder": 23,
+		"default": false
+	},
+	{
+		"id": 5,
+		"symbolicId": "Next_SchedPeriod",
+		"name": "Next Schedule Period",
+		"periodTypeId": "SCHEDULING",
+		"sortOrder": 2,
+		"displayOrder": 24,
+		"default": false
+	},
+	{
+		"id": 2002,
+		"symbolicId": "Next_SchedPeriod_Plus_One",
+		"name": "Next Schedule Period + 1",
+		"periodTypeId": "SCHEDULING",
+		"sortOrder": 3,
+		"displayOrder": 25,
+		"default": false
+	},
+	{
+		"id": 2003,
+		"symbolicId": "Next_SchedPeriod_Plus_Two",
+		"name": "Next Schedule Period + 2",
+		"periodTypeId": "SCHEDULING",
+		"sortOrder": 4,
+		"displayOrder": 26,
+		"default": false
+	},
+	{
+		"id": 0,
+		"symbolicId": "Previous_Payperiod",
+		"name": "Previous Pay Period",
+		"periodTypeId": "TIMEKEEPING",
+		"sortOrder": 0,
+		"displayOrder": 27,
+		"default": true
+	},
+	{
+		"id": 1,
+		"symbolicId": "Current_Payperiod",
+		"name": "Current Pay Period",
+		"periodTypeId": "TIMEKEEPING",
+		"sortOrder": 1,
+		"displayOrder": 28,
+		"default": false
+	},
+	{
+		"id": 2,
+		"symbolicId": "Next_Payperiod",
+		"name": "Next Pay Period",
+		"periodTypeId": "TIMEKEEPING",
+		"sortOrder": 2,
+		"displayOrder": 29,
+		"default": false
+	},
+	{
+		"id": 14,
+		"symbolicId": "Previous_Work_Week",
+		"name": "Previous Work Week",
+		"periodTypeId": "WORK",
+		"sortOrder": 18,
+		"displayOrder": 30,
+		"default": false
+	},
+	{
+		"id": 14,
+		"symbolicId": "Current_Work_Week",
+		"name": "Current Work Week",
+		"periodTypeId": "WORK",
+		"sortOrder": 18,
+		"displayOrder": 31,
+		"default": false
+	},
+	{
+		"id": 14,
+		"symbolicId": "Next_Work_Week",
+		"name": "Next Work Week",
+		"periodTypeId": "WORK",
+		"sortOrder": 18,
+		"displayOrder": 32,
+		"default": false
+	},
+	{
+		"id": 9,
+		"symbolicId": "Select_Range",
+		"name": "Select Range",
+		"periodTypeId": "WORK",
+		"sortOrder": 18,
+		"displayOrder": 33,
+		"default": false
+	}
+]

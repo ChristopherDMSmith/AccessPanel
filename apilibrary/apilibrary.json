@@ -1,0 +1,4846 @@
+{
+	"apiLibrary": {
+		"adHocGet": {
+			"name": "Ad-Hoc GET",
+			"method": "GET",
+			"url": "",
+			"queryParameters": [],
+			"bodyParameters": []
+		},
+		"adHocPost": {
+			"name": "Ad-Hoc POST",
+			"method": "POST",
+			"url": "",
+			"queryParameters": [],
+			"bodyParameters": []
+		},
+		"accrualsAccrualBalances": {
+			"name": "Accruals - Accrual Balances",
+			"method": "POST",
+			"url": "/v1/timekeeping/timecard_metrics/multi_read",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-timecard-data-for-multiple-employees"
+			},
+			"bodyParametersHelp": "Symbolic or Start & End Date required. HFQ Name, HFQ ID, PersonNumber(s) or Employee ID(s) required. Data rolled-up by employee and date range.",
+			"bodyParameters": [
+				{
+					"name": "Symbolic Period",
+					"description": " ",
+					"type": "select",
+					"options": [
+						{
+							"label": "Today",
+							"value": "Today"
+						},
+						{
+							"label": "Yesterday",
+							"value": "Yesterday"
+						},
+						{
+							"label": "Tomorrow",
+							"value": "Tomorrow"
+						},
+						{
+							"label": "Previous Pay Period",
+							"value": "Previous_Payperiod"
+						},
+						{
+							"label": "Current Pay Period",
+							"value": "Current_Payperiod"
+						},
+						{
+							"label": "Next Pay Period",
+							"value": "Next_Payperiod"
+						},
+						{
+							"label": "Previous Schedule Period",
+							"value": "Previous_SchedPeriod"
+						},
+						{
+							"label": "Current Schedule Period",
+							"value": "Current_SchedPeriod"
+						},
+						{
+							"label": "Next Schedule Period",
+							"value": "Next Schedule Period"
+						},
+						{
+							"label": "Next Schedule Period + 1",
+							"value": "Next_SchedPeriod_Plus_One"
+						},
+						{
+							"label": "Next Schedule Period + 2",
+							"value": "Next_SchedPeriod_Plus_Two"
+						},
+						{
+							"label": "Week to Date",
+							"value": "Week_to_Date"
+						},
+						{
+							"label": "Month to Date",
+							"value": "Month_to_Date"
+						},
+						{
+							"label": "Last Week",
+							"value": "Last_Week"
+						},
+						{
+							"label": "Yesterday, Today, Tomorrow",
+							"value": "Yesterday_Today_Tomorrow"
+						},
+						{
+							"label": "Yesterday Plus 6 Days",
+							"value": "Yesterday_Plus_Six_Days"
+						},
+						{
+							"label": "Yesterday Minus 13 Days",
+							"value": "Yesterday_Minus_Thirteen_Days"
+						},
+						{
+							"label": "Last 7 Days",
+							"value": "Last_Seven_Days"
+						},
+						{
+							"label": "Last 30 Days",
+							"value": "Last_Thirty_Days"
+						},
+						{
+							"label": "Current Week",
+							"value": "Current_Week"
+						},
+						{
+							"label": "Last 4 Weeks",
+							"value": "Last_Four_Weeks"
+						},
+						{
+							"label": "Last 3 Months",
+							"value": "Last_Three_Months"
+						},
+						{
+							"label": "Last 90 Days",
+							"value": "Last_Ninety_Days"
+						},
+						{
+							"label": "Last 4 Quarters",
+							"value": "Last_Four_Quarters"
+						},
+						{
+							"label": "Previous Forecast Week",
+							"value": "Previous_Forecast_Week"
+						},
+						{
+							"label": "Current Forecast Week",
+							"value": "Current_Forecast_Week"
+						},
+						{
+							"label": "Next Forecast Week",
+							"value": "Next_Forecast_Week"
+						},
+						{
+							"label": "Next Forecast Week + 1",
+							"value": "Next_Forecast_Week_Plus_One"
+						},
+						{
+							"label": "Next Forecast Week + 2",
+							"value": "Next_Forecast_Week_Plus_Two"
+						},
+						{
+							"label": "Same Week Last Year",
+							"value": "Same_Week_Last_Year"
+						},
+						{
+							"label": "Previous Work Week",
+							"value": "Previous_Work_Week"
+						},
+						{
+							"label": "Current Work Week",
+							"value": "Current_Work_Week"
+						},
+						{
+							"label": "Next Work Week",
+							"value": "Next_Work_Week"
+						}
+					],
+					"defaultValue": "",
+					"path": "where.employeeSet.dateRange.symbolicPeriod.qualifier"
+				},
+				{
+					"name": "Start Date",
+					"type": "date",
+					"defaultValue": "",
+					"path": "where.employeeSet.dateRange.startDate",
+					"validation": {
+						"maxRange": 365,
+						"relatedField": "endDate"
+					}
+				},
+				{
+					"name": "End Date",
+					"type": "date",
+					"defaultValue": "",
+					"path": "where.employeeSet.dateRange.endDate",
+					"validation": {
+						"maxRange": 365,
+						"relatedField": "startDate"
+					}
+				},
+				{
+					"name": "HyperFind Name",
+					"description": "HFQ Name",
+					"type": "text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.employeeSet.hyperFindRef.qualifier",
+					"validation": {
+						"pattern": "^[a-zA-Z0-9]+$",
+						"errorMessage": "HyperFind Name must be alphanumeric."
+					}
+				},
+				{
+					"name": "HyperFind ID",
+					"description": "HFQ ID",
+					"type": "integer",
+					"defaultValue": [
+						""
+					],
+					"path": "where.employeeSet.hyperFindRef.id",
+					"validation": {
+						"pattern": "^[0-9]+$",
+						"errorMessage": "HyperFind ID must be numeric."
+					}
+				},
+				{
+					"name": "PersonNumber",
+					"description": "PersonNumber",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.employeeSet.employees.qualifiers",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 10,
+						"pattern": "^[a-zA-Z0-9]+$",
+						"errorMessage": "Employee IDs must be alphanumeric and unique."
+					}
+				},
+				{
+					"name": "Employee ID(s)",
+					"description": "Employee ID",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.employeeSet.employees.ids",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 10,
+						"pattern": "^[0-9]+$",
+						"errorMessage": "Employee ID(s) must be numeric and unique."
+					}
+				},
+				{
+					"name": "Accrual Code(s)",
+					"description": "Accrual Code Name",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.accruals.qualifiers",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 50,
+						"pattern": "^[a-zA-Z0-9]+$",
+						"errorMessage": "Accrual Code(s) must be alphanumeric and unique."
+					}
+				},
+				{
+					"name": "Accrual Code ID(s)",
+					"description": "Accrual Code ID",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.accruals.ids",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 50,
+						"pattern": "^[0-9]+$",
+						"errorMessage": "Accrual Code ID(s) must be numeric and unique."
+					}
+				}
+			],
+			"requestProfile": {
+				"select": [
+					"ACCRUAL_SUMMARY"
+				],
+				"where": {
+					"employeeSet": {
+						"dateRange": {
+							"symbolicPeriod": {
+								"qualifier": ""
+							},
+							"startDate": "",
+							"endDate": ""
+						},
+						"employees": {
+							"qualifiers": [],
+							"ids": []
+						},
+						"hyperFindRef": {
+							"id": "",
+							"qualifier": ""
+						}
+					},
+					"accruals": {
+						"ids": [],
+						"qualifiers": []
+					}
+				},
+				"rollupContext": {
+					"byDateRange": true,
+					"byEmployee": true
+				}
+			}
+		},
+		"accrualsAccrualCodes": {
+			"name": "Accruals - Accrual Codes",
+			"method": "GET",
+			"url": "/v2/timekeeping/setup/accrual_codes",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-accrual-codes"
+			},
+			"queryParametersHelp": "Query Parameters optional.",
+			"queryParameters": [
+				{
+					"name": "id",
+					"type": "integer",
+					"description": "Accrual Code ID",
+					"defaultValue": ""
+				},
+				{
+					"name": "qualifier",
+					"type": "text",
+					"description": "Accrual Code Name",
+					"defaultValue": ""
+				},
+				{
+					"name": "all_details",
+					"type": "select",
+					"description": "",
+					"options": [
+						"false",
+						"true"
+					],
+					"defaultValue": "false"
+				}
+			],
+			"exportMap": "SetupAccrualCodes"
+		},
+		"accrualsAccrualProfiles": {
+			"name": "Accruals - Accrual Profiles",
+			"method": "GET",
+			"url": "/v2/timekeeping/setup/accrual_profiles",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-all-accrual-profiles-deprecated-v2"
+			},
+			"queryParametersHelp": "Query Parameters optional.",
+			"queryParameters": [
+				{
+					"name": "id",
+					"description": "Accrual Profile ID",
+					"type": "text",
+					"defaultValue": ""
+				},
+				{
+					"name": "qualifier",
+					"description": "Accrual Profile Name",
+					"type": "text",
+					"defaultValue": ""
+				},
+				{
+					"name": "all_details",
+					"type": "select",
+					"description": "false",
+					"options": [
+						"false",
+						"true"
+					],
+					"defaultValue": "false"
+				},
+				{
+					"name": "include_accrual_policies",
+					"type": "select",
+					"description": "false",
+					"options": [
+						"false",
+						"true"
+					],
+					"defaultValue": "false"
+				}
+			],
+			"exportMap": "SetupAccrualProfiles"
+		},
+		"accrualsAccrualTransactions": {
+			"name": "Accruals - Accrual Transactions",
+			"method": "POST",
+			"url": "/v1/timekeeping/timecard_metrics/multi_read",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-timecard-data-for-multiple-employees"
+			},
+			"queryParametersHelp": "No Query Parameters.",
+			"queryParameters": [],
+			"bodyParametersHelp": "Symbolic or Start & End Date required. HFQ Name, HFQ ID, PersonNumber(s) or Employee ID(s) required.",
+			"bodyParameters": [
+				{
+					"name": "Symbolic Period",
+					"description": " ",
+					"type": "select",
+					"options": [
+						{
+							"label": "Today",
+							"value": "Today"
+						},
+						{
+							"label": "Yesterday",
+							"value": "Yesterday"
+						},
+						{
+							"label": "Tomorrow",
+							"value": "Tomorrow"
+						},
+						{
+							"label": "Previous Pay Period",
+							"value": "Previous_Payperiod"
+						},
+						{
+							"label": "Current Pay Period",
+							"value": "Current_Payperiod"
+						},
+						{
+							"label": "Next Pay Period",
+							"value": "Next_Payperiod"
+						},
+						{
+							"label": "Previous Schedule Period",
+							"value": "Previous_SchedPeriod"
+						},
+						{
+							"label": "Current Schedule Period",
+							"value": "Current_SchedPeriod"
+						},
+						{
+							"label": "Next Schedule Period",
+							"value": "Next Schedule Period"
+						},
+						{
+							"label": "Next Schedule Period + 1",
+							"value": "Next_SchedPeriod_Plus_One"
+						},
+						{
+							"label": "Next Schedule Period + 2",
+							"value": "Next_SchedPeriod_Plus_Two"
+						},
+						{
+							"label": "Week to Date",
+							"value": "Week_to_Date"
+						},
+						{
+							"label": "Month to Date",
+							"value": "Month_to_Date"
+						},
+						{
+							"label": "Last Week",
+							"value": "Last_Week"
+						},
+						{
+							"label": "Yesterday, Today, Tomorrow",
+							"value": "Yesterday_Today_Tomorrow"
+						},
+						{
+							"label": "Yesterday Plus 6 Days",
+							"value": "Yesterday_Plus_Six_Days"
+						},
+						{
+							"label": "Yesterday Minus 13 Days",
+							"value": "Yesterday_Minus_Thirteen_Days"
+						},
+						{
+							"label": "Last 7 Days",
+							"value": "Last_Seven_Days"
+						},
+						{
+							"label": "Last 30 Days",
+							"value": "Last_Thirty_Days"
+						},
+						{
+							"label": "Current Week",
+							"value": "Current_Week"
+						},
+						{
+							"label": "Last 4 Weeks",
+							"value": "Last_Four_Weeks"
+						},
+						{
+							"label": "Last 3 Months",
+							"value": "Last_Three_Months"
+						},
+						{
+							"label": "Last 90 Days",
+							"value": "Last_Ninety_Days"
+						},
+						{
+							"label": "Last 4 Quarters",
+							"value": "Last_Four_Quarters"
+						},
+						{
+							"label": "Previous Forecast Week",
+							"value": "Previous_Forecast_Week"
+						},
+						{
+							"label": "Current Forecast Week",
+							"value": "Current_Forecast_Week"
+						},
+						{
+							"label": "Next Forecast Week",
+							"value": "Next_Forecast_Week"
+						},
+						{
+							"label": "Next Forecast Week + 1",
+							"value": "Next_Forecast_Week_Plus_One"
+						},
+						{
+							"label": "Next Forecast Week + 2",
+							"value": "Next_Forecast_Week_Plus_Two"
+						},
+						{
+							"label": "Same Week Last Year",
+							"value": "Same_Week_Last_Year"
+						},
+						{
+							"label": "Previous Work Week",
+							"value": "Previous_Work_Week"
+						},
+						{
+							"label": "Current Work Week",
+							"value": "Current_Work_Week"
+						},
+						{
+							"label": "Next Work Week",
+							"value": "Next_Work_Week"
+						}
+					],
+					"defaultValue": "",
+					"path": "where.employeeSet.dateRange.symbolicPeriod.qualifier"
+				},
+				{
+					"name": "Start Date",
+					"type": "date",
+					"defaultValue": "",
+					"path": "where.employeeSet.dateRange.startDate",
+					"validation": {
+						"maxRange": 365,
+						"relatedField": "endDate"
+					}
+				},
+				{
+					"name": "End Date",
+					"type": "date",
+					"defaultValue": "",
+					"path": "where.employeeSet.dateRange.endDate",
+					"validation": {
+						"maxRange": 365,
+						"relatedField": "startDate"
+					}
+				},
+				{
+					"name": "HyperFind Name",
+					"description": "HFQ Name",
+					"type": "text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.employeeSet.hyperFindRef.qualifier",
+					"validation": {
+						"pattern": "^[a-zA-Z0-9]+$",
+						"errorMessage": "HyperFind Name must be alphanumeric."
+					}
+				},
+				{
+					"name": "HyperFind ID",
+					"description": "HFQ ID",
+					"type": "integer",
+					"defaultValue": [
+						""
+					],
+					"path": "where.employeeSet.hyperFindRef.id",
+					"validation": {
+						"pattern": "^[0-9]+$",
+						"errorMessage": "HyperFind ID must be numeric."
+					}
+				},
+				{
+					"name": "PersonNumber(s)",
+					"description": "PersonNumber",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.employeeSet.employees.qualifiers",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 10,
+						"pattern": "^[a-zA-Z0-9]+$",
+						"errorMessage": "PersonNumber(s) must be alphanumeric and unique."
+					}
+				},
+				{
+					"name": "Employee ID(s)",
+					"description": "Employee ID",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.employeeSet.employees.ids",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 10,
+						"pattern": "^[0-9]+$",
+						"errorMessage": "Employee ID(s) must be alphanumeric and unique."
+					}
+				},
+				{
+					"name": "Transaction Type(s)",
+					"description": "Transaction Type",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.accrualTransactionType",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 50,
+						"pattern": "^[a-zA-Z0-9]+$",
+						"errorMessage": "Transaction Type(s) must be alphanumeric and unique."
+					}
+				},
+				{
+					"name": "Accrual Code(s)",
+					"description": "Accrual Code Name",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.accruals.qualifiers",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 50,
+						"pattern": "^[a-zA-Z0-9]+$",
+						"errorMessage": "Accrual Code(s) must be alphanumeric and unique."
+					}
+				},
+				{
+					"name": "Accrual Code ID(s)",
+					"description": "Accrual Code ID",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.accruals.ids",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 50,
+						"pattern": "^[0-9]+$",
+						"errorMessage": "Accrual Code ID(s) must be alphanumeric and unique."
+					}
+				}
+			],
+			"requestProfile": {
+				"select": [
+					"ACCRUAL_TRANSACTIONS"
+				],
+				"where": {
+					"employeeSet": {
+						"dateRange": {
+							"symbolicPeriod": {
+								"qualifier": ""
+							},
+							"startDate": "",
+							"endDate": ""
+						},
+						"employees": {
+							"qualifiers": [],
+							"ids": []
+						},
+						"hyperFindRef": {
+							"id": "",
+							"qualifier": ""
+						}
+					},
+					"accrualTransactionType": [],
+					"accruals": {
+						"ids": [],
+						"qualifiers": []
+					}
+				}
+			}
+		},
+		"activitiesActivityProfiles": {
+			"name": "Activities - Activity Profiles",
+			"method": "GET",
+			"url": "/v1/work/activity_profiles",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-all-activity-profiles-or-by-name"
+			},
+			"queryParametersHelp": "Query Parameters optional.",
+			"queryParameters": [
+				{
+					"name": "name",
+					"description": "Activity Profile Name",
+					"type": "text",
+					"defaultValue": ""
+				}
+			],
+			"exportMap": "SetupActivityProfiles"
+		},
+		"attendanceAttendanceBalances": {
+			"name": "Attendance - Attendance Balances",
+			"method": "POST",
+			"url": "/v1/attendance/balances/multi_read",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-balances"
+			},
+			"queryParametersHelp": "No Query Parameters.",
+			"queryParameters": [],
+			"bodyParametersHelp": "Symbolic or Start & End Date required. PersonNumber(s) or Employee ID(s) required.",
+			"bodyParameters": [
+				{
+					"name": "Is Manager Role",
+					"type": "boolean",
+					"options": [
+						true,
+						false
+					],
+					"defaultValue": "true",
+					"path": "isManagerRole"
+				},
+				{
+					"name": "Symbolic Period",
+					"description": " ",
+					"type": "select",
+					"options": [
+						{
+							"label": "Today",
+							"value": "Today"
+						},
+						{
+							"label": "Yesterday",
+							"value": "Yesterday"
+						},
+						{
+							"label": "Tomorrow",
+							"value": "Tomorrow"
+						},
+						{
+							"label": "Previous Pay Period",
+							"value": "Previous_Payperiod"
+						},
+						{
+							"label": "Current Pay Period",
+							"value": "Current_Payperiod"
+						},
+						{
+							"label": "Next Pay Period",
+							"value": "Next_Payperiod"
+						},
+						{
+							"label": "Previous Schedule Period",
+							"value": "Previous_SchedPeriod"
+						},
+						{
+							"label": "Current Schedule Period",
+							"value": "Current_SchedPeriod"
+						},
+						{
+							"label": "Next Schedule Period",
+							"value": "Next Schedule Period"
+						},
+						{
+							"label": "Next Schedule Period + 1",
+							"value": "Next_SchedPeriod_Plus_One"
+						},
+						{
+							"label": "Next Schedule Period + 2",
+							"value": "Next_SchedPeriod_Plus_Two"
+						},
+						{
+							"label": "Week to Date",
+							"value": "Week_to_Date"
+						},
+						{
+							"label": "Month to Date",
+							"value": "Month_to_Date"
+						},
+						{
+							"label": "Last Week",
+							"value": "Last_Week"
+						},
+						{
+							"label": "Yesterday, Today, Tomorrow",
+							"value": "Yesterday_Today_Tomorrow"
+						},
+						{
+							"label": "Yesterday Plus 6 Days",
+							"value": "Yesterday_Plus_Six_Days"
+						},
+						{
+							"label": "Yesterday Minus 13 Days",
+							"value": "Yesterday_Minus_Thirteen_Days"
+						},
+						{
+							"label": "Last 7 Days",
+							"value": "Last_Seven_Days"
+						},
+						{
+							"label": "Last 30 Days",
+							"value": "Last_Thirty_Days"
+						},
+						{
+							"label": "Current Week",
+							"value": "Current_Week"
+						},
+						{
+							"label": "Last 4 Weeks",
+							"value": "Last_Four_Weeks"
+						},
+						{
+							"label": "Last 3 Months",
+							"value": "Last_Three_Months"
+						},
+						{
+							"label": "Last 90 Days",
+							"value": "Last_Ninety_Days"
+						},
+						{
+							"label": "Last 4 Quarters",
+							"value": "Last_Four_Quarters"
+						},
+						{
+							"label": "Previous Forecast Week",
+							"value": "Previous_Forecast_Week"
+						},
+						{
+							"label": "Current Forecast Week",
+							"value": "Current_Forecast_Week"
+						},
+						{
+							"label": "Next Forecast Week",
+							"value": "Next_Forecast_Week"
+						},
+						{
+							"label": "Next Forecast Week + 1",
+							"value": "Next_Forecast_Week_Plus_One"
+						},
+						{
+							"label": "Next Forecast Week + 2",
+							"value": "Next_Forecast_Week_Plus_Two"
+						},
+						{
+							"label": "Same Week Last Year",
+							"value": "Same_Week_Last_Year"
+						},
+						{
+							"label": "Previous Work Week",
+							"value": "Previous_Work_Week"
+						},
+						{
+							"label": "Current Work Week",
+							"value": "Current_Work_Week"
+						},
+						{
+							"label": "Next Work Week",
+							"value": "Next_Work_Week"
+						}
+					],
+					"defaultValue": "",
+					"path": "dateRange.symbolicPeriod.qualifier"
+				},
+				{
+					"name": "Start Date",
+					"type": "date",
+					"defaultValue": "",
+					"path": "dateRange.startDate"
+				},
+				{
+					"name": "End Date",
+					"type": "date",
+					"defaultValue": "",
+					"path": "dateRange.endDate"
+				},
+				{
+					"name": "PersonNumber",
+					"description": "personnumber",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "employees.qualifiers",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 10,
+						"pattern": "^[a-zA-Z0-9]+$",
+						"errorMessage": "Invalid Value."
+					}
+				},
+				{
+					"name": "Employee ID(s)",
+					"description": "Employee ID",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "employees.ids",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 10,
+						"pattern": "^[0-9]+$",
+						"errorMessage": "Employee ID(s) must be numeric and unique."
+					}
+				}
+			],
+			"requestProfile": {
+				"dateRange": {
+					"endDate": "",
+					"startDate": "",
+					"symbolicPeriod": {
+						"qualifier": ""
+					}
+				},
+				"employees": {
+					"qualifiers": [],
+					"ids": []
+				},
+				"isManagerRole": ""
+			}
+		},
+		"attendanceAttendanceProfiles": {
+			"name": "Attendance - Attendance Profiles",
+			"method": "GET",
+			"url": "/v1/attendance/attendance_profiles",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/attendance-profiles"
+			},
+			"queryParametersHelp": "Query Parameters optional.",
+			"queryParameters": [
+				{
+					"name": "all_details",
+					"type": "select",
+					"description": "false",
+					"options": [
+						"false",
+						"true"
+					],
+					"defaultValue": "false"
+				}
+			]
+		},
+		"businessStructureCostCenters": {
+			"name": "Business Structure - Cost Centers",
+			"method": "GET",
+			"url": "/v2/commons/cost_centers",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-all-cost-centers"
+			},
+			"queryParametersHelp": "No Query Parameters.",
+			"queryParameters": [],
+			"exportMap": "SetupBSCostCenters"
+		},
+		"businessStructureLaborCategories": {
+			"name": "Business Structure - Labor Categories",
+			"method": "GET",
+			"url": "/v2/commons/labor_categories",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-all-labor-categories-or-by-criteria"
+			},
+			"queryParametersHelp": "Query Parameters optional.",
+			"queryParameters": [
+				{
+					"name": "name",
+					"description": "Labor Category Name",
+					"type": "text",
+					"defaultValue": ""
+				},
+				{
+					"name": "modified_since",
+					"description": "Labor Category Name",
+					"type": "datetime",
+					"defaultValue": ""
+				}
+			],
+			"exportMap": "SetupBSLaborCategories"
+		},
+		"businessStructureLaborCategoryEntries": {
+			"name": "Business Structure - Labor Category Entries",
+			"method": "POST",
+			"url": "/v1/commons/labor_entries/apply_read",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-paginated-list-of-labor-category-entries"
+			},
+			"queryParametersHelp": "No Query Parameters.",
+			"queryParameters": [],
+			"bodyParametersHelp": "Paginated API. See help above for API usage.",
+			"bodyParameters": [
+				{
+					"name": "Labor Category ID",
+					"description": "",
+					"type": "integer",
+					"defaultValue": "",
+					"path": "where.laborCategory.id"
+				},
+				{
+					"name": "Labor Category Name",
+					"description": "",
+					"type": "text",
+					"defaultValue": "",
+					"path": "where.laborCategory.qualifier"
+				},
+				{
+					"name": "Labor Category Entry Name Filter",
+					"description": "",
+					"type": "text",
+					"defaultValue": "",
+					"path": "where.filterCriteria.name"
+				},
+				{
+					"name": "Labor Category Entry Desc Filter",
+					"description": "",
+					"type": "text",
+					"defaultValue": "",
+					"path": "where.filterCriteria.description"
+				},
+				{
+					"name": "Support Partial Filter Match",
+					"type": "boolean",
+					"options": [
+						true,
+						false
+					],
+					"defaultValue": "true",
+					"path": "where.filterCriteria.supportPartialStringMatch"
+				},
+				{
+					"name": "Inactive",
+					"type": "boolean",
+					"options": [
+						false,
+						true
+					],
+					"defaultValue": "false",
+					"path": "where.filterCriteria.inactive"
+				},
+				{
+					"name": "IVR Number",
+					"description": "",
+					"type": "text",
+					"defaultValue": "",
+					"path": "where.filterCriteria.ivrNum"
+				},
+				{
+					"name": "Count",
+					"description": "",
+					"type": "integer",
+					"defaultValue": "100",
+					"path": "count"
+				},
+				{
+					"name": "Index",
+					"description": "",
+					"type": "integer",
+					"defaultValue": "0",
+					"path": "index"
+				}
+			],
+			"requestProfile": {
+				"where": {
+					"laborCategory": {
+						"id": "",
+						"qualifier": ""
+					},
+					"filterCriteria": {
+						"name": "",
+						"description": "",
+						"supportPartialStringMatch": true,
+						"inactive": false,
+						"ivrNum": ""
+					}
+				},
+				"count": 100,
+				"index": 0
+			},
+			"exportMap": "SetupBSLabCatEntries"
+		},
+		"businessStructureLocations": {
+			"name": "Business Structure - Locations",
+			"method": "POST",
+			"url": "/v1/commons/locations/multi_read",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-locations"
+			},
+			"queryParametersHelp": "No Query Parameters.",
+			"queryParameters": [],
+			"bodyParametersHelp": "Paginated API. See help above for API usage.",
+			"bodyParameters": [
+				{
+					"name": "Include OrgPath Details",
+					"type": "boolean",
+					"options": [
+						true,
+						false
+					],
+					"defaultValue": "true",
+					"path": "multiReadOptions.includeOrgPathDetails"
+				},
+				{
+					"name": "Context",
+					"type": "select",
+					"options": [
+						"ORG",
+						"FORECAST"
+					],
+					"defaultValue": "ORG",
+					"path": "where.descendantsOf.context"
+				},
+				{
+					"name": "As of Date",
+					"type": "date",
+					"defaultValue": "0",
+					"path": "where.descendantsOf.date",
+					"validation": {
+						"maxRange": 365,
+						"relatedField": "startDate"
+					}
+				}
+			],
+			"requestProfile": {
+				"multiReadOptions": {
+					"includeOrgPathDetails": true
+				},
+				"where": {
+					"descendantsOf": {
+						"context": "",
+						"date": "",
+						"locationRef": {
+							"id": -1
+						}
+					}
+				}
+			}
+		},
+		"businessStructureLocationsQuery": {
+			"name": "Business Structure - Locations Query",
+			"method": "POST",
+			"url": "/v1/commons/locations/multi_read",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-locations"
+			},
+			"queryParametersHelp": "No Query Parameters.",
+			"queryParameters": [],
+			"bodyParametersHelp": "Query Locations by keyword. Return All Matches must be False if keyword is enterd.",
+			"bodyParameters": [
+				{
+					"name": "Return All Matches",
+					"type": "boolean",
+					"options": [
+						false,
+						true
+					],
+					"defaultValue": "false",
+					"path": "where.query.returnAllMatches"
+				},
+				{
+					"name": "Context",
+					"type": "select",
+					"options": [
+						"ORG",
+						"FORECAST"
+					],
+					"defaultValue": "ORG",
+					"path": "where.query.context"
+				},
+				{
+					"name": "As of Date",
+					"type": "date",
+					"defaultValue": "0",
+					"path": "where.query.date",
+					"validation": {
+						"maxRange": 365,
+						"relatedField": "startDate"
+					}
+				},
+				{
+					"name": "Keyword",
+					"type": "text",
+					"defaultValue": "",
+					"path": "where.query.q"
+				}
+			],
+			"requestProfile": {
+				"where": {
+					"query": {
+						"context": "",
+						"date": "",
+						"q": "",
+						"returnAllMatches": false
+					}
+				}
+			}
+		},
+		"essRetrieveTimeOffRequest": {
+			"name": "Employee Self Service - Retrieve Time Off Requests",
+			"method": "POST",
+			"url": "/v1/scheduling/timeoff/multi_read",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-time-off-requests-as-manager"
+			},
+			"queryParametersHelp": "No Query Parameters.",
+			"queryParameters": [],
+			"bodyParametersHelp": "Employee ID(s) or PersonNumber(s) & Start Date / End Date required.",
+			"bodyParameters": [
+				{
+					"name": "Include Overridden Shifts",
+					"type": "boolean",
+					"options": [
+						true,
+						false
+					],
+					"defaultValue": "true",
+					"path": "multiReadOptions.includeOverriddenShifts"
+				},
+				{
+					"name": "Completion State",
+					"type": "select",
+					"options": [
+						"COMPLETE",
+						"INCOMPLETE"
+					],
+					"defaultValue": " ",
+					"path": "where.states.completionState"
+				},
+				{
+					"name": "startDate",
+					"type": "date",
+					"defaultValue": "today",
+					"path": "where.employees.startDate",
+					"validation": {
+						"maxRange": 365,
+						"relatedField": "endDate"
+					}
+				},
+				{
+					"name": "endDate",
+					"type": "date",
+					"defaultValue": "today",
+					"path": "where.employees.endDate",
+					"validation": {
+						"maxRange": 365,
+						"relatedField": "startDate"
+					}
+				},
+				{
+					"name": "PersonNumber(s)",
+					"description": "PersonNumber",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.employees.employeeRefs.qualifiers",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 10,
+						"pattern": "^[a-zA-Z0-9]+$",
+						"errorMessage": "Employee IDs must be alphanumeric and unique."
+					}
+				},
+				{
+					"name": "Employee ID(s)",
+					"description": "Employee ID",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.employees.employeeRefs.ids",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 10,
+						"pattern": "^[0-9]+$",
+						"errorMessage": "Employee IDs must be numeric and unique."
+					}
+				}
+			],
+			"requestProfile": {
+				"where": {
+					"states": {
+						"completionState": ""
+					},
+					"employees": {
+						"employeeRefs": {
+							"ids": [],
+							"qualifiers": []
+						},
+						"startDate": "",
+						"endDate": ""
+					}
+				},
+				"multiReadOptions": {
+					"includeOverriddenShifts": true
+				}
+			}
+		},
+		"employmentTermsRetrieveEmploymentTerms": {
+			"name": "Employment Terms - Retrieve Employment Terms",
+			"method": "GET",
+			"url": "/v2/timekeeping/setup/employment_terms",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-all-employment-terms"
+			},
+			"queryParametersHelp": "Query Parameters optional.",
+			"queryParameters": [
+				{
+					"name": "id",
+					"type": "integer",
+					"defaultValue": ""
+				},
+				{
+					"name": "qualifier",
+					"type": "text",
+					"defaultValue": ""
+				},
+				{
+					"name": "all_details",
+					"type": "select",
+					"description": "",
+					"options": [
+						"false",
+						"true"
+					],
+					"defaultValue": "false"
+				},
+				{
+					"name": "version_dates",
+					"type": "select",
+					"description": "",
+					"options": [
+						"false",
+						"true"
+					],
+					"defaultValue": "false"
+				}
+			]
+		},
+		"hyperfindsRetrieveAllHFQsorbyCriteria": {
+			"name": "Hyperfinds - Retrieve All HFQ's or by Criteria",
+			"method": "POST",
+			"url": "/v1/commons/hyperfind/multi_read",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-hyperfind-queries"
+			},
+			"queryParametersHelp": "No Query Parameters.",
+			"queryParameters": [],
+			"bodyParametersHelp": "HFQ Name(s) or ID(s) required.",
+			"bodyParameters": [
+				{
+					"name": "HyperFind Query Name(s)",
+					"description": "HyperFind Query Name",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.hyperFindQuery.qualifiers",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 25,
+						"pattern": "^[a-zA-Z0-9]+$",
+						"errorMessage": "HyperFind Query Name(s) must be alphanumeric and unique."
+					}
+				},
+				{
+					"name": "HyperFind Query ID(s)",
+					"description": "HyperFind Query ID",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.hyperFindQuery.ids",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 25,
+						"pattern": "^[0-9]+$",
+						"errorMessage": "HyperFind Query ID(s) must be alphanumeric and unique."
+					}
+				},
+				{
+					"name": "Usage Type",
+					"type": "select",
+					"options": [
+						"ALL",
+						"HOME",
+						"REGULAR"
+					],
+					"defaultValue": "ALL",
+					"path": "where.usageType"
+				},
+				{
+					"name": "Return All Details",
+					"type": "boolean",
+					"options": [
+						false,
+						true
+					],
+					"defaultValue": "false",
+					"path": "where.allDetails"
+				}
+			],
+			"requestProfile": {
+				"where": {
+					"hyperFindQuery": {
+						"ids": [],
+						"qualifiers": []
+					},
+					"allDetails": "",
+					"usageType": ""
+				}
+			},
+			"exportMap": "HyperfindQueryDetail"
+		},
+		"hyperfindsRetrieveAllPublicHFQs": {
+			"name": "Hyperfinds - Retrieve All Public HFQ's",
+			"method": "GET",
+			"url": "/v1/commons/hyperfind/public",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-public-hyperfind-queries"
+			},
+			"queryParametersHelp": "Query Parameters are optional.",
+			"queryParameters": [
+				{
+					"name": "all_details",
+					"type": "select",
+					"description": "false",
+					"options": [
+						"false",
+						"true"
+					],
+					"defaultValue": "false"
+				}
+			],
+			"exportMap": "retrievePublicHFQs"
+		},
+		"hyperfindsExecuteHFQ": {
+			"name": "Hyperfinds - Execute HFQ",
+			"method": "POST",
+			"url": "/v1/commons/hyperfind/execute",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/execute-hyperfind-query"
+			},
+			"queryParametersHelp": "No Query Parameters.",
+			"queryParameters": [],
+			"bodyParametersHelp": "Paginated API. See help above for API usage. Symbolic or Start & End Date required. HFQ Name or ID required.",
+			"bodyParameters": [
+				{
+					"name": "Enable Pagination",
+					"type": "boolean",
+					"options": [
+						false,
+						true
+					],
+					"defaultValue": "false",
+					"path": "enablePagination"
+				},
+				{
+					"name": "Employee Threshold (max 50000)",
+					"description": "",
+					"type": "integer",
+					"defaultValue": "3500",
+					"path": "threshold"
+				},
+				{
+					"name": "HyperFind Query Name",
+					"description": "",
+					"type": "text",
+					"defaultValue": "",
+					"path": "hyperfind.qualifier"
+				},
+				{
+					"name": "HyperFind Query ID",
+					"description": "",
+					"type": "integer",
+					"defaultValue": "",
+					"path": "hyperfind.id"
+				},
+				{
+					"name": "Symbolic Period",
+					"description": " ",
+					"type": "select",
+					"options": [
+						{
+							"label": "Today",
+							"value": "Today"
+						},
+						{
+							"label": "Yesterday",
+							"value": "Yesterday"
+						},
+						{
+							"label": "Tomorrow",
+							"value": "Tomorrow"
+						},
+						{
+							"label": "Previous Pay Period",
+							"value": "Previous_Payperiod"
+						},
+						{
+							"label": "Current Pay Period",
+							"value": "Current_Payperiod"
+						},
+						{
+							"label": "Next Pay Period",
+							"value": "Next_Payperiod"
+						},
+						{
+							"label": "Previous Schedule Period",
+							"value": "Previous_SchedPeriod"
+						},
+						{
+							"label": "Current Schedule Period",
+							"value": "Current_SchedPeriod"
+						},
+						{
+							"label": "Next Schedule Period",
+							"value": "Next Schedule Period"
+						},
+						{
+							"label": "Next Schedule Period + 1",
+							"value": "Next_SchedPeriod_Plus_One"
+						},
+						{
+							"label": "Next Schedule Period + 2",
+							"value": "Next_SchedPeriod_Plus_Two"
+						},
+						{
+							"label": "Week to Date",
+							"value": "Week_to_Date"
+						},
+						{
+							"label": "Month to Date",
+							"value": "Month_to_Date"
+						},
+						{
+							"label": "Last Week",
+							"value": "Last_Week"
+						},
+						{
+							"label": "Yesterday, Today, Tomorrow",
+							"value": "Yesterday_Today_Tomorrow"
+						},
+						{
+							"label": "Yesterday Plus 6 Days",
+							"value": "Yesterday_Plus_Six_Days"
+						},
+						{
+							"label": "Yesterday Minus 13 Days",
+							"value": "Yesterday_Minus_Thirteen_Days"
+						},
+						{
+							"label": "Last 7 Days",
+							"value": "Last_Seven_Days"
+						},
+						{
+							"label": "Last 30 Days",
+							"value": "Last_Thirty_Days"
+						},
+						{
+							"label": "Current Week",
+							"value": "Current_Week"
+						},
+						{
+							"label": "Last 4 Weeks",
+							"value": "Last_Four_Weeks"
+						},
+						{
+							"label": "Last 3 Months",
+							"value": "Last_Three_Months"
+						},
+						{
+							"label": "Last 90 Days",
+							"value": "Last_Ninety_Days"
+						},
+						{
+							"label": "Last 4 Quarters",
+							"value": "Last_Four_Quarters"
+						},
+						{
+							"label": "Previous Forecast Week",
+							"value": "Previous_Forecast_Week"
+						},
+						{
+							"label": "Current Forecast Week",
+							"value": "Current_Forecast_Week"
+						},
+						{
+							"label": "Next Forecast Week",
+							"value": "Next_Forecast_Week"
+						},
+						{
+							"label": "Next Forecast Week + 1",
+							"value": "Next_Forecast_Week_Plus_One"
+						},
+						{
+							"label": "Next Forecast Week + 2",
+							"value": "Next_Forecast_Week_Plus_Two"
+						},
+						{
+							"label": "Same Week Last Year",
+							"value": "Same_Week_Last_Year"
+						},
+						{
+							"label": "Previous Work Week",
+							"value": "Previous_Work_Week"
+						},
+						{
+							"label": "Current Work Week",
+							"value": "Current_Work_Week"
+						},
+						{
+							"label": "Next Work Week",
+							"value": "Next_Work_Week"
+						}
+					],
+					"defaultValue": "",
+					"path": "dateRange.symbolicPeriod.qualifier"
+				},
+				{
+					"name": "Start Date",
+					"type": "date",
+					"defaultValue": "",
+					"path": "dateRange.startDate",
+					"validation": {
+						"maxRange": 365,
+						"relatedField": "endDate"
+					}
+				},
+				{
+					"name": "End Date",
+					"type": "date",
+					"defaultValue": "",
+					"path": "dateRange.endDate",
+					"validation": {
+						"maxRange": 365,
+						"relatedField": "startDate"
+					}
+				},
+				{
+					"name": "Page Token",
+					"description": "",
+					"type": "text",
+					"defaultValue": "",
+					"path": "pageToken"
+				}
+			],
+			"requestProfile": {
+				"persons": [
+					{
+						"id": "",
+						"qualifier": ""
+					}
+				],
+				"dateRange": {
+					"symbolicPeriod": {
+						"qualifier": ""
+					},
+					"startDate": "",
+					"endDate": ""
+				},
+				"locations": [
+					{
+						"qualifier": ""
+					}
+				],
+				"hyperfind": {
+					"id": "",
+					"qualifier": ""
+				},
+				"searchAlsoByFirstName": "",
+				"enablePagination": "",
+				"isEmployee": "",
+				"threshold": "",
+				"validateAccessForPrivateHF": "",
+				"includeTerminatedInRangeForLocations": "",
+				"pageToken": ""
+			}
+		},
+		"integrationsInstalled": {
+			"name": "Integrations - Installed Integrations",
+			"method": "GET",
+			"url": "/v1/platform/integrations",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-integrations"
+			},
+			"queryParametersHelp": "No Query Parameters. Returns all installed integrations.",
+			"queryParameters": []
+		},
+		"integrationsRunResults": {
+			"name": "Integrations - Run Results",
+			"method": "GET",
+			"url": "/v1/platform/integration_executions",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-all-integration-executions"
+			},
+			"queryParametersHelp": "Dates required. Integration Id optional.",
+			"queryParameters": [
+				{
+					"name": "Integration ID",
+					"type": "text",
+					"defaultValue": ""
+				},
+				{
+					"name": "From Date",
+					"type": "date",
+					"defaultValue": "-30"
+				},
+				{
+					"name": "To Date",
+					"type": "date",
+					"defaultValue": "0"
+				}
+			]
+		},
+		"integrationsScheduled": {
+			"name": "Integrations - Scheduled Integrations",
+			"method": "GET",
+			"url": "/v1/platform/integration_schedules",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-all-scheduled-integration-instances"
+			},
+			"queryParametersHelp": "Dates required. Integration Id optional.",
+			"queryParameters": [
+				{
+					"name": "From Date",
+					"type": "date",
+					"defaultValue": "1753-01-01"
+				},
+				{
+					"name": "To Date",
+					"type": "date",
+					"defaultValue": "3000-01-01"
+				},
+				{
+					"name": "integrationId",
+					"type": "text",
+					"defaultValue": ""
+				}
+			],
+			"exportMap": "IntegrationsScheduled"
+		},
+		"integrationsSftpConnectionsGet": {
+			"name": "Integrations - SFTP Connections Get",
+			"method": "GET",
+			"url": "/v1/platform/integrations/sftp_connections",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-all-sftp-connections"
+			},
+			"queryParametersHelp": "No Query Parameters.",
+			"queryParameters": [],
+			"exportMap": "AllSFTPConnections"
+		},
+		"integrationsSftpConnectionTest": {
+			"name": "Integrations - SFTP Connection Test",
+			"method": "GET",
+			"url": "/v1/platform/integrations/sftp_connections/{id}/connection_status",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/test-sftp-connection-by-id"
+			},
+			"pathParametersHelp": "Path Parameters required.",
+			"pathParameters": [
+				{
+					"name": "id",
+					"type": "text",
+					"defaultValue": ""
+				}
+			],
+			"queryParametersHelp": "No Query Parameters.",
+			"queryParameters": [],
+			"exportMap": "AllSFTPConnections"
+		},
+		"intetgrationsUpdateStatus": {
+			"name": "Integrations - Update Run Status",
+			"method": "POST",
+			"url": "/v1/platform/integrations/update_status",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/update-integration-execution-details"
+			},
+			"queryParametersHelp": "No Query Parameters.",
+			"queryParameters": [],
+			"bodyParametersHelp": "Id & Execution ID required. Status & Call Back Message should only be changed if needed.",
+			"bodyParameters": [
+				{
+					"name": "WFM Integration Execution ID",
+					"description": "id from Run Results",
+					"type": "text",
+					"defaultValue": "",
+					"path": "batchIntegration.id"
+				},
+				{
+					"name": "Boomi Execution ID",
+					"description": "executionId from Run Results",
+					"type": "text",
+					"defaultValue": "",
+					"path": "batchIntegration.executionid"
+				},
+				{
+					"name": "Status",
+					"description": "Change to Status name",
+					"type": "text",
+					"defaultValue": "Failed",
+					"path": "batchIntegration.status"
+				},
+				{
+					"name": "Call Back Message",
+					"description": "Call Back Message",
+					"type": "text",
+					"defaultValue": "Cancelled by User",
+					"path": "batchIntegration.callbackmessages"
+				}
+			],
+			"requestProfile": {
+				"batchIntegration": {
+					"status": "string",
+					"executionid": "string",
+					"id": 0,
+					"callbackmessages": "string"
+				}
+			}
+		},
+		"leavesLeaveProfiles": {
+			"name": "Leaves - Leave Profiles",
+			"method": "GET",
+			"url": "/v1/leave/leave_profiles",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-all-leave-profiles"
+			},
+			"queryParametersHelp": "Query Parameters optional.",
+			"queryParameters": [
+				{
+					"name": "name",
+					"type": "text",
+					"description": "Enter value",
+					"defaultValue": ""
+				}
+			]
+		},
+		"licensingEntitlementHistory": {
+			"name": "Licensing - Entitlement History",
+			"method": "GET",
+			"url": "/v1/licensing/entitlement_history",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/entitlement-history"
+			},
+			"queryParametersHelp": "No Query Parameters.",
+			"queryParameters": [],
+			"exportMap": "EntitlementHistory"
+		},
+		"licensingEntitlementSummary": {
+			"name": "Licensing - Entitlement Summary",
+			"method": "GET",
+			"url": "/v1/licensing/entitlement_summary",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/entitlement-summary"
+			},
+			"queryParametersHelp": "No Query Parameters.",
+			"queryParameters": [],
+			"exportMap": "EntitlementSummary"
+		},
+		"payPoliciesAdjustmentRules": {
+			"name": "Pay Policies - Adjustment Rules",
+			"method": "GET",
+			"url": "/v2/timekeeping/setup/adjustment_rules",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-all-adjustment-rules"
+			},
+			"queryParametersHelp": "Query Parameters optional.",
+			"queryParameters": [
+				{
+					"name": "id",
+					"type": "integer",
+					"defaultValue": ""
+				},
+				{
+					"name": "qualifier",
+					"type": "text",
+					"defaultValue": ""
+				},
+				{
+					"name": "start_date",
+					"type": "date",
+					"defaultValue": "1753-01-01"
+				},
+				{
+					"name": "end_date",
+					"type": "date",
+					"defaultValue": "3000-01-01"
+				},
+				{
+					"name": "all_details",
+					"type": "select",
+					"description": "false",
+					"options": [
+						"false",
+						"true"
+					],
+					"defaultValue": "false"
+				},
+				{
+					"name": "count",
+					"type": "integer",
+					"defaultValue": ""
+				},
+				{
+					"name": "index",
+					"type": "integer",
+					"defaultValue": ""
+				}
+			]
+		},
+		"payPoliciesBonusAndDeductions": {
+			"name": "Pay Policies - Bonuses/Deductions",
+			"method": "GET",
+			"url": "/v2/timekeeping/setup/deduct_rules",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-bonus-and-deduction-rules"
+			},
+			"queryParametersHelp": "Query Parameters optional.",
+			"queryParameters": [
+				{
+					"name": "id",
+					"type": "integer",
+					"defaultValue": ""
+				},
+				{
+					"name": "qualifier",
+					"type": "text",
+					"defaultValue": ""
+				}
+			],
+			"exportMap": "BonusDeductions"
+		},
+		"payPoliciesBreakRules": {
+			"name": "Pay Policies - Break Rules",
+			"method": "GET",
+			"url": "/v2/timekeeping/setup/break_rules",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-all-break-rules"
+			},
+			"queryParametersHelp": "Query Parameters optional.",
+			"queryParameters": [
+				{
+					"name": "id",
+					"type": "integer",
+					"defaultValue": ""
+				},
+				{
+					"name": "qualifier",
+					"type": "text",
+					"defaultValue": ""
+				}
+			],
+			"exportMap": "BreakRules"
+		},
+		"payPoliciesCombinationRules": {
+			"name": "Pay Policies - Combination Rules",
+			"method": "GET",
+			"url": "/v1/timekeeping/setup/combination_rules",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-all-combination-rules"
+			},
+			"queryParametersHelp": "Query Parameters optional.",
+			"queryParameters": [],
+			"exportMap": "CombinedPayCodes"
+		},
+		"payPoliciesCombinedPayCodes": {
+			"name": "Pay Policies - Combined Pay Codes",
+			"method": "POST",
+			"url": "/v1/timekeeping/setup/paycodes/combined/apply_read",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-combined-paycodes"
+			},
+			"queryParametersHelp": "Query Parameters optional.",
+			"queryParameters": [
+				{
+					"name": "all_details",
+					"type": "select",
+					"description": "false",
+					"options": [
+						"false",
+						"true"
+					],
+					"defaultValue": "false"
+				}
+			],
+			"bodyParametersHelp": "Combined Pay Code Name optional. Multi-call request*.",
+			"bodyParameters": [
+				{
+					"name": "Combined Pay Code Name",
+					"description": "Combined Pay Code",
+					"type": "multi-text",
+					"defaultValue": [
+						"all"
+					],
+					"path": "where.combinedPayCodes.qualifiers",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 1000,
+						"pattern": "^[a-zA-Z0-9]+$",
+						"errorMessage": "NA."
+					}
+				}
+			],
+			"preRequest": {
+				"apiKey": "payPoliciesPayCodes",
+				"responseFilter": {
+					"field": "combined",
+					"match": true,
+					"mapTo": "name",
+					"data-path": "where.combinedPayCodes.qualifiers"
+				}
+			},
+			"requestProfile": {
+				"where": {
+					"combinedPayCodes": {
+						"qualifiers": [
+							"all"
+						]
+					}
+				}
+			},
+			"exportMap": "SetupTKCombinedPaycodes"
+		},
+		"payPoliciesFixedRules": {
+			"name": "Pay Policies - Fixed Rules",
+			"method": "GET",
+			"url": "/v1/timekeeping/setup/fixed_rules",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-all-fixed-rules"
+			},
+			"queryParametersHelp": "No Query Parameters.",
+			"queryParameters": [],
+			"exportMap": "FixedRules"
+		},
+		"payPoliciesHolidays": {
+			"name": "Pay Policies - Holidays",
+			"method": "GET",
+			"url": "/v1/commons/setup/holidays",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-all-holidays"
+			},
+			"queryParametersHelp": "All Query Parameters required.",
+			"queryParameters": [
+				{
+					"name": "year",
+					"type": "text",
+					"description": "0000",
+					"options": [
+						"false",
+						"true"
+					],
+					"defaultValue": "2025"
+				},
+				{
+					"name": "enabled",
+					"type": "select",
+					"description": "false",
+					"options": [
+						"false",
+						"true"
+					],
+					"defaultValue": "false"
+				}
+			],
+			"exportMap": "PayPoliciesHolidays"
+		},
+		"payPoliciesOvertimeRules": {
+			"name": "Pay Policies - Overtime Rules",
+			"method": "GET",
+			"url": "/v1/timekeeping/setup/overtime_rules",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-all-overtime-rules"
+			},
+			"queryParametersHelp": "No Query Parameters.",
+			"queryParameters": [],
+			"exportMap": "OvertimeRules"
+		},
+		"payPoliciesPayCodeDistributions": {
+			"name": "Pay Policies - Pay Code Distributions",
+			"method": "GET",
+			"url": "/v1/timekeeping/setup/pay_code_distributions",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-all-paycode-distributions-or-by-name"
+			},
+			"queryParametersHelp": "Query Parameters optional.",
+			"queryParameters": [
+				{
+					"name": "name",
+					"type": "text",
+					"defaultValue": ""
+				}
+			]
+		},
+		"payPoliciesPayCodes": {
+			"name": "Pay Policies - Pay Code Definitions",
+			"method": "GET",
+			"url": "/v2/timekeeping/setup/pay_codes",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-paycodes-as-manager"
+			},
+			"queryParametersHelp": "Query Parameters optional.",
+			"queryParameters": [
+				{
+					"name": "id",
+					"type": "text",
+					"defaultValue": ""
+				},
+				{
+					"name": "qualifier",
+					"type": "text",
+					"defaultValue": ""
+				}
+			],
+			"exportMap": "PayCodes"
+		},
+		"payPoliciesPayCodeTags": {
+			"name": "Pay Policies - Pay Code Tags",
+			"method": "GET",
+			"url": "/v1/timekeeping/setup/pay_code_tags",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-all-pay-code-tags"
+			},
+			"queryParametersHelp": "Query Parameters optional.",
+			"queryParameters": [
+				{
+					"name": "name",
+					"type": "text",
+					"defaultValue": ""
+				}
+			]
+		},
+		"payPoliciesPayPeriodTimeSpans": {
+			"name": "Pay Policies - Pay Period Time Spans",
+			"method": "GET",
+			"url": "/v1/commons/pay_period",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-pay-period-timespans"
+			},
+			"queryParametersHelp": "All parameters optional. See help above for parameter usage.",
+			"queryParameters": [
+				{
+					"name": "pay_period_id",
+					"type": "text",
+					"defaultValue": ""
+				},
+				{
+					"name": "pay_rule_id",
+					"type": "text",
+					"defaultValue": ""
+				},
+				{
+					"name": "user",
+					"type": "text",
+					"defaultValue": ""
+				},
+				{
+					"name": "date",
+					"type": "date",
+					"description": "",
+					"defaultValue": ""
+				},
+				{
+					"name": "period_type",
+					"type": "select",
+					"options": [
+						"Previous",
+						"Current",
+						"Next"
+					],
+					"defaultValue": "",
+					"description": "Symbolic Period"
+				}
+			]
+		},
+		"payPoliciesPayRules": {
+			"name": "Pay Policies - Pay Rules",
+			"method": "GET",
+			"url": "/v2/timekeeping/setup/payrules",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-all-timekeeping-pay-rules"
+			},
+			"queryParametersHelp": "Query Parameters optional.",
+			"queryParameters": [
+				{
+					"name": "id",
+					"type": "text",
+					"defaultValue": ""
+				},
+				{
+					"name": "name",
+					"type": "text",
+					"defaultValue": ""
+				},
+				{
+					"name": "all_details",
+					"type": "select",
+					"description": "",
+					"options": [
+						"false",
+						"true"
+					],
+					"defaultValue": "false"
+				}
+			]
+		},
+		"payPoliciesPunchInterpretationRules": {
+			"name": "Pay Policies - Punch Interpretation Rules",
+			"method": "GET",
+			"url": "/v1/timekeeping/setup/punch_interpretation_rules",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-all-punch-interpretation-rules"
+			},
+			"queryParametersHelp": "When this operation is executed with no parameters, the system returns a list of all available punch interpretation rules without details.",
+			"queryParameters": [
+				{
+					"name": "id",
+					"type": "text",
+					"defaultValue": ""
+				},
+				{
+					"name": "qualifier",
+					"type": "text",
+					"defaultValue": ""
+				},
+				{
+					"name": "all_details",
+					"type": "select",
+					"description": "",
+					"options": [
+						"false",
+						"true"
+					],
+					"defaultValue": "false"
+				},
+				{
+					"name": "index",
+					"type": "integer",
+					"defaultValue": ""
+				},
+				{
+					"name": "count",
+					"type": "integer",
+					"defaultValue": ""
+				}
+			]
+		},
+		"payPoliciesWorkRules": {
+			"name": "Pay Policies - Work Rules",
+			"method": "GET",
+			"url": "/v1/timekeeping/setup/full_work_rules",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-all-work-rules"
+			},
+			"queryParametersHelp": "Query Parameters optional.",
+			"queryParameters": [
+				{
+					"name": "snapshotdate",
+					"type": "date",
+					"defaultValue": "0"
+				}
+			]
+		},
+		"peoplePersonsAoidCoid": {
+			"name": "People - Persons AOID/COID",
+			"method": "POST",
+			"url": "/v1/commons/persons/external_id/multi_read",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-aoid-and-coid-for-multiple-employees"
+			},
+			"queryParametersHelp": "No Query Parameters.",
+			"queryParameters": [],
+			"bodyParametersHelp": "Key and Key Value(s) required.",
+			"bodyParameters": [
+				{
+					"name": "Fail On No Assignment",
+					"type": "boolean",
+					"options": [
+						false,
+						true
+					],
+					"defaultValue": "false",
+					"path": "failOnNoAssignment"
+				},
+				{
+					"name": "Return Unassigned Employees",
+					"type": "boolean",
+					"options": [
+						true,
+						false
+					],
+					"defaultValue": "true",
+					"path": "returnUnassignedEmployees"
+				},
+				{
+					"name": "Is Employee Allowed",
+					"type": "boolean",
+					"options": [
+						true,
+						false
+					],
+					"defaultValue": "true",
+					"path": "where.isEmployeeAllowed"
+				},
+				{
+					"name": "Only Active Person",
+					"type": "boolean",
+					"options": [
+						false,
+						true
+					],
+					"defaultValue": "false",
+					"path": "where.onlyActivePerson"
+				},
+				{
+					"name": "Key",
+					"description": "SELECT LOOKUP KEY",
+					"type": "select",
+					"options": [
+						"personnumber",
+						"personid",
+						"badgenumber",
+						"username",
+						"useraccountid",
+						"useremailaddress",
+						"jobassignmentid"
+					],
+					"defaultValue": "personnumber",
+					"path": "where.employees.key"
+				},
+				{
+					"name": "Key Value(s)",
+					"description": "Key Value",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.employees.values",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 10
+					}
+				}
+			],
+			"requestProfile": {
+				"where": {
+					"hyperFindFilter": {
+						"dateRange": {
+							"symbolicPeriod": {
+								"qualifier": ""
+							},
+							"startDate": "",
+							"dateRange": "",
+							"endDate": ""
+						},
+						"hyperfind": {
+							"id": "",
+							"qualifier": ""
+						}
+					},
+					"employees": {
+						"key": "",
+						"values": []
+					},
+					"includeBaseWages": "",
+					"snapshotDateTime": "",
+					"includeAccrualPolicyDetails": false,
+					"isEmployeeAllowed": true,
+					"extensionType": "",
+					"onlyActivePerson": false,
+					"snapshotDate": ""
+				},
+				"failOnNoAssignment": false
+			},
+			"exportMap": "PersonsAoidCoid"
+		},
+		"peopleBasePersons": {
+			"name": "People - Base Persons",
+			"method": "POST",
+			"url": "/v1/commons/persons/base_persons/multi_read",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-base-person"
+			},
+			"queryParametersHelp": "No Query Parameters.",
+			"queryParameters": [],
+			"bodyParametersHelp": "Select Key and enter Value(s) for the Key.",
+			"bodyParameters": [
+				{
+					"name": "Key",
+					"description": "SELECT LOOKUP KEY",
+					"type": "select",
+					"options": [
+						"personnumber",
+						"personid",
+						"badgenumber",
+						"username",
+						"useraccountid",
+						"useremailaddress",
+						"jobassignmentid"
+					],
+					"defaultValue": "personnumber",
+					"path": "where.employees.key"
+				},
+				{
+					"name": "Value(s)",
+					"description": "Key Value",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.employees.values",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 10
+					}
+				}
+			],
+			"requestProfile": {
+				"where": {
+					"employees": {
+						"values": [
+							""
+						],
+						"key": "personnumber"
+					}
+				}
+			},
+			"exportMap": "BasePersons"
+		},
+		"peoplePersonsExtensions": {
+			"name": "People - Persons Extensions",
+			"method": "POST",
+			"url": "/v1/commons/persons/extensions/multi_read",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-persons"
+			},
+			"queryParametersHelp": "No Query Parameters.",
+			"queryParameters": [],
+			"bodyParametersHelp": "Key and Key Value(s) required.",
+			"bodyParameters": [
+				{
+					"name": "Fail On No Assignment",
+					"type": "boolean",
+					"options": [
+						false,
+						true
+					],
+					"defaultValue": "false",
+					"path": "failOnNoAssignment"
+				},
+				{
+					"name": "Return Unassigned Employees",
+					"type": "boolean",
+					"options": [
+						true,
+						false
+					],
+					"defaultValue": "true",
+					"path": "returnUnassignedEmployees"
+				},
+				{
+					"name": "Include Accrual Policy Details",
+					"type": "boolean",
+					"options": [
+						false,
+						true
+					],
+					"defaultValue": "false",
+					"path": "where.includeAccrualPolicyDetails"
+				},
+				{
+					"name": "Include Base Wages",
+					"type": "boolean",
+					"options": [
+						true,
+						false
+					],
+					"defaultValue": "true",
+					"path": "where.includeBaseWages"
+				},
+				{
+					"name": "Is Employee Allowed",
+					"type": "boolean",
+					"options": [
+						true,
+						false
+					],
+					"defaultValue": "true",
+					"path": "where.isEmployeeAllowed"
+				},
+				{
+					"name": "Only Active Person",
+					"type": "boolean",
+					"options": [
+						false,
+						true
+					],
+					"defaultValue": "false",
+					"path": "where.onlyActivePerson"
+				},
+				{
+					"name": "Extension Type",
+					"description": "ALL",
+					"type": "select",
+					"options": [
+						"accrual",
+						"device",
+						"employee",
+						"scheduling",
+						"timekeeping"
+					],
+					"defaultValue": "",
+					"path": "where.extensionType"
+				},
+				{
+					"name": "Snapshot Date",
+					"type": "date",
+					"defaultValue": " ",
+					"path": "where.snapshotDate"
+				},
+				{
+					"name": "Key",
+					"description": "SELECT LOOKUP KEY",
+					"type": "select",
+					"options": [
+						"personnumber",
+						"personid",
+						"badgenumber",
+						"username",
+						"useraccountid",
+						"useremailaddress",
+						"jobassignmentid"
+					],
+					"defaultValue": "personnumber",
+					"path": "where.employees.key"
+				},
+				{
+					"name": "Key Value(s)",
+					"description": "Key Value",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.employees.values",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 10
+					}
+				}
+			],
+			"requestProfile": {
+				"where": {
+					"hyperFindFilter": {
+						"dateRange": {
+							"symbolicPeriod": {
+								"qualifier": ""
+							},
+							"startDate": "",
+							"dateRange": "",
+							"endDate": ""
+						},
+						"hyperfind": {
+							"id": "",
+							"qualifier": ""
+						}
+					},
+					"employees": {
+						"key": "",
+						"values": []
+					},
+					"includeBaseWages": "",
+					"snapshotDateTime": "",
+					"includeAccrualPolicyDetails": false,
+					"isEmployeeAllowed": true,
+					"extensionType": "",
+					"onlyActivePerson": false,
+					"snapshotDate": ""
+				},
+				"failOnNoAssignment": false
+			}
+		},
+		"reportingGetReportDataObjects": {
+			"name": "Reporting - Get Report Data Objects",
+			"method": "GET",
+			"url": "/v1/platform/report_dataobjects",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-all-report-data-objects-or-by-name"
+			},
+			"queryParametersHelp": "Query Parameters optional.",
+			"queryParameters": [
+				{
+					"name": "name",
+					"type": "text",
+					"options": [],
+					"defaultValue": ""
+				}
+			],
+			"exportMap": "ReportDataObjects"
+		},
+		"reportingRetrievePublishedReports": {
+			"name": "Reporting - Retrieve Published Reports",
+			"method": "GET",
+			"url": "/v1/platform/reports",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-published-reports"
+			},
+			"queryParametersHelp": "Query Parameters optional.",
+			"queryParameters": [
+				{
+					"name": "custom_reports_only",
+					"type": "select",
+					"description": "false",
+					"options": [
+						"false",
+						"true"
+					],
+					"defaultValue": "false"
+				}
+			],
+			"exportMap": "PublishedReports"
+		},
+		"schedulerSchedules": {
+			"name": "Scheduler - Retrieve Schedule",
+			"method": "POST",
+			"url": "/v1/scheduling/schedule/multi_read",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-schedule"
+			},
+			"queryParametersHelp": "No Query Parameters.",
+			"queryParameters": [],
+			"bodyParametersHelp": "Symbolic or Start & End Date required. PersonNumber required.",
+			"bodyParameters": [
+				{
+					"name": "Partial Success",
+					"type": "boolean",
+					"options": [
+						true,
+						false
+					],
+					"defaultValue": " ",
+					"path": "multiReadOptions.partialSuccess"
+				},
+				{
+					"name": "Exclude Overnight Shifts On Start Date",
+					"type": "boolean",
+					"options": [
+						false,
+						true
+					],
+					"defaultValue": " ",
+					"path": "multiReadOptions.excludeOvernightShiftsOnStartDate"
+				},
+				{
+					"name": "Exclude Breaks",
+					"type": "boolean",
+					"options": [
+						false,
+						true
+					],
+					"defaultValue": " ",
+					"path": "where.excludeBreaks"
+				},
+				{
+					"name": "Schedule Items",
+					"type": "multi-select",
+					"options": [
+						"AVAILABILITIES",
+						"DAYLOCKS",
+						"EMPLOYEES",
+						"EXPANDEDJOBS",
+						"HOLIDAYS",
+						"LEAVEEDITS",
+						"ONCALLFLAG",
+						"OPENSHIFTS",
+						"OPENSHIFTSUMMARY",
+						"PAYCODEEDITS",
+						"SCHEDULEDAYS",
+						"SCHEDULETAGS",
+						"SHIFTS"
+					],
+					"defaultValue": [
+						""
+					],
+					"path": "select",
+					"validation": {
+						"minSelected": 1,
+						"maxSelected": 13
+					}
+				},
+				{
+					"name": "Symbolic Period",
+					"description": " ",
+					"type": "select",
+					"options": [
+						{
+							"label": "Today",
+							"value": "Today"
+						},
+						{
+							"label": "Yesterday",
+							"value": "Yesterday"
+						},
+						{
+							"label": "Tomorrow",
+							"value": "Tomorrow"
+						},
+						{
+							"label": "Previous Pay Period",
+							"value": "Previous_Payperiod"
+						},
+						{
+							"label": "Current Pay Period",
+							"value": "Current_Payperiod"
+						},
+						{
+							"label": "Next Pay Period",
+							"value": "Next_Payperiod"
+						},
+						{
+							"label": "Previous Schedule Period",
+							"value": "Previous_SchedPeriod"
+						},
+						{
+							"label": "Current Schedule Period",
+							"value": "Current_SchedPeriod"
+						},
+						{
+							"label": "Next Schedule Period",
+							"value": "Next Schedule Period"
+						},
+						{
+							"label": "Next Schedule Period + 1",
+							"value": "Next_SchedPeriod_Plus_One"
+						},
+						{
+							"label": "Next Schedule Period + 2",
+							"value": "Next_SchedPeriod_Plus_Two"
+						},
+						{
+							"label": "Week to Date",
+							"value": "Week_to_Date"
+						},
+						{
+							"label": "Month to Date",
+							"value": "Month_to_Date"
+						},
+						{
+							"label": "Last Week",
+							"value": "Last_Week"
+						},
+						{
+							"label": "Yesterday, Today, Tomorrow",
+							"value": "Yesterday_Today_Tomorrow"
+						},
+						{
+							"label": "Yesterday Plus 6 Days",
+							"value": "Yesterday_Plus_Six_Days"
+						},
+						{
+							"label": "Yesterday Minus 13 Days",
+							"value": "Yesterday_Minus_Thirteen_Days"
+						},
+						{
+							"label": "Last 7 Days",
+							"value": "Last_Seven_Days"
+						},
+						{
+							"label": "Last 30 Days",
+							"value": "Last_Thirty_Days"
+						},
+						{
+							"label": "Current Week",
+							"value": "Current_Week"
+						},
+						{
+							"label": "Last 4 Weeks",
+							"value": "Last_Four_Weeks"
+						},
+						{
+							"label": "Last 3 Months",
+							"value": "Last_Three_Months"
+						},
+						{
+							"label": "Last 90 Days",
+							"value": "Last_Ninety_Days"
+						},
+						{
+							"label": "Last 4 Quarters",
+							"value": "Last_Four_Quarters"
+						},
+						{
+							"label": "Previous Forecast Week",
+							"value": "Previous_Forecast_Week"
+						},
+						{
+							"label": "Current Forecast Week",
+							"value": "Current_Forecast_Week"
+						},
+						{
+							"label": "Next Forecast Week",
+							"value": "Next_Forecast_Week"
+						},
+						{
+							"label": "Next Forecast Week + 1",
+							"value": "Next_Forecast_Week_Plus_One"
+						},
+						{
+							"label": "Next Forecast Week + 2",
+							"value": "Next_Forecast_Week_Plus_Two"
+						},
+						{
+							"label": "Same Week Last Year",
+							"value": "Same_Week_Last_Year"
+						},
+						{
+							"label": "Previous Work Week",
+							"value": "Previous_Work_Week"
+						},
+						{
+							"label": "Current Work Week",
+							"value": "Current_Work_Week"
+						},
+						{
+							"label": "Next Work Week",
+							"value": "Next_Work_Week"
+						}
+					],
+					"defaultValue": "",
+					"path": "where.employees.dateRange.symbolicPeriod.qualifier"
+				},
+				{
+					"name": "Start Date",
+					"type": "date",
+					"defaultValue": "",
+					"path": "where.employees.dateRange.startDate",
+					"validation": {
+						"maxRange": 365,
+						"relatedField": "endDate"
+					}
+				},
+				{
+					"name": "End Date",
+					"type": "date",
+					"defaultValue": "",
+					"path": "where.employees.dateRange.endDate",
+					"validation": {
+						"maxRange": 365,
+						"relatedField": "startDate"
+					}
+				},
+				{
+					"name": "PersonNumber(s)",
+					"description": "PersonNumber",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.employees.employees.qualifiers",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 10,
+						"pattern": "^[a-zA-Z0-9]+$",
+						"errorMessage": "PersonNumbers must be alphanumeric and unique."
+					}
+				},
+				{
+					"name": "Person ID(s)",
+					"description": "PersonID",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.employees.employees.ids",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 10,
+						"pattern": "^[0-9]+$",
+						"errorMessage": "Person IDs must be alphanumeric and unique."
+					}
+				}
+			],
+			"requestProfile": {
+				"multiReadOptions": {
+					"excludeOvernightShiftsOnStartDate": true,
+					"partialSuccess": ""
+				},
+				"select": [
+					""
+				],
+				"where": {
+					"employees": {
+						"dateRange": {
+							"endDate": "",
+							"startDate": "",
+							"symbolicPeriod": {
+								"qualifier": ""
+							}
+						},
+						"employees": {
+							"ids": [],
+							"qualifiers": [
+								""
+							]
+						}
+					},
+					"excludeBreaks": false
+				}
+			}
+		},
+		"timekeepingPunches": {
+			"name": "Timekeeping - Retrieve Punches",
+			"method": "POST",
+			"url": "/v1/timekeeping/timecard/multi_read",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-timecard-data-for-multiple-employees"
+			},
+			"queryParametersHelp": "Query Parameters optional.",
+			"queryParameters": [
+				{
+					"name": "partial_success",
+					"type": "select",
+					"description": "true",
+					"options": [
+						"true",
+						"false"
+					],
+					"defaultValue": "true"
+				}
+			],
+			"bodyParametersHelp": "Symbolic or Start & End Date required. PersonNumber(s) or Employee ID(s) required.",
+			"bodyParameters": [
+				{
+					"name": "Symbolic Period",
+					"description": " ",
+					"type": "select",
+					"options": [
+						{
+							"label": "Today",
+							"value": "Today"
+						},
+						{
+							"label": "Yesterday",
+							"value": "Yesterday"
+						},
+						{
+							"label": "Tomorrow",
+							"value": "Tomorrow"
+						},
+						{
+							"label": "Previous Pay Period",
+							"value": "Previous_Payperiod"
+						},
+						{
+							"label": "Current Pay Period",
+							"value": "Current_Payperiod"
+						},
+						{
+							"label": "Next Pay Period",
+							"value": "Next_Payperiod"
+						},
+						{
+							"label": "Previous Schedule Period",
+							"value": "Previous_SchedPeriod"
+						},
+						{
+							"label": "Current Schedule Period",
+							"value": "Current_SchedPeriod"
+						},
+						{
+							"label": "Next Schedule Period",
+							"value": "Next Schedule Period"
+						},
+						{
+							"label": "Next Schedule Period + 1",
+							"value": "Next_SchedPeriod_Plus_One"
+						},
+						{
+							"label": "Next Schedule Period + 2",
+							"value": "Next_SchedPeriod_Plus_Two"
+						},
+						{
+							"label": "Week to Date",
+							"value": "Week_to_Date"
+						},
+						{
+							"label": "Month to Date",
+							"value": "Month_to_Date"
+						},
+						{
+							"label": "Last Week",
+							"value": "Last_Week"
+						},
+						{
+							"label": "Yesterday, Today, Tomorrow",
+							"value": "Yesterday_Today_Tomorrow"
+						},
+						{
+							"label": "Yesterday Plus 6 Days",
+							"value": "Yesterday_Plus_Six_Days"
+						},
+						{
+							"label": "Yesterday Minus 13 Days",
+							"value": "Yesterday_Minus_Thirteen_Days"
+						},
+						{
+							"label": "Last 7 Days",
+							"value": "Last_Seven_Days"
+						},
+						{
+							"label": "Last 30 Days",
+							"value": "Last_Thirty_Days"
+						},
+						{
+							"label": "Current Week",
+							"value": "Current_Week"
+						},
+						{
+							"label": "Last 4 Weeks",
+							"value": "Last_Four_Weeks"
+						},
+						{
+							"label": "Last 3 Months",
+							"value": "Last_Three_Months"
+						},
+						{
+							"label": "Last 90 Days",
+							"value": "Last_Ninety_Days"
+						},
+						{
+							"label": "Last 4 Quarters",
+							"value": "Last_Four_Quarters"
+						},
+						{
+							"label": "Previous Forecast Week",
+							"value": "Previous_Forecast_Week"
+						},
+						{
+							"label": "Current Forecast Week",
+							"value": "Current_Forecast_Week"
+						},
+						{
+							"label": "Next Forecast Week",
+							"value": "Next_Forecast_Week"
+						},
+						{
+							"label": "Next Forecast Week + 1",
+							"value": "Next_Forecast_Week_Plus_One"
+						},
+						{
+							"label": "Next Forecast Week + 2",
+							"value": "Next_Forecast_Week_Plus_Two"
+						},
+						{
+							"label": "Same Week Last Year",
+							"value": "Same_Week_Last_Year"
+						},
+						{
+							"label": "Previous Work Week",
+							"value": "Previous_Work_Week"
+						},
+						{
+							"label": "Current Work Week",
+							"value": "Current_Work_Week"
+						},
+						{
+							"label": "Next Work Week",
+							"value": "Next_Work_Week"
+						}
+					],
+					"defaultValue": "",
+					"path": "where.dateRange.symbolicPeriod.qualifier"
+				},
+				{
+					"name": "Start Date",
+					"type": "date",
+					"defaultValue": "",
+					"path": "where.dateRange.startDate",
+					"validation": {
+						"maxRange": 365,
+						"relatedField": "endDate"
+					}
+				},
+				{
+					"name": "End Date",
+					"type": "date",
+					"defaultValue": "",
+					"path": "where.dateRange.endDate",
+					"validation": {
+						"maxRange": 365,
+						"relatedField": "startDate"
+					}
+				},
+				{
+					"name": "PersonNumber(s)",
+					"description": "PersonNumber",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.employees.qualifiers",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 10,
+						"pattern": "^[a-zA-Z0-9]+$",
+						"errorMessage": "Employee IDs must be alphanumeric and unique."
+					}
+				},
+				{
+					"name": "Employee ID(s)",
+					"description": "Employee ID",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.employees.ids",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 10,
+						"pattern": "^[0-9]+$",
+						"errorMessage": "Employee IDs must be numeric and unique."
+					}
+				}
+			],
+			"requestProfile": {
+				"multiReadOptions": {
+					"includePhantomPunches": ""
+				},
+				"select": [
+					"PUNCHES"
+				],
+				"where": {
+					"dateRange": {
+						"symbolicPeriod": {
+							"qualifier": ""
+						},
+						"endDate": "",
+						"startDate": ""
+					},
+					"employees": {
+						"qualifiers": [
+							""
+						]
+					}
+				}
+			}
+		},
+		"timekeepingTimecardMetrics": {
+			"name": "Timekeeping - Timecard Metrics",
+			"method": "POST",
+			"url": "/v1/timekeeping/timecard_metrics/multi_read",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-timecard-data-for-multiple-employees"
+			},
+			"queryParametersHelp": "Query Parameters Optional.",
+			"queryParameters": [
+				{
+					"name": "partial_success",
+					"type": "select",
+					"description": "true",
+					"options": [
+						"true",
+						"false"
+					],
+					"defaultValue": "true"
+				}
+			],
+			"bodyParametersHelp": "Symbolic or Start & End Date required. PersonNumber(s), Employee ID(s) or Hyperfind required. Configure any other desired parameters (some only work with specific Metrics Items, see help link above for usage.",
+			"bodyParameters": [
+				{
+					"name": "For Work Week",
+					"type": "boolean",
+					"options": [
+						true,
+						false
+					],
+					"defaultValue": " ",
+					"path": "multiReadOptions.forWorkWeek"
+				},
+				{
+					"name": "For Split Day",
+					"type": "boolean",
+					"options": [
+						true,
+						false
+					],
+					"defaultValue": " ",
+					"path": "multiReadOptions.forSplitDay"
+				},
+				{
+					"name": "Metrics Items",
+					"type": "multi-select",
+					"options": [
+						"ISR_DAILY",
+						"ISR_SUMMARY",
+						"FTPTDATA_ALL",
+						"FTPTDATA",
+						"AVERAGING",
+						"SCHEDULED_TOTALS",
+						"PROJECTED_TOTALS",
+						"PROJECTED_TOTALS_ONLY_CORRECTIONS",
+						"PROJECTED_TOTALS_EXCLUDE_CORRECTIONS",
+						"ACTUAL_TOTALS",
+						"ACTUAL_TOTALS_ONLY_CORRECTIONS",
+						"EXCEPTION_TOTAL",
+						"EXCEPTION_TOTAL_UNREVIEWED",
+						"EXCEPTION_TOTAL_EMPLOYEE_JUSTIFIED",
+						"EXCEPTION_TOTAL_MANAGER_JUSTIFIED",
+						"EXCEPTION_TOTAL_AUTO_RESOLVED",
+						"SHIFT_ACTUAL_TOTAL_SUMMARY",
+						"SHIFT_SCHEDULED_TOTAL_SUMMARY",
+						"SHIFT_PROJECTED_TOTAL_SUMMARY",
+						"DAILY_ACTUAL_TOTAL_SUMMARY",
+						"DAILY_SCHEDULED_TOTAL_SUMMARY",
+						"DAILY_PROJECTED_TOTAL_SUMMARY",
+						"ACCRUAL_SUMMARY",
+						"ACCRUAL_TRANSACTIONS",
+						"ABSENCE_EXCEPTION",
+						"TOTALS",
+						"GROUPED_HOURS_TOTALS",
+						"CONTRACT_TOTALS",
+						"SHIFT_CONTRACT_TOTAL_SUMMARY",
+						"DAILY_CONTRACT_TOTAL_SUMMARY"
+					],
+					"defaultValue": [
+						""
+					],
+					"path": "select",
+					"validation": {
+						"minSelected": 1,
+						"maxSelected": 30
+					}
+				},
+				{
+					"name": "Pay Code Type",
+					"type": "select",
+					"options": [
+						"REGULAR",
+						"COMBINED"
+					],
+					"defaultValue": " ",
+					"path": "where.payCodeType"
+				},
+				{
+					"name": "Correction Option",
+					"type": "select",
+					"options": [
+						"INCLUDE_CORRECTIONS",
+						"ONLY_CORRECTIONS",
+						"EXCLUDE_CORRECTIONS"
+					],
+					"defaultValue": " ",
+					"path": "options.correctionOption"
+				},
+				{
+					"name": "Round Per Locale",
+					"type": "boolean",
+					"options": [
+						true,
+						false
+					],
+					"defaultValue": " ",
+					"path": "where.includeApprovingManagers"
+				},
+				{
+					"name": "Include Approving Managers",
+					"type": "boolean",
+					"options": [
+						true,
+						false
+					],
+					"defaultValue": " ",
+					"path": "where.includeApprovingManagers"
+				},
+				{
+					"name": "Is IA Origin",
+					"type": "boolean",
+					"options": [
+						false,
+						true
+					],
+					"defaultValue": " ",
+					"path": "isIAOrigin"
+				},
+				{
+					"name": "Roll up by Date",
+					"type": "boolean",
+					"options": [
+						true,
+						false
+					],
+					"defaultValue": " ",
+					"path": "rollupContext.byDate"
+				},
+				{
+					"name": "Roll up by Date Range",
+					"type": "boolean",
+					"options": [
+						true,
+						false
+					],
+					"defaultValue": " ",
+					"path": "rollupContext.byDateRange"
+				},
+				{
+					"name": "Roll up by Employee",
+					"type": "boolean",
+					"options": [
+						true,
+						false
+					],
+					"defaultValue": " ",
+					"path": "rollupContext.byEmployee"
+				},
+				{
+					"name": "Roll up by TimeFrame",
+					"description": " ",
+					"type": "select",
+					"options": [
+						{
+							"label": "Today",
+							"value": 13
+						},
+						{
+							"label": "Yesterday",
+							"value": 8
+						},
+						{
+							"label": "Tomorrow",
+							"value": 2001
+						},
+						{
+							"label": "Previous Pay Period",
+							"value": 0
+						},
+						{
+							"label": "Current Pay Period",
+							"value": 1
+						},
+						{
+							"label": "Next Pay Period",
+							"value": 2
+						},
+						{
+							"label": "Previous Schedule Period",
+							"value": 3
+						},
+						{
+							"label": "Current Schedule Period",
+							"value": 4
+						},
+						{
+							"label": "Next Schedule Period",
+							"value": 5
+						},
+						{
+							"label": "Next Schedule Period + 1",
+							"value": 2002
+						},
+						{
+							"label": "Next Schedule Period + 2",
+							"value": 2003
+						},
+						{
+							"label": "Week to Date",
+							"value": 6
+						},
+						{
+							"label": "Month to Date",
+							"value": 30
+						},
+						{
+							"label": "Last Week",
+							"value": 7
+						},
+						{
+							"label": "Yesterday, Today, Tomorrow",
+							"value": 901
+						},
+						{
+							"label": "Yesterday Plus 6 Days",
+							"value": 902
+						},
+						{
+							"label": "Yesterday Minus 13 Days",
+							"value": 907
+						},
+						{
+							"label": "Last 7 Days",
+							"value": 906
+						},
+						{
+							"label": "Last 30 Days",
+							"value": 903
+						},
+						{
+							"label": "Current Week",
+							"value": 904
+						},
+						{
+							"label": "Last 4 Weeks",
+							"value": 910
+						},
+						{
+							"label": "Last 3 Months",
+							"value": 908
+						},
+						{
+							"label": "Last 90 Days",
+							"value": 905
+						},
+						{
+							"label": "Last 4 Quarters",
+							"value": 909
+						},
+						{
+							"label": "Previous Forecast Week",
+							"value": 33
+						},
+						{
+							"label": "Current Forecast Week",
+							"value": 34
+						},
+						{
+							"label": "Next Forecast Week",
+							"value": 35
+						},
+						{
+							"label": "Next Forecast Week + 1",
+							"value": 37
+						},
+						{
+							"label": "Next Forecast Week + 2",
+							"value": 38
+						},
+						{
+							"label": "Same Week Last Year",
+							"value": 36
+						},
+						{
+							"label": "Previous Work Week",
+							"value": 14
+						},
+						{
+							"label": "Current Work Week",
+							"value": 14
+						},
+						{
+							"label": "Next Work Week",
+							"value": 14
+						}
+					],
+					"defaultValue": "rollupContext.timeFrameId",
+					"path": "rollupContext.timeFrameId"
+				},
+				{
+					"name": "Roll up by Anchor Date",
+					"type": "date",
+					"defaultValue": " ",
+					"path": "rollupContext.anchorDate"
+				},
+				{
+					"name": "Roll up by Org",
+					"type": "boolean",
+					"options": [
+						true,
+						false
+					],
+					"defaultValue": " ",
+					"path": "rollupContext.byOrg"
+				},
+				{
+					"name": "Roll up by Labor Category",
+					"type": "boolean",
+					"options": [
+						true,
+						false
+					],
+					"defaultValue": " ",
+					"path": "rollupContext.byLaborCategory"
+				},
+				{
+					"name": "Roll up by Paycode",
+					"type": "boolean",
+					"options": [
+						true,
+						false
+					],
+					"defaultValue": " ",
+					"path": "rollupContext.byPaycode"
+				},
+				{
+					"name": "Roll up by Job",
+					"type": "boolean",
+					"options": [
+						true,
+						false
+					],
+					"defaultValue": " ",
+					"path": "rollupContext.byJob"
+				},
+				{
+					"name": "Roll up by Position",
+					"type": "boolean",
+					"options": [
+						true,
+						false
+					],
+					"defaultValue": " ",
+					"path": "rollupContext.byPosition"
+				},
+				{
+					"name": "Roll up by Job ID",
+					"type": "boolean",
+					"options": [
+						true,
+						false
+					],
+					"defaultValue": " ",
+					"path": "where.rollUpByJobId"
+				},
+				{
+					"name": "Symbolic Period",
+					"description": " ",
+					"type": "select",
+					"options": [
+						{
+							"label": "Today",
+							"value": "Today"
+						},
+						{
+							"label": "Yesterday",
+							"value": "Yesterday"
+						},
+						{
+							"label": "Tomorrow",
+							"value": "Tomorrow"
+						},
+						{
+							"label": "Previous Pay Period",
+							"value": "Previous_Payperiod"
+						},
+						{
+							"label": "Current Pay Period",
+							"value": "Current_Payperiod"
+						},
+						{
+							"label": "Next Pay Period",
+							"value": "Next_Payperiod"
+						},
+						{
+							"label": "Previous Schedule Period",
+							"value": "Previous_SchedPeriod"
+						},
+						{
+							"label": "Current Schedule Period",
+							"value": "Current_SchedPeriod"
+						},
+						{
+							"label": "Next Schedule Period",
+							"value": "Next Schedule Period"
+						},
+						{
+							"label": "Next Schedule Period + 1",
+							"value": "Next_SchedPeriod_Plus_One"
+						},
+						{
+							"label": "Next Schedule Period + 2",
+							"value": "Next_SchedPeriod_Plus_Two"
+						},
+						{
+							"label": "Week to Date",
+							"value": "Week_to_Date"
+						},
+						{
+							"label": "Month to Date",
+							"value": "Month_to_Date"
+						},
+						{
+							"label": "Last Week",
+							"value": "Last_Week"
+						},
+						{
+							"label": "Yesterday, Today, Tomorrow",
+							"value": "Yesterday_Today_Tomorrow"
+						},
+						{
+							"label": "Yesterday Plus 6 Days",
+							"value": "Yesterday_Plus_Six_Days"
+						},
+						{
+							"label": "Yesterday Minus 13 Days",
+							"value": "Yesterday_Minus_Thirteen_Days"
+						},
+						{
+							"label": "Last 7 Days",
+							"value": "Last_Seven_Days"
+						},
+						{
+							"label": "Last 30 Days",
+							"value": "Last_Thirty_Days"
+						},
+						{
+							"label": "Current Week",
+							"value": "Current_Week"
+						},
+						{
+							"label": "Last 4 Weeks",
+							"value": "Last_Four_Weeks"
+						},
+						{
+							"label": "Last 3 Months",
+							"value": "Last_Three_Months"
+						},
+						{
+							"label": "Last 90 Days",
+							"value": "Last_Ninety_Days"
+						},
+						{
+							"label": "Last 4 Quarters",
+							"value": "Last_Four_Quarters"
+						},
+						{
+							"label": "Previous Forecast Week",
+							"value": "Previous_Forecast_Week"
+						},
+						{
+							"label": "Current Forecast Week",
+							"value": "Current_Forecast_Week"
+						},
+						{
+							"label": "Next Forecast Week",
+							"value": "Next_Forecast_Week"
+						},
+						{
+							"label": "Next Forecast Week + 1",
+							"value": "Next_Forecast_Week_Plus_One"
+						},
+						{
+							"label": "Next Forecast Week + 2",
+							"value": "Next_Forecast_Week_Plus_Two"
+						},
+						{
+							"label": "Same Week Last Year",
+							"value": "Same_Week_Last_Year"
+						},
+						{
+							"label": "Previous Work Week",
+							"value": "Previous_Work_Week"
+						},
+						{
+							"label": "Current Work Week",
+							"value": "Current_Work_Week"
+						},
+						{
+							"label": "Next Work Week",
+							"value": "Next_Work_Week"
+						}
+					],
+					"defaultValue": "",
+					"path": "where.employeeSet.dateRange.symbolicPeriod.qualifier"
+				},
+				{
+					"name": "startDate",
+					"type": "date",
+					"defaultValue": "today",
+					"path": "where.employeeSet.dateRange.startDate",
+					"validation": {
+						"maxRange": 365,
+						"relatedField": "endDate"
+					}
+				},
+				{
+					"name": "endDate",
+					"type": "date",
+					"defaultValue": "today",
+					"path": "where.employeeSet.dateRange.endDate",
+					"validation": {
+						"maxRange": 365,
+						"relatedField": "startDate"
+					}
+				},
+				{
+					"name": "Hyperfind ID",
+					"type": "integer",
+					"defaultValue": "",
+					"path": "where.employeeSet.hyperFindRef.id"
+				},
+				{
+					"name": "Hyperfind Name",
+					"type": "text",
+					"defaultValue": "",
+					"path": "where.employeeSet.hyperFindRef.qualifier"
+				},
+				{
+					"name": "Filter by Anchor Date",
+					"type": "boolean",
+					"options": [
+						true,
+						false
+					],
+					"defaultValue": " ",
+					"path": "where.employeeSet.filterByAnchorDate"
+				},
+				{
+					"name": "PersonNumber(s)",
+					"description": "PersonNumber",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.employeeSet.employees.qualifiers",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 10,
+						"pattern": "^[a-zA-Z0-9]+$",
+						"errorMessage": "PersonNumber must be alphanumeric and unique."
+					}
+				},
+				{
+					"name": "Employee ID(s)",
+					"description": "Employee ID",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.employeeSet.employees.ids",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 10,
+						"pattern": "^[0-9]+$",
+						"errorMessage": "Employee ID must be numeric and unique."
+					}
+				},
+				{
+					"name": "Paycode Name(s)",
+					"description": "Paycode Name",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.paycodes.qualifiers",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 10,
+						"pattern": "^[a-zA-Z0-9]+$",
+						"errorMessage": "Paycode Name must be alphanumeric and unique."
+					}
+				},
+				{
+					"name": "Paycode ID(s)",
+					"description": "Paycode ID",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.paycodes.ids",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 10,
+						"pattern": "^[0-9]+$",
+						"errorMessage": "Paycode ID must be numeric and unique."
+					}
+				},
+				{
+					"name": "Accrual Code Name(s)",
+					"description": "Accrual Code Name",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.accruals.qualifiers",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 10,
+						"pattern": "^[a-zA-Z0-9]+$",
+						"errorMessage": "Accrual Code Name must be alphanumeric and unique."
+					}
+				},
+				{
+					"name": "Accrual Code ID(s)",
+					"description": "Accrual Code ID",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.accruals.ids",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 10,
+						"pattern": "^[0-9]+$",
+						"errorMessage": "Accrual Code ID must be numeric and unique."
+					}
+				},
+				{
+					"name": "Accrual Transaction Type(s)",
+					"description": "Accrual Transaction Type",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.accrualTransactionType",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 10,
+						"pattern": "^[a-zA-Z0-9]+$",
+						"errorMessage": "Accrual Transaction Type must be alphanumeric and unique."
+					}
+				},
+				{
+					"name": "Exception Type(s)",
+					"description": "Exception Type",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.exceptionTypes.qualifiers",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 10,
+						"pattern": "^[a-zA-Z0-9]+$",
+						"errorMessage": "Exception Type must be alphanumeric and unique."
+					}
+				}
+			],
+			"requestProfile": {
+				"multiReadOptions": {
+					"forWorkWeek": "",
+					"forSplitDay": ""
+				},
+				"rollupContext": {
+					"byDateRange": "",
+					"anchorDate": "",
+					"byEmployee": "",
+					"byOrg": "",
+					"groupBy": "",
+					"byLaborCategory": "",
+					"byPaycode": "",
+					"timeFrameId": "",
+					"byJob": "",
+					"byPosition": "",
+					"byDate": ""
+				},
+				"where": {
+					"accrualTransactionType": [
+						""
+					],
+					"exceptionTypes": {
+						"qualifiers": [
+							""
+						]
+					},
+					"paycodes": {
+						"ids": [
+							""
+						],
+						"qualifiers": [
+							""
+						]
+					},
+					"accruals": {
+						"ids": [
+							""
+						],
+						"qualifiers": [
+							""
+						]
+					},
+					"employeeSet": {
+						"dateRange": {
+							"symbolicPeriod": {
+								"qualifier": ""
+							},
+							"startDate": "",
+							"endDate": ""
+						},
+						"employees": {
+							"ids": [
+								""
+							],
+							"qualifiers": [
+								""
+							]
+						},
+						"hyperFindRef": {
+							"id": "",
+							"qualifier": ""
+						},
+						"filterByAnchorDate": ""
+					},
+					"contributingDays": [],
+					"payCodeType": "",
+					"includeApprovingManagers": "",
+					"rollUpByJobId": ""
+				},
+				"options": {
+					"correctionOption": "",
+					"roundHoursAmountPerLocalePolicy": ""
+				},
+				"select": [],
+				"isIAOrigin": ""
+			}
+		},
+		"timekeepingTimecards": {
+			"name": "Timekeeping - Retrieve Timecards",
+			"method": "POST",
+			"url": "/v1/timekeeping/timecard/multi_read",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-timecards-as-manager"
+			},
+			"queryParametersHelp": "Query Parameters Optional.",
+			"queryParameters": [
+				{
+					"name": "partial_success",
+					"type": "select",
+					"description": "true",
+					"options": [
+						"true",
+						"false"
+					],
+					"defaultValue": "true"
+				}
+			],
+			"bodyParametersHelp": "Symbolic or Start & End Date required. PersonNumber(s), Employee ID(s) or Hyperfind required. Configure any other desired parameters (some only work with specific Timecard Items, see help link above for usage.",
+			"bodyParameters": [
+				{
+					"name": "Hide Flanking Days",
+					"type": "boolean",
+					"options": [
+						false,
+						true
+					],
+					"defaultValue": " ",
+					"path": "multiReadOptions.hideFlankingDays"
+				},
+				{
+					"name": "Include Hidden Pay Code Edits",
+					"type": "boolean",
+					"options": [
+						false,
+						true
+					],
+					"defaultValue": " ",
+					"path": "multiReadOptions.includeHiddenPayCodeEdits"
+				},
+				{
+					"name": "Include Phantom Punches",
+					"type": "boolean",
+					"options": [
+						false,
+						true
+					],
+					"defaultValue": " ",
+					"path": "multiReadOptions.includePhantomPunches"
+				},
+				{
+					"name": "Break Worked Spans at Midnight",
+					"type": "boolean",
+					"options": [
+						false,
+						true
+					],
+					"defaultValue": " ",
+					"path": "multiReadOptions.breakSpanAtMidnight"
+				},
+				{
+					"name": "Combine Worked Shifts at Midnight",
+					"type": "boolean",
+					"options": [
+						false,
+						true
+					],
+					"defaultValue": " ",
+					"path": "multiReadOptions.combineWorkShiftAtMidnight"
+				},
+				{
+					"name": "Include Kind of Time Segments",
+					"type": "boolean",
+					"options": [
+						false,
+						true
+					],
+					"defaultValue": " ",
+					"path": "multiReadOptions.includeKindOfTimeSegments"
+				},
+				{
+					"name": "Consolidate Schedule Segments",
+					"type": "boolean",
+					"options": [
+						false,
+						true
+					],
+					"defaultValue": " ",
+					"path": "multiReadOptions.consolidateScheduleSegments"
+				},
+				{
+					"name": "Include Combined Pay Code Totals",
+					"type": "boolean",
+					"options": [
+						false,
+						true
+					],
+					"defaultValue": " ",
+					"path": "multiReadOptions.totalsIncludeCombinedPaycodes"
+				},
+				{
+					"name": "Return True Cost Center In Totals",
+					"type": "boolean",
+					"options": [
+						false,
+						true
+					],
+					"defaultValue": " ",
+					"path": "multiReadOptions.returnTrueCostCenterId"
+				},
+				{
+					"name": "Retreive Full Labor Categories In Totals",
+					"type": "boolean",
+					"options": [
+						false,
+						true
+					],
+					"defaultValue": " ",
+					"path": "multiReadOptions.retrieveFullLaborCategories"
+				},
+				{
+					"name": "Retreive Totals for Work Week",
+					"type": "boolean",
+					"options": [
+						false,
+						true
+					],
+					"defaultValue": " ",
+					"path": "multiReadOptions.forWorkWeek"
+				},
+				{
+					"name": "Include Unprocessed Pay Codes in Totals",
+					"type": "boolean",
+					"options": [
+						false,
+						true
+					],
+					"defaultValue": " ",
+					"path": "multiReadOptions.includeUnprocessedPaycodeEdits"
+				},
+				{
+					"name": "Show Hidden Pay Code Totals",
+					"type": "boolean",
+					"options": [
+						false,
+						true
+					],
+					"defaultValue": " ",
+					"path": "multiReadOptions.showTotalsWithHiddenPaycodes"
+				},
+				{
+					"name": "Exceptions Include Justifications",
+					"type": "boolean",
+					"options": [
+						false,
+						true
+					],
+					"defaultValue": " ",
+					"path": "multiReadOptions.exceptionOptions.includeJustifications"
+				},
+				{
+					"name": "Exceptions Include Justifified Times",
+					"type": "boolean",
+					"options": [
+						false,
+						true
+					],
+					"defaultValue": " ",
+					"path": "multiReadOptions.exceptionOptions.includeJustifiedTimes"
+				},
+				{
+					"name": "Timecard Items",
+					"type": "multi-select",
+					"options": [
+						"ACTIVITY_SHIFTS",
+						"ACTIVITY_TOTALS",
+						"APPROVAL",
+						"DAILY_TOTAL_SUMMARY",
+						"EXCEPTIONS",
+						"EXTENDED_EXCEPTIONS",
+						"HAS_PENDING_CHANGES",
+						"HISTORICAL_CORRECTIONS",
+						"HOLIDAY_CREDITS",
+						"HOURS_WORKED",
+						"ITEM_TOTAL_SUMMARY",
+						"MOVE_AMOUNTS",
+						"OTA",
+						"OVERTIME_DETAILS",
+						"OVERTIME_SUMMARY",
+						"PAYCODE_EDITS",
+						"PROCESSED_SEGMENTS",
+						"PROJECTS",
+						"PUNCHES",
+						"REMOVE_APPROVAL",
+						"REMOVE_SIGNOFF",
+						"SAVE",
+						"SCHEDULE_SHIFT",
+						"SCHEDULED_TOTALS",
+						"SIGNOFF",
+						"TIMECARD_LAST_UPDATED_BY_SOMEELSE",
+						"TOTAL_SUMMARY",
+						"TOTALIZE",
+						"TOTALS",
+						"WORKED_SHIFTS"
+					],
+					"defaultValue": [
+						""
+					],
+					"path": "select",
+					"validation": {
+						"minSelected": 1,
+						"maxSelected": 30
+					}
+				},
+				{
+					"name": "totalsRollupBy",
+					"type": "select",
+					"options": [
+						"ACTIVITY_EVENT",
+						"ALL",
+						"DAILY",
+						"PERIOD_TO_DATE",
+						"RAW",
+						"SHIFT",
+						"TIMEITEM"
+					],
+					"defaultValue": " ",
+					"path": "multiReadOptions.totalsRollupBy"
+				},
+				{
+					"name": "Totals Context Date within Range",
+					"type": "date",
+					"defaultValue": "",
+					"path": "multiReadOptions.contextDate"
+				},
+				{
+					"name": "Activity ID",
+					"type": "integer",
+					"defaultValue": "",
+					"path": "where.activity.id"
+				},
+				{
+					"name": "Activity Name",
+					"type": "text",
+					"defaultValue": "",
+					"path": "where.activity.qualifier"
+				},
+				{
+					"name": "Activity Work Shift ID",
+					"type": "integer",
+					"defaultValue": "",
+					"path": "where.shiftId"
+				},
+				{
+					"name": "Symbolic Period",
+					"description": " ",
+					"type": "select",
+					"options": [
+						{
+							"label": "Today",
+							"value": "Today"
+						},
+						{
+							"label": "Yesterday",
+							"value": "Yesterday"
+						},
+						{
+							"label": "Tomorrow",
+							"value": "Tomorrow"
+						},
+						{
+							"label": "Previous Pay Period",
+							"value": "Previous_Payperiod"
+						},
+						{
+							"label": "Current Pay Period",
+							"value": "Current_Payperiod"
+						},
+						{
+							"label": "Next Pay Period",
+							"value": "Next_Payperiod"
+						},
+						{
+							"label": "Previous Schedule Period",
+							"value": "Previous_SchedPeriod"
+						},
+						{
+							"label": "Current Schedule Period",
+							"value": "Current_SchedPeriod"
+						},
+						{
+							"label": "Next Schedule Period",
+							"value": "Next Schedule Period"
+						},
+						{
+							"label": "Next Schedule Period + 1",
+							"value": "Next_SchedPeriod_Plus_One"
+						},
+						{
+							"label": "Next Schedule Period + 2",
+							"value": "Next_SchedPeriod_Plus_Two"
+						},
+						{
+							"label": "Week to Date",
+							"value": "Week_to_Date"
+						},
+						{
+							"label": "Month to Date",
+							"value": "Month_to_Date"
+						},
+						{
+							"label": "Last Week",
+							"value": "Last_Week"
+						},
+						{
+							"label": "Yesterday, Today, Tomorrow",
+							"value": "Yesterday_Today_Tomorrow"
+						},
+						{
+							"label": "Yesterday Plus 6 Days",
+							"value": "Yesterday_Plus_Six_Days"
+						},
+						{
+							"label": "Yesterday Minus 13 Days",
+							"value": "Yesterday_Minus_Thirteen_Days"
+						},
+						{
+							"label": "Last 7 Days",
+							"value": "Last_Seven_Days"
+						},
+						{
+							"label": "Last 30 Days",
+							"value": "Last_Thirty_Days"
+						},
+						{
+							"label": "Current Week",
+							"value": "Current_Week"
+						},
+						{
+							"label": "Last 4 Weeks",
+							"value": "Last_Four_Weeks"
+						},
+						{
+							"label": "Last 3 Months",
+							"value": "Last_Three_Months"
+						},
+						{
+							"label": "Last 90 Days",
+							"value": "Last_Ninety_Days"
+						},
+						{
+							"label": "Last 4 Quarters",
+							"value": "Last_Four_Quarters"
+						},
+						{
+							"label": "Previous Forecast Week",
+							"value": "Previous_Forecast_Week"
+						},
+						{
+							"label": "Current Forecast Week",
+							"value": "Current_Forecast_Week"
+						},
+						{
+							"label": "Next Forecast Week",
+							"value": "Next_Forecast_Week"
+						},
+						{
+							"label": "Next Forecast Week + 1",
+							"value": "Next_Forecast_Week_Plus_One"
+						},
+						{
+							"label": "Next Forecast Week + 2",
+							"value": "Next_Forecast_Week_Plus_Two"
+						},
+						{
+							"label": "Same Week Last Year",
+							"value": "Same_Week_Last_Year"
+						},
+						{
+							"label": "Previous Work Week",
+							"value": "Previous_Work_Week"
+						},
+						{
+							"label": "Current Work Week",
+							"value": "Current_Work_Week"
+						},
+						{
+							"label": "Next Work Week",
+							"value": "Next_Work_Week"
+						}
+					],
+					"defaultValue": "",
+					"path": "where.dateRange.symbolicPeriod.qualifier"
+				},
+				{
+					"name": "startDate",
+					"type": "date",
+					"defaultValue": "today",
+					"path": "where.dateRange.startDate",
+					"validation": {
+						"maxRange": 365,
+						"relatedField": "endDate"
+					}
+				},
+				{
+					"name": "endDate",
+					"type": "date",
+					"defaultValue": "today",
+					"path": "where.dateRange.endDate",
+					"validation": {
+						"maxRange": 365,
+						"relatedField": "startDate"
+					}
+				},
+				{
+					"name": "Hyperfind ID",
+					"type": "integer",
+					"defaultValue": "",
+					"path": "where.hyperfind.id"
+				},
+				{
+					"name": "Hyperfind Name",
+					"type": "text",
+					"defaultValue": "",
+					"path": "where.hyperfind.qualifier"
+				},
+				{
+					"name": "PersonNumber(s)",
+					"description": "PersonNumber",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.employees.qualifiers",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 10,
+						"pattern": "^[a-zA-Z0-9]+$",
+						"errorMessage": "Employee IDs must be alphanumeric and unique."
+					}
+				},
+				{
+					"name": "Employee ID(s)",
+					"description": "Employee ID",
+					"type": "multi-text",
+					"defaultValue": [
+						""
+					],
+					"path": "where.employees.ids",
+					"validation": {
+						"minEntered": 1,
+						"maxEntered": 10,
+						"pattern": "^[0-9]+$",
+						"errorMessage": "Employee IDs must be numeric and unique."
+					}
+				}
+			],
+			"requestProfile": {
+				"multiReadOptions": {
+					"hideFlankingDays": "",
+					"includePhantomPunches": "",
+					"includeHiddenPayCodeEdits": "",
+					"breakSpanAtMidnight": "",
+					"combineWorkShiftAtMidnight": "",
+					"includeKindOfTimeSegments": "",
+					"consolidateScheduleSegments": "",
+					"returnTrueCostCenterId": "",
+					"retrieveFullLaborCategories": "",
+					"forWorkWeek": "",
+					"includeUnprocessedPaycodeEdits": "",
+					"showTotalsWithHiddenPaycodes": "",
+					"totalsIncludeCombinedPaycodes": "",
+					"totalsRollupBy": "",
+					"contextdate": "",
+					"exceptionOptions": {
+						"includeJustifications": "",
+						"includeJustifiedTimes": ""
+					}
+				},
+				"select": [
+					""
+				],
+				"where": {
+					"dateRange": {
+						"endDate": "",
+						"startDate": ""
+					},
+					"activity": {
+						"id": "",
+						"qualifier": ""
+					},
+					"employees": {
+						"ids": [
+							""
+						],
+						"qualifiers": [
+							""
+						]
+					},
+					"hyperFind": {
+						"id": "",
+						"qualifier": ""
+					},
+					"resolveSymbolicTimeFrame": "",
+					"shiftId": ""
+				}
+			}
+		},
+		"timekeepingTimecardApprovals": {
+			"name": "Timekeeping - Get Timecard Approvals",
+			"method": "GET",
+			"url": "/v1/timekeeping/timecard_approvals",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-timecard-approvals-as-manager"
+			},
+			"queryParametersHelp": "Symbolic or Start & End Date required. Employee ID, PersonNumber or AOID required.",
+			"queryParameters": [
+				{
+					"name": "symbolic_period_id",
+					"description": " ",
+					"type": "select",
+					"options": [
+						{
+							"label": "Today",
+							"value": 13
+						},
+						{
+							"label": "Yesterday",
+							"value": 8
+						},
+						{
+							"label": "Tomorrow",
+							"value": 2001
+						},
+						{
+							"label": "Previous Pay Period",
+							"value": 0
+						},
+						{
+							"label": "Current Pay Period",
+							"value": 1
+						},
+						{
+							"label": "Next Pay Period",
+							"value": 2
+						},
+						{
+							"label": "Previous Schedule Period",
+							"value": 3
+						},
+						{
+							"label": "Current Schedule Period",
+							"value": 4
+						},
+						{
+							"label": "Next Schedule Period",
+							"value": 5
+						},
+						{
+							"label": "Next Schedule Period + 1",
+							"value": 2002
+						},
+						{
+							"label": "Next Schedule Period + 2",
+							"value": 2003
+						},
+						{
+							"label": "Week to Date",
+							"value": 6
+						},
+						{
+							"label": "Month to Date",
+							"value": 30
+						},
+						{
+							"label": "Last Week",
+							"value": 7
+						},
+						{
+							"label": "Yesterday, Today, Tomorrow",
+							"value": 901
+						},
+						{
+							"label": "Yesterday Plus 6 Days",
+							"value": 902
+						},
+						{
+							"label": "Yesterday Minus 13 Days",
+							"value": 907
+						},
+						{
+							"label": "Last 7 Days",
+							"value": 906
+						},
+						{
+							"label": "Last 30 Days",
+							"value": 903
+						},
+						{
+							"label": "Current Week",
+							"value": 904
+						},
+						{
+							"label": "Last 4 Weeks",
+							"value": 910
+						},
+						{
+							"label": "Last 3 Months",
+							"value": 908
+						},
+						{
+							"label": "Last 90 Days",
+							"value": 905
+						},
+						{
+							"label": "Last 4 Quarters",
+							"value": 909
+						},
+						{
+							"label": "Previous Forecast Week",
+							"value": 33
+						},
+						{
+							"label": "Current Forecast Week",
+							"value": 34
+						},
+						{
+							"label": "Next Forecast Week",
+							"value": 35
+						},
+						{
+							"label": "Next Forecast Week + 1",
+							"value": 37
+						},
+						{
+							"label": "Next Forecast Week + 2",
+							"value": 38
+						},
+						{
+							"label": "Same Week Last Year",
+							"value": 36
+						},
+						{
+							"label": "Previous Work Week",
+							"value": 14
+						},
+						{
+							"label": "Current Work Week",
+							"value": 14
+						},
+						{
+							"label": "Next Work Week",
+							"value": 14
+						}
+					],
+					"defaultValue": ""
+				},
+				{
+					"name": "start_date",
+					"type": "date",
+					"defaultValue": "",
+					"validation": {
+						"maxRange": 365,
+						"relatedField": "endDate"
+					}
+				},
+				{
+					"name": "end_date",
+					"type": "date",
+					"defaultValue": "",
+					"validation": {
+						"maxRange": 365,
+						"relatedField": "startDate"
+					}
+				},
+				{
+					"name": "employee_id",
+					"type": "integer",
+					"description": "true",
+					"defaultValue": ""
+				},
+				{
+					"name": "person_num",
+					"description": "",
+					"type": "text",
+					"defaultValue": ""
+				},
+				{
+					"name": "aoid",
+					"description": "",
+					"type": "text",
+					"defaultValue": ""
+				}
+			],
+			"exportMap": "TimecardApprovals"
+		},
+		"timekeepingTimecardChanges": {
+			"name": "Timekeeping - Get Timecard Changes",
+			"method": "GET",
+			"url": "/v1/timekeeping/timecard/changes",
+			"devLink": {
+				"urlText": "Get help on this API ?",
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-timecard-changes"
+			},
+			"queryParametersHelp": "Symbolic or Start & End Date required. Employee ID or PersonNumber required. Status required.",
+			"queryParameters": [
+				{
+					"name": "symbolic_period_id",
+					"description": " ",
+					"type": "select",
+					"options": [
+						{
+							"label": "Today",
+							"value": 13
+						},
+						{
+							"label": "Yesterday",
+							"value": 8
+						},
+						{
+							"label": "Tomorrow",
+							"value": 2001
+						},
+						{
+							"label": "Previous Pay Period",
+							"value": 0
+						},
+						{
+							"label": "Current Pay Period",
+							"value": 1
+						},
+						{
+							"label": "Next Pay Period",
+							"value": 2
+						},
+						{
+							"label": "Previous Schedule Period",
+							"value": 3
+						},
+						{
+							"label": "Current Schedule Period",
+							"value": 4
+						},
+						{
+							"label": "Next Schedule Period",
+							"value": 5
+						},
+						{
+							"label": "Next Schedule Period + 1",
+							"value": 2002
+						},
+						{
+							"label": "Next Schedule Period + 2",
+							"value": 2003
+						},
+						{
+							"label": "Week to Date",
+							"value": 6
+						},
+						{
+							"label": "Month to Date",
+							"value": 30
+						},
+						{
+							"label": "Last Week",
+							"value": 7
+						},
+						{
+							"label": "Yesterday, Today, Tomorrow",
+							"value": 901
+						},
+						{
+							"label": "Yesterday Plus 6 Days",
+							"value": 902
+						},
+						{
+							"label": "Yesterday Minus 13 Days",
+							"value": 907
+						},
+						{
+							"label": "Last 7 Days",
+							"value": 906
+						},
+						{
+							"label": "Last 30 Days",
+							"value": 903
+						},
+						{
+							"label": "Current Week",
+							"value": 904
+						},
+						{
+							"label": "Last 4 Weeks",
+							"value": 910
+						},
+						{
+							"label": "Last 3 Months",
+							"value": 908
+						},
+						{
+							"label": "Last 90 Days",
+							"value": 905
+						},
+						{
+							"label": "Last 4 Quarters",
+							"value": 909
+						},
+						{
+							"label": "Previous Forecast Week",
+							"value": 33
+						},
+						{
+							"label": "Current Forecast Week",
+							"value": 34
+						},
+						{
+							"label": "Next Forecast Week",
+							"value": 35
+						},
+						{
+							"label": "Next Forecast Week + 1",
+							"value": 37
+						},
+						{
+							"label": "Next Forecast Week + 2",
+							"value": 38
+						},
+						{
+							"label": "Same Week Last Year",
+							"value": 36
+						},
+						{
+							"label": "Previous Work Week",
+							"value": 14
+						},
+						{
+							"label": "Current Work Week",
+							"value": 14
+						},
+						{
+							"label": "Next Work Week",
+							"value": 14
+						}
+					],
+					"defaultValue": ""
+				},
+				{
+					"name": "start_date",
+					"type": "date",
+					"defaultValue": "",
+					"validation": {
+						"maxRange": 365,
+						"relatedField": "endDate"
+					}
+				},
+				{
+					"name": "end_date",
+					"type": "date",
+					"defaultValue": "",
+					"validation": {
+						"maxRange": 365,
+						"relatedField": "startDate"
+					}
+				},
+				{
+					"name": "employee_id",
+					"type": "integer",
+					"description": "true",
+					"defaultValue": ""
+				},
+				{
+					"name": "person_number",
+					"description": "",
+					"type": "text",
+					"defaultValue": ""
+				},
+				{
+					"name": "status",
+					"type": "select",
+					"options": [
+						"SUBMITTED",
+						"APPROVED",
+						"REFUSED"
+					],
+					"defaultValue": ""
+				}
+			]
+		}
+	}
+}
