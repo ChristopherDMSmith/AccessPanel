@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+         name="description"
+         content="API access and token management for ADP Workforce Manager"
+         />
+      <title>AccessPanel</title>
+      <link rel="stylesheet" href="styles/uistyles.css" />
+      <link
+         href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;900&display=swap"
+         rel="stylesheet"
+         />
+      <script src="scripts/main.js"></script>
+   </head>
+   <body>
+      <!-- Header -->
+      <div class="title-bar">
+         <div class="app-title-section">
+            <svg
+               class="header-icon icon-api"
+               viewBox="0 0 500 330"
+               preserveAspectRatio="xMidYMin meet"
+               role="img"
+               aria-label="AccessPanel"
+               >
+               <g id="innercircle">
+                  <path class="st0" d="M261.9,93.9h-43.2c-3,0-5.9-1.6-7.4-4.3l-19.7-34.1c-1.5-2.6-1.5-5.9,0-8.5l19.7-34.1c1.5-2.6,4.3-4.3,7.4-4.3
+                     h43.2c3,0,5.9,1.6,7.4,4.3L289,46.9c1.5,2.6,1.5,5.9,0,8.5l-19.7,34.1C267.7,92.2,264.9,93.9,261.9,93.9L261.9,93.9z"/>
+                  <path class="st0" d="M389.9,170.7h-43.2c-3,0-5.9-1.6-7.4-4.3l-19.7-34.1c-1.5-2.6-1.5-5.9,0-8.5l19.7-34.1
+                     c1.5-2.6,4.3-4.3,7.4-4.3h43.2c3,0,5.9,1.6,7.4,4.3l19.7,34.1c1.5,2.6,1.5,5.9,0,8.5l-19.7,34.1C395.7,169,392.9,170.7,389.9,170.7
+                     z"/>
+                  <path class="st0" d="M261.9,418.1h-43.2c-3,0-5.9,1.6-7.4,4.3l-19.7,34.1c-1.5,2.6-1.5,5.9,0,8.5l19.7,34.1
+                     c1.5,2.6,4.3,4.3,7.4,4.3h43.2c3,0,5.9-1.6,7.4-4.3l19.7-34.1c1.5-2.6,1.5-5.9,0-8.5l-19.7-34.1
+                     C267.7,419.8,264.9,418.1,261.9,418.1L261.9,418.1z"/>
+                  <path class="st0" d="M389.9,341.3h-43.2c-3,0-5.9,1.6-7.4,4.3l-19.7,34.1c-1.5,2.6-1.5,5.9,0,8.5l19.7,34.1
+                     c1.5,2.6,4.3,4.3,7.4,4.3h43.2c3,0,5.9-1.6,7.4-4.3l19.7-34.1c1.5-2.6,1.5-5.9,0-8.5l-19.7-34.1C395.7,343,392.9,341.3,389.9,341.3
+                     z"/>
+                  <path class="st0" d="M432,213.3h43.2c3,0,5.9,1.6,7.4,4.3l19.7,34.1c1.5,2.6,1.5,5.9,0,8.5l-19.7,34.1c-1.5,2.6-4.3,4.3-7.4,4.3
+                     H432c-3,0-5.9-1.6-7.4-4.3l-19.7-34.1c-1.5-2.6-1.5-5.9,0-8.5l19.7-34.1C426.1,215,428.9,213.3,432,213.3z"/>
+                  <path class="st0" d="M90.8,128h125.6c9,0.1,17.2,5,21.5,12.8l57.4,102.4c4.4,8,4.4,17.6,0,25.6l-57.4,102.4
+                     c-4.3,7.8-12.5,12.7-21.5,12.8H90.8c-9-0.1-17.2-5-21.5-12.8L11.9,268.8c-4.4-8-4.4-17.6,0-25.6l57.4-102.4
+                     C73.6,133,81.8,128.1,90.8,128L90.8,128z"/>
+               </g>
+               <g id="keyhole">
+                  <circle class="st1" cx="153.6" cy="256" r="93.9"/>
+               </g>
+               <g id="brackets">
+                  <path id="_x3C_Path_x3E_" class="st2" d="M490,213.3c-3.1-5.3-8.7-8.5-14.8-8.5H432c-6.1,0-11.7,3.3-14.8,8.5l-19.7,34.1h-91.4
+                     c-0.7-3-1.9-5.8-3.3-8.5l-27.1-48.4l51.5-28.1l4.7,8.2c3.1,5.3,8.7,8.5,14.8,8.5h43.2c6.1,0,11.7-3.3,14.8-8.5l19.7-34.1
+                     c3.1-5.3,3.1-11.8,0-17.1l-19.7-34.1c-3.1-5.3-8.7-8.5-14.8-8.5h-43.2c-6.1,0-11.7,3.3-14.8,8.5l-19.7,34.2c-3,5.3-3,11.8,0,17.1
+                     l6.5,11.2l-51.3,28.1l-22-39.1c-2.6-4.6-6.2-8.5-10.5-11.4l9.8-22.9h17.3c6.1,0,11.7-3.3,14.8-8.5l19.7-34.1c3-5.3,3-11.8,0-17.1
+                     L276.6,8.5C273.6,3.3,268,0,261.9,0h-43.2c-6.1,0-11.7,3.3-14.8,8.5l-19.7,34.1c-3,5.3-3,11.8,0,17.1l19.7,34.1
+                     c3.1,5.3,8.7,8.5,14.8,8.5h7.3l-7.4,17.2c-0.7-0.1-1.5-0.2-2.2-0.2H90.8c-12,0.1-23.1,6.6-28.9,17.1L4.4,239
+                     c-5.9,10.6-5.9,23.4,0,34l57.4,102.4c5.8,10.5,16.9,17.1,28.9,17.1h125.6c0.8,0,1.5-0.1,2.2-0.2l7.4,17.2h-7.3
+                     c-6.1,0-11.7,3.3-14.8,8.5l-19.7,34.1c-3.1,5.3-3.1,11.8,0,17.1l19.7,34.1c3.1,5.3,8.7,8.5,14.8,8.5h43.2c6.1,0,11.7-3.3,14.8-8.5
+                     l19.7-34.1c3.1-5.3,3.1-11.8,0-17.1l-19.7-34.1c-3.1-5.3-8.7-8.5-14.8-8.5h-17.3l-9.8-22.8c4.3-2.9,8-6.8,10.5-11.4l22-39.2
+                     l51.3,28l-6.5,11.3c-3.1,5.3-3.1,11.8,0,17.1l19.7,34.1c3.1,5.3,8.7,8.5,14.8,8.5h43.2c6.1,0,11.7-3.3,14.8-8.5l19.7-34.1
+                     c3.1-5.3,3.1-11.8,0-17.1l-19.7-34.1c-3.1-5.3-8.7-8.5-14.8-8.5h-43.2c-6.1,0-11.7,3.3-14.8,8.5l-4.7,8.2l-51.5-28.1l27.1-48.4
+                     c1.5-2.7,2.6-5.5,3.4-8.5h91.4l19.7,34.1c3.1,5.3,8.7,8.5,14.8,8.5h43.2c6.1,0,11.7-3.3,14.8-8.5l19.7-34.1c3-5.3,3-11.8,0-17.1
+                     L490,213.3z M346.7,93.9h43.2l19.7,34.1l-19.7,34.1h-43.2l-8.7-15.1V147l-0.1-0.1L326.9,128L346.7,93.9z M198.9,51.2l19.7-34.1
+                     h43.2l19.7,34.1l-19.7,34.1h-43.2L198.9,51.2z M281.6,460.8l-19.7,34.1h-43.2l-19.7-34.1l19.7-34.1h43.2L281.6,460.8z M389.9,349.9
+                     l19.7,34.1l-19.7,34.1h-43.2L326.9,384l10.9-18.8l0.1-0.1V365l8.8-15.1H389.9z M287.9,264.6l-31.3,55.7c-0.1,0.1-0.1,0.1-0.2,0.2
+                     c0,0.1,0,0.2-0.1,0.2L230.5,367c-2.8,5.1-8.2,8.4-14,8.4H90.8c-5.9-0.1-11.2-3.3-14-8.4L19.3,264.6c-3-5.4-3-11.9,0-17.3L76.7,145
+                     c2.8-5.1,8.2-8.4,14.1-8.4h125.6c5.9,0.1,11.2,3.3,14,8.4l25.9,46.2c0,0.1,0,0.2,0.1,0.2c0.1,0.1,0.2,0.2,0.2,0.3l31.2,55.6
+                     C290.9,252.7,290.9,259.3,287.9,264.6L287.9,264.6z M475.2,290.1H432L412.3,256l19.7-34.1h43.2l19.7,34.1L475.2,290.1z"/>
+                  <path class="st2" d="M153.6,153.6c-42.2-0.2-80.2,25.8-95.4,65.2c-1.7,4.4,0.5,9.3,4.9,11.1c4.4,1.7,9.3-0.5,11.1-4.9
+                     c17.1-43.9,66.6-65.7,110.5-48.6s65.7,66.6,48.6,110.5c-17.1,43.9-66.6,65.7-110.5,48.6c-32.8-12.8-54.4-44.3-54.4-79.5
+                     c0-4.7-3.8-8.5-8.5-8.5s-8.5,3.8-8.5,8.5c0,56.6,45.8,102.4,102.4,102.4S256,312.6,256,256S210.2,153.6,153.6,153.6z"/>
+                  <path class="st2" d="M179.2,230.4c4.7,0,8.5-3.8,8.5-8.5c0-4.7-3.8-8.5-8.5-8.5H128c-4.7,0-8.5,3.8-8.5,8.5c0,4.7,3.8,8.5,8.5,8.5
+                     H179.2z"/>
+                  <path class="st2" d="M128,281.6c-4.7,0-8.5,3.8-8.5,8.5c0,4.7,3.8,8.5,8.5,8.5h51.2c4.7,0,8.5-3.8,8.5-8.5c0-4.7-3.8-8.5-8.5-8.5
+                     H128z"/>
+                  <path class="st2" d="M93.9,256c0,4.7,3.8,8.5,8.5,8.5h102.4c4.7,0,8.5-3.8,8.5-8.5c0-4.7-3.8-8.5-8.5-8.5H102.4
+                     C97.7,247.5,93.9,251.3,93.9,256z"/>
+                  <path class="st2" d="M247.5,59.7c4.7,0,8.5-3.8,8.5-8.5s-3.8-8.5-8.5-8.5h-17.1c-4.7,0-8.5,3.8-8.5,8.5s3.8,8.5,8.5,8.5H247.5z"/>
+                  <path class="st2" d="M358.4,136.5h17.1c4.7,0,8.5-3.8,8.5-8.5c0-4.7-3.8-8.5-8.5-8.5h-17.1c-4.7,0-8.5,3.8-8.5,8.5
+                     C349.9,132.7,353.7,136.5,358.4,136.5z"/>
+                  <path class="st2" d="M460.8,247.5h-17.1c-4.7,0-8.5,3.8-8.5,8.5c0,4.7,3.8,8.5,8.5,8.5h17.1c4.7,0,8.5-3.8,8.5-8.5
+                     C469.3,251.3,465.5,247.5,460.8,247.5z"/>
+                  <path class="st2" d="M358.4,392.5h17.1c4.7,0,8.5-3.8,8.5-8.5s-3.8-8.5-8.5-8.5h-17.1c-4.7,0-8.5,3.8-8.5,8.5
+                     S353.7,392.5,358.4,392.5z"/>
+                  <path class="st2" d="M221.9,460.8c0,4.7,3.8,8.5,8.5,8.5h17.1c4.7,0,8.5-3.8,8.5-8.5s-3.8-8.5-8.5-8.5h-17.1
+                     C225.7,452.3,221.9,456.1,221.9,460.8z"/>
+               </g>
+            </svg>
+            <!--<span class="app-title">AccessPanel</span>-->
+         </div>
+         <div class="title-actions">
+            <button id="reload-app" class="icon-btn" title="Reload App" aria-label="Reload App">
+            <img src="icons/reload-app.png" alt="" />
+            </button>
+         </div>
+      </div>
+      <!-- Overlay for non-linked tabs -->
+<!--      <div id="hermes-overlay" class="hermes-overlay hidden">
+         <div class="overlay-content">
+            <h3>Session Active in Another Tab</h3>
+            <p>Return to the linked WFM session tab to use AccessPanel.</p>
+            <button id="hermes-return-to-tab" class="btn">
+            Return to Linked Tab
+            </button>
+            <button id="hermes-relink-tab" class="btn">
+            Link This Tab Instead
+            </button>
+         </div>
+      </div>
+      <div id="hermes-link-banner" data-show="false">
+         <div class="row row-status">
+            <strong id="hermes-link-status">Linked</strong>
+            <span class="small" id="hermes-link-target"></span>
+         </div>
+         <div class="small" id="hermes-link-hint"></div>
+      </div>-->
+<!-- Overlay for non-linked tabs -->
+<div id="hermes-overlay" class="hermes-overlay hidden">
+  <div class="overlay-content">
+    <h3>Session Status</h3>
+    <p>Click "Check Connection" to re-validate your session.</p>
+
+    <button id="hermes-check-connection" class="btn">
+      Check Connection
+    </button>
+
+    <button id="hermes-relink-tab" class="btn">
+      Link This Tab Instead
+    </button>
+  </div>
+</div>
+
+<div id="hermes-link-banner" data-show="false">
+  <div class="row row-status">
+    <strong id="hermes-link-status">Linked</strong>
+    <span class="small" id="hermes-link-target"></span>
+  </div>
+  <div class="small" id="hermes-link-hint"></div>
+</div>
+      <!-- Menu Bar -->
+      <div class="menu-bar">
+         <!-- Admin Dropdown -->
+         <div class="dropdown">
+            <button class="menu-btn">Admin ▾</button>
+            <div class="dropdown-content">
+               <a href="#" id="admin-settings">Preferences</a>
+               <a href="#" id="clear-all-data">Clear All Tenant Data</a>
+               <a href="#" id="clear-client-data">Clear Current Tenant Data</a>
+            </div>
+         </div>
+         <div class="dropdown">
+            <button class="menu-btn">Links ▾</button>
+            <div class="dropdown-content">
+               <a href="#" id="links-boomi">Boomi</a>
+               <a href="#" id="links-install-integrations">Install Integrations</a>
+               <a href="#" id="links-developer-portal">Developer Portal</a>
+            </div>
+         </div>
+         <!-- Theme Selector (click menu + hidden select) -->
+         <div class="dropdown" id="themes-dropdown">
+            <button class="menu-btn" id="theme-menu-btn" aria-haspopup="true" aria-expanded="false">
+            Themes ▾
+            </button>
+            <div class="dropdown-content theme-menu" id="theme-menu" role="menu"></div>
+         </div>
+         <!-- Hidden select remains the single source of truth for themeSelection() -->
+         <select id="theme-selector" hidden></select>
+         <!-- Help Menu -->
+         <div class="dropdown">
+            <button class="menu-btn">Help ▾</button>
+            <div class="dropdown-content">
+               <a href="#" id="help-about">About</a>
+               <a href="#" id="help-support">Support</a>
+            </div>
+         </div>
+      </div>
+      <!-- Main Body -->
+      <div class="main-body">
+      <!-- Collapsible: Tenant Information -->
+      <div class="collapsible-tenant-section">
+         <button class="collapsible-tenant-toggle" id="toggle-tenant-section">
+         ▼ Show Tenant Information ▼
+         </button>
+         <div class="collapsible-tenant-content" id="tenant-section-content">
+            <button class="btn" id="tms-pull-api">Pull Tenant From TMS</button>
+            <button class="btn" id="generate-birt-file">Generate BIRT Properties</button>
+            <div>
+               <p></p>
+            </div>
+            <!-- Client URL -->
+            <div class="form-group-client-url">
+               <label for="client-url">API Access Client URL</label>
+               <div class="client-secret-container">
+                  <input
+                     type="password"
+                     id="client-url"
+                     class="input-box"
+                     placeholder="https://{tenant}.mykronos.com/..."
+                     readonly
+                     />
+                  <img
+                     id="toggle-client-url"
+                     class="input-icon"
+                     src="icons/eyeopen.png"
+                     alt="Toggle Visibility"
+                     title="Toggle Visibility"
+                     />
+               </div>
+               <button class="btn" id="refresh-client-url">Refresh URL</button>
+               <button class="btn" id="copy-client-url">Copy URL</button>
+            </div>
+            <!-- Client ID -->
+            <div class="form-group-client-id">
+               <label for="client-id">API Access Client ID</label>
+               <div class="client-secret-container">
+                  <input
+                     type="password"
+                     id="client-id"
+                     class="input-box"
+                     placeholder="Enter Client ID"
+                     />
+                  <img
+                     id="toggle-client-id"
+                     class="input-icon"
+                     src="icons/eyeopen.png"
+                     alt="Toggle Visibility"
+                     title="Toggle Visibility"
+                     />
+               </div>
+               <button class="btn" id="save-client-id">Save Client ID</button>
+               <button class="btn" id="copy-client-id">Copy Client ID</button>
+            </div>
+            <!-- Client Secret -->
+            <div class="form-group-client-secret">
+               <label for="client-secret">API Access Client Secret</label>
+               <div class="client-secret-container">
+                  <input
+                     type="password"
+                     id="client-secret"
+                     class="input-box"
+                     placeholder="Enter Client Secret"
+                     />
+                  <img
+                     id="toggle-client-secret"
+                     class="input-icon"
+                     src="icons/eyeopen.png"
+                     alt="Toggle Visibility"
+                     title="Toggle Visibility"
+                     />
+               </div>
+               <button class="btn" id="save-client-secret">
+               Save Client Secret
+               </button>
+               <button class="btn" id="copy-client-secret">Copy Client Secret</button>
+            </div>
+            <!-- Tenant ID -->
+            <div class="form-group-tenant-id">
+               <label for="tenant-id">Tenant ID</label>
+               <div class="client-secret-container">
+                  <input
+                     type="password"
+                     id="tenant-id"
+                     class="input-box"
+                     placeholder="Enter Tenant ID"
+                     />
+                  <img
+                     id="toggle-tenant-id"
+                     class="input-icon"
+                     src="icons/eyeopen.png"
+                     alt="Toggle Visibility"
+                     title="Toggle Visibility"
+                     />
+               </div>
+               <button class="btn" id="save-tenant-id">Save Tenant ID</button>
+               <button class="btn" id="copy-tenant-id">Copy Tenant ID</button>
+            </div>
+         </div>
+      </div>
+      <!-- Collapsible: API Token Options -->
+      <div class="collapsible-access-section">
+         <button class="collapsible-access-toggle" id="toggle-access-section">
+         ▼ Show API Tokens Options ▼
+         </button>
+         <div class="collapsible-access-content" id="access-section-content">
+            <!-- Access Token -->
+            <div class="form-group-access-token">
+               <label for="access-token">Access Token</label>
+               <div class="client-secret-container">
+                  <input
+                     type="password"
+                     id="access-token"
+                     class="input-box"
+                     placeholder="Get Token"
+                     readonly
+                     />
+                  <img
+                     id="toggle-access-token"
+                     class="input-icon"
+                     src="icons/eyeopen.png"
+                     alt="Toggle Visibility"
+                     title="Toggle Visibility"
+                     />
+               </div>
+               <div class="btn-timer-group">
+                  <button class="btn" id="get-token">Get Access Token</button>
+                  <button class="btn" id="copy-token">Copy Access Token</button>
+                  <span class="timer" id="timer">--:--</span>
+               </div>
+            </div>
+            <!-- Refresh Token -->
+            <div class="form-group-refresh-token">
+               <label for="refresh-token">Refresh Token</label>
+               <div class="client-secret-container">
+                  <input
+                     type="password"
+                     id="refresh-token"
+                     class="input-box"
+                     placeholder="Get Access Token"
+                     readonly
+                     />
+                  <img
+                     id="toggle-refresh-token"
+                     class="input-icon"
+                     src="icons/eyeopen.png"
+                     alt="Toggle Visibility"
+                     title="Toggle Visibility"
+                     />
+               </div>
+               <div class="refresh-btn-timer-group">
+                  <button class="btn" id="refresh-access-token">
+                  Refresh Access Token
+                  </button>
+                  <button class="btn" id="copy-refresh-token">
+                  Copy Refresh Token
+                  </button>
+                  <span class="refresh-timer" id="refresh-timer">--:--</span>
+               </div>
+            </div>
+         </div>
+      </div>
+      <!-- Collapsible Wrapper for API Library -->
+      <div class="collapsible-api-section">
+         <button class="collapsible-api-toggle" id="toggle-api-library">
+         ▼ Show API Library ▼
+         </button>
+         <div class="collapsible-api-content" id="api-library-content">
+            <!-- API Library -->
+            <div class="form-group-api">
+               <label for="api-selector">API Request</label>
+               <select id="api-selector" class="api-selector-box">
+                  <option value="" disabled selected>Select API...</option>
+               </select>
+               <!-- Toolbar directly under the selector -->
+               <div class="api-toolbar">
+                  <a id="api-devlink" class="api-devlink" href="#" target="_blank" rel="noopener" hidden>
+                  </a>
+               </div>
+               <div id="parameter-section">
+                  <!-- Path Parameters -->
+                  <div
+                     id="path-parameters-container"
+                     class="parameter-container"
+                     aria-label="Path Parameters"
+                     ></div>
+                  <!-- Query Parameters -->
+                  <div
+                     id="query-parameters-container"
+                     class="parameter-container"
+                     ></div>
+                  <!-- Body Parameters -->
+                  <div
+                     id="body-parameters-container"
+                     class="parameter-container"
+                     ></div>
+               </div>
+               <!-- API Actions (single toolbar row) -->
+               <div class="api-actions-toolbar" role="toolbar" aria-label="API actions">
+                  <!-- Primary action -->
+                  <button id="execute-api" class="btn btn--primary" title="Send Request">
+                  Send Request
+                  </button>
+                  <!-- Icon actions (request + response) -->
+                  <div class="api-actions-icons">
+                     <!-- Reset Parameters -->
+                     <button id="reset-params" class="icon-btn" title="Reset Form Parameters" aria-label="Reset Parameters">
+                     <img src="icons/reset-arrow.png" alt="" />
+                     </button>
+                     <!-- Save Request -->
+                     <button id="save-request" class="icon-btn" title="Save Sent Request As MyAPI"  disabled aria-label="Save Request">
+                     <img src="icons/save.png" alt="" />
+                     </button>
+                     <!-- View Request -->
+                     <button id="view-request-details" class="icon-btn" title="View Sent Request Details" disabled aria-label="View Request">
+                     <img src="icons/request-view.png" alt="" />
+                     </button>
+                     <!-- Export Request -->
+                     <button
+                        id="save-request-definition"
+                        class="icon-btn"
+                        title="Export Sent Request As Collection (Postman/Bruno)" disabled
+                        >
+                     <img
+                        src="icons/collection-save.png"
+                        alt="Save Request"
+                        class="btn-icon"
+                        />
+                     </button>
+                     <button
+                        id="export-bruno-request"
+                        class="icon-btn"
+                        title="Export Sent Request As Request (Bruno)" disabled
+                        >
+                     <img
+                        src="icons/bruno-save.png"
+                        alt="Export Request (Bruno)"
+                        class="btn-icon"
+                        />
+                     </button>
+                     <button
+                        id="export-env"
+                        class="icon-btn"
+                        title="Export Environment (Postman/Bruno)"
+                        >
+                     <img
+                        src="icons/env-save.png"
+                        alt="Export Environment (Postman/Bruno)"
+                        class="btn-icon"
+                        />
+                     </button>
+                     <!-- Copy Response (semi-frequent) -->
+                     <button id="copy-api-response" class="icon-btn" title="Copy Response" disabled aria-label="Copy Response">
+                     <img src="icons/copy.png" alt="" />
+                     </button>
+                     <!-- Download Response (enabled after response) -->
+                     <button id="download-response" class="icon-btn" title="Download Response" disabled aria-label="Download Response" disabled>
+                     <img src="icons/download.png" alt="" />
+                     </button>
+                  </div>
+               </div>
+               <div id="response-section" class="response-section">
+                  <pre>Awaiting API Send Request & Response...</pre>
+                  <!-- Response will appear here -->
+               </div>
+               <!-- Manage My APIs overlay -->
+               <div id="manage-myapis-overlay" hidden>
+                  <div class="overlay-card">
+                     <h4>Manage My APIs</h4>
+                     <div class="myapis-toolbar">
+                        <label><input type="checkbox" id="myapis-select-all"> Select All</label>
+                        <div class="spacer"></div>
+                        <button class="btn" id="myapis-delete-selected" disabled>Delete Selected</button>
+                        <button class="btn" id="myapis-delete-all">Delete All</button>
+                        <button class="btn" id="myapis-cancel">Close</button>
+                     </div>
+                     <div id="myapis-list" class="myapis-list">
+                        <!-- rows injected here -->
+                     </div>
+                  </div>
+               </div>
+               <!-- Settings / Preferences overlay -->
+               <div id="settings-overlay" hidden>
+                  <div class="overlay-card">
+                     <!-- Top header with Restore Defaults -->
+                     <div class="settings-header">
+                        <h4>Preferences</h4>
+                        <button class="btn2" id="settings-restore-defaults">Restore Defaults</button>
+                     </div>
+                     <!-- Postman / Bruno section -->
+                     <div class="settings-section">
+                        <div class="settings-section-title">
+                           Postman / Bruno Export Variable Names
+                        </div>
+                        <p class="settings-section-help">
+                           These variable names are used when exporting collections or requests so they match
+                           your existing environments in Postman or Bruno.
+                        </p>
+                        <div class="settings-box">
+                           <div class="settings-list">
+                              <div class="settings-row">
+                                 <label for="settings-api-url-var">API URL variable</label>
+                                 <input
+                                    id="settings-api-url-var"
+                                    type="text"
+                                    class="input-box"
+                                    placeholder="apiUrl"
+                                    />
+                              </div>
+                              <div class="settings-row">
+                                 <label for="settings-access-token-var">Access Token variable</label>
+                                 <input
+                                    id="settings-access-token-var"
+                                    type="text"
+                                    class="input-box"
+                                    placeholder="accessToken"
+                                    />
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                     <!-- Bottom toolbar: Save / Cancel -->
+                     <div class="myapis-toolbar">
+                        <div class="spacer"></div>
+                        <button class="btn" id="settings-save-exit">Save &amp; Exit</button>
+                        <button class="btn2" id="settings-cancel">Cancel</button>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+   </body>
+</html>

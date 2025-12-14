@@ -14,7 +14,7 @@
   },
 
   "side_panel": {
-    "default_path": "apiaccesspanel.html"
+    "default_path": "accesspanel.html"
   },
 
   "background": {
@@ -32,18 +32,14 @@
 
   "permissions": [
     "storage",
-    "activeTab",
     "scripting",
-    "downloads",
     "tabs",
-    "windows",
     "sidePanel"
   ],
 
   "host_permissions": [
     "*://*.mykronos.com/*",
     "https://adpvantage.adp.com/*",
-    "https://testadpvantage.adp.com/*",
-	"https://platform.boomi.com/*"
+    "https://testadpvantage.adp.com/*"
   ]
 }
