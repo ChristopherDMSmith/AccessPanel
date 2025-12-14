@@ -123,7 +123,10 @@ function resolvePanelUrl(templateOrPath, ssoClientUrl) {
   // Backward compatibility: old templated format
   const templatePrefix = "https://*.mykronos.com/";
   if (raw.startsWith(templatePrefix)) {
-    console.warn("[AccessPanel] Deprecated URL template in config. Use a relative path instead:", raw);
+    console.warn(
+      "[AccessPanel] Deprecated URL template in config. Use a relative path instead:",
+      raw
+    );
     return ssoClientUrl + raw.slice(templatePrefix.length);
   }
 
@@ -131,7 +134,6 @@ function resolvePanelUrl(templateOrPath, ssoClientUrl) {
   return ssoClientUrl + raw.replace(/^\/+/, "");
 }
 // ===================== //
-
 
 // ===== TITLE BAR ACTIONS ===== //
 // Reload app
@@ -147,7 +149,6 @@ function initTitleBarActions() {
   }
 }
 // ============================= //
-
 
 // ===== MENU BAR | ADMIN FUNCTIONS ===== //
 // Load preferences from storage
@@ -363,7 +364,6 @@ async function clearClientData() {
   }
 }
 // ====================================== //
-
 
 // ===== MENU BAR | LINKS FUNCTIONS ===== //
 // Developer portal
@@ -595,7 +595,6 @@ function wireThemeMenuClicks() {
 }
 // ======================================= //
 
-
 // ===== MENU BAR | HELP FUNCTIONS ===== //
 // About button
 async function helpAbout() {
@@ -603,13 +602,17 @@ async function helpAbout() {
     const cfg = await fetch("accesspanel.json").then((res) => res.json());
 
     const name = cfg?.name ?? "AccessPanel";
-    const description = (cfg?.details?.description ?? "").replace(/\s+/g, " ").trim();
+    const description = (cfg?.details?.description ?? "")
+      .replace(/\s+/g, " ")
+      .trim();
     const version = cfg?.details?.version ?? "";
     const releaseDate = cfg?.details?.release_date ?? "";
     const author = cfg?.details?.author ?? "";
     const descMax = 120;
     const descShort =
-      description.length > descMax ? description.slice(0, descMax - 1) + "…" : description;
+      description.length > descMax
+        ? description.slice(0, descMax - 1) + "…"
+        : description;
 
     const message = [
       `Name: ${name}`,
@@ -637,7 +640,9 @@ async function helpSupport() {
       return;
     }
 
-    const ok = confirm("Open AccessPanel support (GitHub Issues) in a new tab?");
+    const ok = confirm(
+      "Open AccessPanel support (GitHub Issues) in a new tab?"
+    );
     if (!ok) return;
 
     const issuesUrl = resolvePanelUrl(issuesTemplate, "");
@@ -676,7 +681,6 @@ async function saveClientData(data) {
   });
 }
 // =================================== //
-
 
 // ===== MAIN UI HELPERS ===== //
 // Button success text temporary
@@ -820,7 +824,6 @@ async function restoreTokenTimers() {
   }
 }
 // =========================== //
-
 
 // ===== CLIENT URL/ID FIELDS AND BUTTONS ===== //
 // Tenant section collapsed
@@ -1243,7 +1246,11 @@ async function generateBirtPropertiesClick() {
     void fetchToken();
 
     // --- 4. wait for tokens to appear in storage ---
-    const waitForTokens = async (clientUrl, maxWaitMs = 5000, intervalMs = 250) => {
+    const waitForTokens = async (
+      clientUrl,
+      maxWaitMs = 5000,
+      intervalMs = 250
+    ) => {
       const start = Date.now();
 
       while (Date.now() - start < maxWaitMs) {
@@ -1735,7 +1742,8 @@ async function saveClientSecretClick() {
       return;
     }
 
-    const clientsecret = document.getElementById("client-secret")?.value?.trim() || "";
+    const clientsecret =
+      document.getElementById("client-secret")?.value?.trim() || "";
     if (!clientsecret) {
       setButtonFailText(button, "Secret Empty", 2000, originalText);
       return;
@@ -1903,7 +1911,6 @@ async function copyTenantIdClick() {
 }
 // ==================================== //
 
-
 // ===== API TOKEN UI FIELDS AND BUTTONS ===== //
 // Access token section collapsed
 function toggleAccessSection() {
@@ -1988,35 +1995,36 @@ async function populateAccessToken() {
 
 // Get access token button (returns true if token retrieval was initiated)
 async function fetchToken() {
-    const clienturl = await getClientUrl();
-    if (!clienturl) {
-        alert("Client URL is required. Please refresh or set the Client URL first.");
-        return false;
-    }
+  const clienturl = await getClientUrl();
+  if (!clienturl) {
+    alert(
+      "Client URL is required. Please refresh or set the Client URL first."
+    );
+    return false;
+  }
 
-    if (!(await isValidSession())) {
-        alert("Requires a valid ADP Workforce Manager session.");
-        return false;
-    }
+  if (!(await isValidSession())) {
+    alert("Requires a valid ADP Workforce Manager session.");
+    return false;
+  }
 
-    const clientID = document.getElementById("client-id")?.value?.trim() || "";
-    if (!clientID) {
-        alert("Please enter a Client ID first.");
-        return false;
-    }
+  const clientID = document.getElementById("client-id")?.value?.trim() || "";
+  if (!clientID) {
+    alert("Please enter a Client ID first.");
+    return false;
+  }
 
-    const tokenurl = `${clienturl}accessToken?clientId=${clientID}`;
+  const tokenurl = `${clienturl}accessToken?clientId=${clientID}`;
 
-    const incognito = await isIncognitoContext();
-    if (incognito) {
-        retrieveTokenViaNewTab(tokenurl);
-    } else {
-        fetchTokenDirectly(tokenurl, clienturl, clientID);
-    }
+  const incognito = await isIncognitoContext();
+  if (incognito) {
+    retrieveTokenViaNewTab(tokenurl);
+  } else {
+    fetchTokenDirectly(tokenurl, clienturl, clientID);
+  }
 
-    return true;
+  return true;
 }
-
 
 // Get access token normal mode (used by fetchToken())
 async function fetchTokenDirectly(tokenurl, clienturl, clientID) {
@@ -2563,7 +2571,6 @@ async function purgeExpiredTokensInStorage() {
 }
 // =============================================== //
 
-
 // ===== BODY JSON FONT CONTROLS For API Library ===== //
 const ADHOC_BODY_FONT_KEY = "hermes_adhoc_body_font_px";
 
@@ -2673,7 +2680,6 @@ function ensureBodyFontControls(headerEl) {
   initBodyFontSizeFromStorage();
 }
 // =============================================== //
-
 
 // ===== API LIBRARY FUNCTIONS ===== //
 const MYAPIS_KEY = "hermes_myapis"; // [{id,name,method,endpoint,body,createdAt,updatedAt}]
@@ -3824,7 +3830,9 @@ async function ensureApiReadyContext() {
     "";
 
   if (!clientId) {
-    alert("Client ID is required to request an access token. Please enter and save a Client ID.");
+    alert(
+      "Client ID is required to request an access token. Please enter and save a Client ID."
+    );
     return { ok: false };
   }
 
@@ -4220,16 +4228,28 @@ async function executeApiCall() {
     if (!(await isValidSession())) {
       alert("Requires a valid ADP Workforce Manager session.");
       stopAnimation();
-      setButtonFailText(button, "Invalid Session", 2000, animation?.originalText || originalText);
+      setButtonFailText(
+        button,
+        "Invalid Session",
+        2000,
+        animation?.originalText || originalText
+      );
       return;
     }
 
     // Ensure client URL exists
     const clienturl = await getClientUrl();
     if (!clienturl) {
-      alert("Client URL is required. Please refresh or set the Client URL first.");
+      alert(
+        "Client URL is required. Please refresh or set the Client URL first."
+      );
       stopAnimation();
-      setButtonFailText(button, "Missing Client URL", 2000, animation?.originalText || originalText);
+      setButtonFailText(
+        button,
+        "Missing Client URL",
+        2000,
+        animation?.originalText || originalText
+      );
       return;
     }
 
@@ -4239,7 +4259,12 @@ async function executeApiCall() {
     if (!selectedApiKey || selectedApiKey === "Select API...") {
       alert("Please select an API to execute.");
       stopAnimation();
-      setButtonFailText(button, "No API Selected", 2000, animation?.originalText || originalText);
+      setButtonFailText(
+        button,
+        "No API Selected",
+        2000,
+        animation?.originalText || originalText
+      );
       return;
     }
 
@@ -4257,13 +4282,21 @@ async function executeApiCall() {
     if (!clientId) {
       alert("Client ID is required. Please enter and save a Client ID.");
       stopAnimation();
-      setButtonFailText(button, "Missing Client ID", 2000, animation?.originalText || originalText);
+      setButtonFailText(
+        button,
+        "Missing Client ID",
+        2000,
+        animation?.originalText || originalText
+      );
       return;
     }
 
     // Token check
     const tokenMissing = !clientData.accesstoken;
-    const tokenNearOrExpired = isTokenExpiredOrNear(clientData.expirationdatetime, 10);
+    const tokenNearOrExpired = isTokenExpiredOrNear(
+      clientData.expirationdatetime,
+      10
+    );
 
     if (tokenMissing || tokenNearOrExpired) {
       // Ensure minimal fields exist in storage so token retrieval doesn’t fail
@@ -4287,15 +4320,27 @@ async function executeApiCall() {
       if (!initiated) {
         // fetchToken already alerted the user; just exit cleanly
         stopAnimation();
-        setButtonFailText(button, "Token Needed", 2000, animation?.originalText || originalText);
+        setButtonFailText(
+          button,
+          "Token Needed",
+          2000,
+          animation?.originalText || originalText
+        );
         return;
       }
 
       const updatedClientData = await waitForUpdatedToken(clienturl, 5, 1000);
       if (!updatedClientData?.accesstoken) {
-        alert("Unable to retrieve a valid access token. Please verify your settings and try again.");
+        alert(
+          "Unable to retrieve a valid access token. Please verify your settings and try again."
+        );
         stopAnimation();
-        setButtonFailText(button, "Token Failed", 2000, animation?.originalText || originalText);
+        setButtonFailText(
+          button,
+          "Token Failed",
+          2000,
+          animation?.originalText || originalText
+        );
         return;
       }
 
@@ -4328,7 +4373,12 @@ async function executeApiCall() {
       if (!savedEntry) {
         alert("Saved request not found.");
         stopAnimation();
-        setButtonFailText(button, "Request Missing", 2000, animation?.originalText || originalText);
+        setButtonFailText(
+          button,
+          "Request Missing",
+          2000,
+          animation?.originalText || originalText
+        );
         return;
       }
     }
@@ -4349,17 +4399,29 @@ async function executeApiCall() {
       if (!endpoint) {
         alert("Please provide an endpoint URL.");
         stopAnimation();
-        setButtonFailText(button, "Missing Endpoint", 2000, animation?.originalText || originalText);
+        setButtonFailText(
+          button,
+          "Missing Endpoint",
+          2000,
+          animation?.originalText || originalText
+        );
         return;
       }
       fullUrl = clientData.apiurl + endpoint;
 
       if (requestMethod === "POST") {
-        const raw = (typeof bodyUi === "string" ? bodyUi : savedEntry.body || "").trim();
+        const raw = (
+          typeof bodyUi === "string" ? bodyUi : savedEntry.body || ""
+        ).trim();
         if (!raw) {
           alert("Please provide a JSON body.");
           stopAnimation();
-          setButtonFailText(button, "Missing Body", 2000, animation?.originalText || originalText);
+          setButtonFailText(
+            button,
+            "Missing Body",
+            2000,
+            animation?.originalText || originalText
+          );
           return;
         }
         try {
@@ -4368,7 +4430,12 @@ async function executeApiCall() {
         } catch {
           alert("Invalid JSON body. Please correct it.");
           stopAnimation();
-          setButtonFailText(button, "Bad JSON", 2000, animation?.originalText || originalText);
+          setButtonFailText(
+            button,
+            "Bad JSON",
+            2000,
+            animation?.originalText || originalText
+          );
           return;
         }
       }
@@ -4412,7 +4479,12 @@ async function executeApiCall() {
     if (!selectedApi) {
       alert("Selected API not found in the library.");
       stopAnimation();
-      setButtonFailText(button, "API Missing", 2000, animation?.originalText || originalText);
+      setButtonFailText(
+        button,
+        "API Missing",
+        2000,
+        animation?.originalText || originalText
+      );
       return;
     }
 
@@ -4443,7 +4515,12 @@ async function executeApiCall() {
       if (!endpointInput || !endpointInput.value.trim()) {
         alert("Please provide an endpoint URL.");
         stopAnimation();
-        setButtonFailText(button, "Missing Endpoint", 2000, animation?.originalText || originalText);
+        setButtonFailText(
+          button,
+          "Missing Endpoint",
+          2000,
+          animation?.originalText || originalText
+        );
         return;
       }
       fullUrl = clientData.apiurl + endpointInput.value.trim();
@@ -4463,25 +4540,36 @@ async function executeApiCall() {
         const errorText = await preResponse.text();
         displayApiResponse({ error: errorText }, selectedApiKey);
         stopAnimation();
-        setButtonFailText(button, "Failed!", 2000, animation?.originalText || originalText);
+        setButtonFailText(
+          button,
+          "Failed!",
+          2000,
+          animation?.originalText || originalText
+        );
         return;
       }
 
       const preResult = await preResponse.json();
 
-      const { field, match, mapTo, ["data-path"]: dataPath } =
-        selectedApi.preRequest.responseFilter;
+      const {
+        field,
+        match,
+        mapTo,
+        ["data-path"]: dataPath,
+      } = selectedApi.preRequest.responseFilter;
 
       let mappedValues = preResult
         .filter((item) => item[field] === match)
         .map((item) => item[mapTo]);
 
       const maxLimit =
-        selectedApi.bodyParameters.find((p) => p.name === "qualifiers")?.validation?.maxEntered ||
-        1000;
+        selectedApi.bodyParameters.find((p) => p.name === "qualifiers")
+          ?.validation?.maxEntered || 1000;
 
       if (mappedValues.length > maxLimit) {
-        alert(`Only the first ${maxLimit} entries will be used due to API limitations.`);
+        alert(
+          `Only the first ${maxLimit} entries will be used due to API limitations.`
+        );
         mappedValues = mappedValues.slice(0, maxLimit);
       }
 
@@ -4503,7 +4591,12 @@ async function executeApiCall() {
           if (!bodyInput || !bodyInput.value.trim()) {
             alert("Please provide a JSON body.");
             stopAnimation();
-            setButtonFailText(button, "Missing Body", 2000, animation?.originalText || originalText);
+            setButtonFailText(
+              button,
+              "Missing Body",
+              2000,
+              animation?.originalText || originalText
+            );
             return;
           }
           try {
@@ -4511,13 +4604,24 @@ async function executeApiCall() {
           } catch {
             alert("Invalid JSON body. Please correct it.");
             stopAnimation();
-            setButtonFailText(button, "Bad JSON", 2000, animation?.originalText || originalText);
+            setButtonFailText(
+              button,
+              "Bad JSON",
+              2000,
+              animation?.originalText || originalText
+            );
             return;
           }
         } else if (selectedApi.requestProfile) {
-          const profileTemplate = JSON.parse(JSON.stringify(selectedApi.requestProfile));
-          const bodyParamsContainer = document.getElementById("body-parameters-container");
-          const paramInputs = Array.from(bodyParamsContainer.querySelectorAll("[data-path]"));
+          const profileTemplate = JSON.parse(
+            JSON.stringify(selectedApi.requestProfile)
+          );
+          const bodyParamsContainer = document.getElementById(
+            "body-parameters-container"
+          );
+          const paramInputs = Array.from(
+            bodyParamsContainer.querySelectorAll("[data-path]")
+          );
           mapUserInputsToRequestProfile(profileTemplate, paramInputs);
           pruneRequestBody(profileTemplate);
           requestBody = profileTemplate;
@@ -4561,7 +4665,12 @@ async function executeApiCall() {
     displayApiResponse({ error: error.message }, "Error");
 
     stopAnimation();
-    setButtonFailText(button, "Failed!", 2000, animation?.originalText || originalText);
+    setButtonFailText(
+      button,
+      "Failed!",
+      2000,
+      animation?.originalText || originalText
+    );
   }
 }
 
@@ -4584,11 +4693,22 @@ async function displayApiResponse(response, apiKey) {
     responseSection.prepend(popoutButton);
   }
 
+  // remove existing export csv button; we will re-add only if current API supports it
+  const existingExport = document.getElementById("export-api-csv");
+  if (existingExport) existingExport.remove();
+
   // load api library and set up export csv button if needed
   const apiLibrary = await loadApiLibrary();
   const selectedApi = apiLibrary[apiKey];
 
-  if (!selectedApi) {
+  const isNonLibraryKey =
+    typeof apiKey === "string" &&
+    (apiKey === "Error" ||
+      apiKey.startsWith("myapi:") ||
+      apiKey === "adHocGet" ||
+      apiKey === "adHocPost");
+
+  if (!selectedApi && !isNonLibraryKey) {
     console.warn("API Key Not Found in Library:", apiKey);
   }
 
@@ -4879,8 +4999,10 @@ async function saveRequestDefinition() {
     // ----- 2) ask user for a friendly name -----
     const MAX_NAME = 120;
     const requestDisplayName =
-      prompt("Save request definition as: (120 Character Limit)", defaultName)?.trim() ||
-      "";
+      prompt(
+        "Save request definition as: (120 Character Limit)",
+        defaultName
+      )?.trim() || "";
 
     if (!requestDisplayName) return; // user cancelled or left blank
 
@@ -5036,8 +5158,10 @@ async function saveBrunoRequest() {
 
     const MAX_NAME = 120;
     const requestDisplayName =
-      prompt("Save Bruno request as: (120 Character Limit)", defaultName)?.trim() ||
-      "";
+      prompt(
+        "Save Bruno request as: (120 Character Limit)",
+        defaultName
+      )?.trim() || "";
 
     if (!requestDisplayName) return; // user cancelled or empty
     if (requestDisplayName.length > MAX_NAME) {
@@ -5197,7 +5321,10 @@ async function exportEnvironmentDefinition() {
 
   // Prompt for environment name (default to hostname)
   const defaultEnvName = urlObj.hostname || "API Environment";
-  const nameInput = window.prompt("Enter a name for this environment:", defaultEnvName);
+  const nameInput = window.prompt(
+    "Enter a name for this environment:",
+    defaultEnvName
+  );
   if (nameInput === null) return; // user cancelled
   const envName = nameInput.trim() || defaultEnvName;
 
@@ -5761,7 +5888,6 @@ async function exportApiResponseToCSV(response, apiKey) {
 }
 // ================================= //
 
-
 // ===== MANAGE MY API'S OVERLAY FUNCTIONS ===== //
 let MYAPIS_MANAGER_WIRED = false;
 
@@ -6009,7 +6135,6 @@ async function onDeleteAllClick() {
   await renderMyApisManager();
 }
 // ============================================= //
-
 
 // ===== SESSION FUNCTIONS ===== //
 // Remove -nosso from client URL
@@ -6271,11 +6396,12 @@ window.HermesLink = (function () {
       hint: "Please return to a valid WFM page.",
       overlay: "Invalid WFM session. Return to a valid WFM page to continue.",
     },
-WRONG_TAB: {
-  banner: "Not Active Tab: ",
-  hint: "Check Connection or link this tab.",
-  overlay: "Session not validated in this tab. Click Check Connection or Link This Tab Instead.",
-},
+    WRONG_TAB: {
+      banner: "Not Active Tab: ",
+      hint: "Check Connection or link this tab.",
+      overlay:
+        "Session not validated in this tab. Click Check Connection or Link This Tab Instead.",
+    },
     // TMS-specific states
     TMS_OK: {
       banner: "Active (TMS): ",
@@ -6785,36 +6911,35 @@ WRONG_TAB: {
     .catch((e) => console.error("Failed to initialize HermesLink:", e));
 
   // public api
-return {
-  checkState: () => core.validateAndUpdateState(),
-  relinkToCurrentTab: async (tab) => {
-    if (!tab?.url) {
-      throw new Error("No active tab");
-    }
+  return {
+    checkState: () => core.validateAndUpdateState(),
+    relinkToCurrentTab: async (tab) => {
+      if (!tab?.url) {
+        throw new Error("No active tab");
+      }
 
-    const validation = validateWebPage(tab.url);
-    if (!validation.valid) {
-      throw new Error(validation.message);
-    }
+      const validation = validateWebPage(tab.url);
+      if (!validation.valid) {
+        throw new Error(validation.message);
+      }
 
-    await updateLinkedState({
-      [SESSION_KEYS.TAB_ID]: tab.id,
-      [SESSION_KEYS.WINDOW_ID]: tab.windowId,
-      [SESSION_KEYS.URL]: tab.url,
-      [SESSION_KEYS.ORIGIN]: new URL(tab.url).origin,
-      [SESSION_KEYS.TITLE]: tab.title || "",
-      [SESSION_KEYS.STATUS]: "ok",
-      hermesValidationMessage: "Successfully linked to current tab",
-    });
+      await updateLinkedState({
+        [SESSION_KEYS.TAB_ID]: tab.id,
+        [SESSION_KEYS.WINDOW_ID]: tab.windowId,
+        [SESSION_KEYS.URL]: tab.url,
+        [SESSION_KEYS.ORIGIN]: new URL(tab.url).origin,
+        [SESSION_KEYS.TITLE]: tab.title || "",
+        [SESSION_KEYS.STATUS]: "ok",
+        hermesValidationMessage: "Successfully linked to current tab",
+      });
 
-    await core.validateAndUpdateState();
-  },
-  getBaseUrl: async () => {
-    const { hermesLinkedOrigin, hermesLinkedStatus } = await getLinkedState();
-    return hermesLinkedStatus === "ok" ? hermesLinkedOrigin : null;
-  },
-};
-
+      await core.validateAndUpdateState();
+    },
+    getBaseUrl: async () => {
+      const { hermesLinkedOrigin, hermesLinkedStatus } = await getLinkedState();
+      return hermesLinkedStatus === "ok" ? hermesLinkedOrigin : null;
+    },
+  };
 })();
 
 // ============================= //
@@ -6884,24 +7009,49 @@ document.addEventListener("DOMContentLoaded", async () => {
   // tenant information section
   onAsync("tms-pull-api", "click", pullApiFromTmsClick);
   onAsync("generate-birt-file", "click", generateBirtPropertiesClick);
-  on("toggle-client-url", "click", () => toggleFieldVisibility("client-url", "toggle-client-url"), { onceKey: "reveal" });
+  on(
+    "toggle-client-url",
+    "click",
+    () => toggleFieldVisibility("client-url", "toggle-client-url"),
+    { onceKey: "reveal" }
+  );
   onAsync("refresh-client-url", "click", refreshClientUrlClick);
   onAsync("copy-client-url", "click", copyClientUrlClick);
-  on("toggle-client-id", "click", () => toggleFieldVisibility("client-id", "toggle-client-id"), { onceKey: "reveal" });
+  on(
+    "toggle-client-id",
+    "click",
+    () => toggleFieldVisibility("client-id", "toggle-client-id"),
+    { onceKey: "reveal" }
+  );
   onAsync("save-client-id", "click", saveClientIDClick);
   onAsync("copy-client-id", "click", copyClientIdClick);
   on("toggle-client-secret", "click", toggleClientSecretVisibility);
   onAsync("copy-client-secret", "click", copyClientSecretClick);
   onAsync("save-client-secret", "click", saveClientSecretClick);
-  on("toggle-tenant-id", "click", () => toggleFieldVisibility("tenant-id", "toggle-tenant-id"), { onceKey: "reveal" });
+  on(
+    "toggle-tenant-id",
+    "click",
+    () => toggleFieldVisibility("tenant-id", "toggle-tenant-id"),
+    { onceKey: "reveal" }
+  );
   onAsync("save-tenant-id", "click", saveTenantIdClick);
   onAsync("copy-tenant-id", "click", copyTenantIdClick);
 
   // api tokens
-  on("toggle-access-token", "click", () => toggleFieldVisibility("access-token", "toggle-access-token"), { onceKey: "reveal" });
+  on(
+    "toggle-access-token",
+    "click",
+    () => toggleFieldVisibility("access-token", "toggle-access-token"),
+    { onceKey: "reveal" }
+  );
   onAsync("get-token", "click", fetchToken);
   on("copy-token", "click", copyAccessToken);
-  on("toggle-refresh-token", "click", () => toggleFieldVisibility("refresh-token", "toggle-refresh-token"), { onceKey: "reveal" });
+  on(
+    "toggle-refresh-token",
+    "click",
+    () => toggleFieldVisibility("refresh-token", "toggle-refresh-token"),
+    { onceKey: "reveal" }
+  );
   onAsync("refresh-access-token", "click", refreshAccessToken);
   on("copy-refresh-token", "click", copyRefreshToken);
 
@@ -6961,20 +7111,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     } else {
       purgeExpiredTokensInStorage()
         .then(() => {
-          HermesLink.checkState().catch((e) => console.error("Visibility check failed:", e));
-          resumeTokenTimersFromStorage().catch((e) => console.error("Timer resume failed:", e));
+          HermesLink.checkState().catch((e) =>
+            console.error("Visibility check failed:", e)
+          );
+          resumeTokenTimersFromStorage().catch((e) =>
+            console.error("Timer resume failed:", e)
+          );
         })
         .catch((e) => console.error("Token purge failed:", e));
     }
   });
 
-
   // focus handler
   window.addEventListener("focus", () => {
     purgeExpiredTokensInStorage()
       .then(() => {
-        HermesLink.checkState().catch((e) => console.error("Focus check failed:", e));
-        resumeTokenTimersFromStorage().catch((e) => console.error("Timer resume failed:", e));
+        HermesLink.checkState().catch((e) =>
+          console.error("Focus check failed:", e)
+        );
+        resumeTokenTimersFromStorage().catch((e) =>
+          console.error("Timer resume failed:", e)
+        );
       })
       .catch((e) => console.error("Token purge failed:", e));
   });
