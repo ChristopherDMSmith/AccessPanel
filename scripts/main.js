@@ -102,11 +102,14 @@ function ensureMasked(inputId) {
 }
 
 // Determine whether the current extension context is incognito
-function isIncognitoContext() {
+async function isIncognitoContext() {
+  if (chrome.extension?.inIncognitoContext) return true;
+
   try {
-    return Promise.resolve(!!chrome.extension?.inIncognitoContext);
+    const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    return !!tabs?.[0]?.incognito;
   } catch {
-    return Promise.resolve(false);
+    return false;
   }
 }
 
@@ -149,6 +152,7 @@ function initTitleBarActions() {
   }
 }
 // ============================= //
+
 
 // ===== MENU BAR | ADMIN FUNCTIONS ===== //
 // Load preferences from storage
@@ -2053,88 +2057,107 @@ async function fetchTokenDirectly(tokenurl, clienturl, clientID) {
 
 // Get access token incognito mode (used by fetchToken())
 async function retrieveTokenViaNewTab(tokenurl) {
-  chrome.tabs.create({ url: tokenurl, active: false }, async (tab) => {
-    if (chrome.runtime.lastError || !tab?.id) {
-      console.error("Failed to create token tab:", chrome.runtime.lastError);
-      alert("Failed to open token tab.");
-      return;
-    }
-
-    const tabId = tab.id;
-
-    const cleanupAndClose = () => {
-      try {
-        chrome.tabs.onUpdated.removeListener(onUpdated);
-      } catch (e) {
-        // ignore
+  return new Promise((resolve) => {
+    chrome.tabs.create({ url: tokenurl, active: true }, async (tab) => {
+      if (chrome.runtime.lastError || !tab?.id) {
+        console.error("Failed to create token tab:", chrome.runtime.lastError);
+        alert("Failed to open token tab.");
+        return resolve(false);
       }
 
-      chrome.tabs.remove(tabId, () => {
-        const err = chrome.runtime.lastError?.message || "";
-        if (err && !err.toLowerCase().includes("no tab with id")) {
-          console.warn("Error closing tab:", chrome.runtime.lastError);
+      const tabId = tab.id;
+      let finished = false;
+
+      const cleanupAndClose = () => {
+        try {
+          chrome.tabs.onUpdated.removeListener(onUpdated);
+        } catch (e) {
+          // ignore
         }
-      });
-    };
 
-    const onUpdated = async (updatedTabId, changeInfo) => {
-      if (updatedTabId !== tabId) return;
-      if (changeInfo.status !== "complete") return;
-
-      // stop listening as soon as the tab is complete
-      chrome.tabs.onUpdated.removeListener(onUpdated);
-
-      chrome.scripting.executeScript(
-        {
-          target: { tabId },
-          function: scrapeTokenFromPage,
-        },
-        async (injectionResults) => {
-          if (chrome.runtime.lastError) {
-            alert("Failed to retrieve token (script injection failed).");
-            cleanupAndClose();
-            return;
+        // close (don’t fail the flow if it’s already gone)
+        chrome.tabs.remove(tabId, () => {
+          const err = chrome.runtime.lastError?.message || "";
+          if (err && !err.toLowerCase().includes("no tab with id")) {
+            console.warn("Error closing token tab:", chrome.runtime.lastError);
           }
+        });
+      };
 
-          const payload = injectionResults?.[0]?.result;
+      // safety timeout in case onUpdated never fires (network/redirect edge cases)
+      const timeoutMs = 25000;
+      const timeoutId = setTimeout(() => {
+        if (finished) return;
+        finished = true;
+        alert("Token retrieval timed out. Please try again.");
+        cleanupAndClose();
+        resolve(false);
+      }, timeoutMs);
 
-          if (!payload?.ok) {
-            alert("Failed to retrieve token from the page.");
+      const onUpdated = async (updatedTabId, changeInfo) => {
+        if (updatedTabId !== tabId) return;
+        if (changeInfo.status !== "complete") return;
+
+        // stop listening as soon as the tab is complete
+        chrome.tabs.onUpdated.removeListener(onUpdated);
+
+        chrome.scripting.executeScript(
+          {
+            target: { tabId },
+            function: scrapeTokenFromPage,
+          },
+          async (injectionResults) => {
+            if (finished) return;
+            finished = true;
+            clearTimeout(timeoutId);
+
+            if (chrome.runtime.lastError) {
+              alert("Failed to retrieve token (script injection failed).");
+              cleanupAndClose();
+              return resolve(false);
+            }
+
+            const payload = injectionResults?.[0]?.result;
+
+            if (!payload?.ok) {
+              alert("Failed to retrieve token from the page.");
+              cleanupAndClose();
+              return resolve(false);
+            }
+
+            // payload.text is the raw <pre> contents; parse in extension context
+            let tokenJson;
+            try {
+              tokenJson = JSON.parse(payload.text);
+            } catch (e) {
+              console.error("Token page did not return valid JSON.");
+              alert("Token response was not valid JSON.");
+              cleanupAndClose();
+              return resolve(false);
+            }
+
+            // retrieve the existing client ID from storage
+            const baseClientUrl = new URL(tokenurl).origin + "/";
+            const storedData = await loadClientData();
+            const existingClientID =
+              storedData?.[baseClientUrl]?.clientid || "unknown-client";
+
+            await processTokenResponse(
+              tokenJson,
+              baseClientUrl,
+              existingClientID,
+              tokenurl
+            );
+
             cleanupAndClose();
-            return;
+            resolve(true);
           }
+        );
+      };
 
-          // payload.text is the raw <pre> contents; parse in extension context
-          let tokenJson;
-          try {
-            tokenJson = JSON.parse(payload.text);
-          } catch (e) {
-            console.error("Token page did not return valid JSON.");
-            alert("Token response was not valid JSON.");
-            cleanupAndClose();
-            return;
-          }
-
-          // retrieve the existing client ID from storage
-          const baseClientUrl = new URL(tokenurl).origin + "/";
-          const storedData = await loadClientData();
-          const existingClientID =
-            storedData?.[baseClientUrl]?.clientid || "unknown-client";
-
-          processTokenResponse(
-            tokenJson,
-            baseClientUrl,
-            existingClientID,
-            tokenurl
-          );
-
-          cleanupAndClose();
-        }
-      );
-    };
-
-    // Listen for tab load completion instead of using a fixed timeout
-    chrome.tabs.onUpdated.addListener(onUpdated);
+      // isten for tab load completion
+      chrome.tabs.onUpdated.addListener(onUpdated);
+    });
   });
 }
 
