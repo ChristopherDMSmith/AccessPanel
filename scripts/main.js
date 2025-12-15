@@ -1176,7 +1176,7 @@ async function pullApiFromTmsClick() {
 }
 
 // Generate BIRT Properties Button
-async function generateBirtPropertiesClick() {
+/*async function generateBirtPropertiesClick() {
   const btn = document.getElementById("generate-birt-file");
   if (!btn) return;
 
@@ -1495,6 +1495,361 @@ async function generateBirtPropertiesClick() {
             }
           } else {
             // fallback: blob download in popup context
+            downloadFileWithContext(
+              w.document,
+              w.URL,
+              defaultFileName,
+              text,
+              "text/plain"
+            );
+          }
+        } catch (err) {
+          console.error("Download BIRT properties failed:", err);
+          alert("Failed to download the BIRT properties file.");
+        }
+      });
+    };
+
+    if (w.document.readyState === "complete") {
+      setupChildHandlers();
+    } else {
+      w.addEventListener("load", setupChildHandlers);
+    }
+
+    // success: brief positive feedback, then reset
+    setLabel("Generated", 1500);
+  } catch (e) {
+    console.error("Generate BIRT Properties failed:", e);
+    alert("Failed to generate BIRT properties.");
+    setLabel("Error", 1500);
+  }
+}*/
+
+// Generate BIRT Properties Button
+async function generateBirtPropertiesClick() {
+  const btn = document.getElementById("generate-birt-file");
+  if (!btn) return;
+
+  const originalLabel = btn.textContent || "Generate BIRT Properties";
+
+  const setLabel = (text, autoResetMs = null) => {
+    btn.textContent = text;
+    if (autoResetMs) {
+      setTimeout(() => {
+        btn.textContent = originalLabel;
+      }, autoResetMs);
+    }
+  };
+
+  try {
+    // quick visual feedback that the button was clicked
+    setLabel("Generating...");
+
+    // --- 1. basic field checks (Client ID / Secret / Tenant ID) ---
+    const clientIdInput = document.getElementById("client-id");
+    const clientSecretInput = document.getElementById("client-secret");
+    const tenantIdInput = document.getElementById("tenant-id");
+
+    const clientId = clientIdInput?.value.trim() || "";
+    const clientSecret = clientSecretInput?.value.trim() || "";
+    const tenantId = tenantIdInput?.value.trim() || "";
+
+    if (!clientId || !clientSecret || !tenantId) {
+      alert(
+        [
+          !clientId ? "- Client ID is required." : "",
+          !clientSecret ? "- Client Secret is required." : "",
+          !tenantId ? "- Tenant ID is required." : "",
+        ]
+          .filter(Boolean)
+          .join("\n")
+      );
+      setLabel("Error", 1500);
+      return;
+    }
+
+    // --- 2. get the current client URL and vanity host ---
+    const clientUrl = await getClientUrl();
+    if (!clientUrl) {
+      alert(
+        "No valid client URL detected. Make sure AccessPanel is linked to a tenant."
+      );
+      setLabel("Error", 1500);
+      return;
+    }
+
+    let vanityHost = "";
+    try {
+      const urlObj = new URL(clientUrl);
+      vanityHost = urlObj.hostname || "";
+      if (!vanityHost || !vanityHost.includes("mykronos.com")) {
+        throw new Error("Not a mykronos.com vanity URL");
+      }
+    } catch (e) {
+      console.error("Failed to parse vanity URL from Tenant URL.", e);
+      alert(
+        "Unable to parse a valid vanity hostname from the Tenant URL.\n" +
+          "Expected something like https://<tenant>.mykronos.com"
+      );
+      setLabel("Error", 1500);
+      return;
+    }
+
+    // --- 3. request a fresh token (fetchToken is incognito-aware) ---
+    // NOTE: fetchToken() will:
+    // - validate session
+    // - validate client URL
+    // - validate client ID
+    // - in incognito, open a new tab retrieve token JSON
+    // - in normal mode, fetch directly
+    await fetchToken();
+
+    // --- 4. wait for tokens to appear in storage ---
+    const waitForTokens = async (
+      clientUrlKey,
+      maxWaitMs = 12000,
+      intervalMs = 250
+    ) => {
+      const start = Date.now();
+
+      while (Date.now() - start < maxWaitMs) {
+        const data = await loadClientData();
+        const client = data[clientUrlKey] || {};
+
+        // BIRT requires BOTH
+        if (client.accesstoken && client.refreshtoken) {
+          return client;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, intervalMs));
+      }
+
+      // final check before giving up
+      const data = await loadClientData();
+      return data[clientUrlKey] || {};
+    };
+
+    const thisClient = await waitForTokens(clientUrl);
+    const accessToken = thisClient.accesstoken || "";
+    const refreshToken = thisClient.refreshtoken || "";
+
+    if (!accessToken || !refreshToken) {
+      // fetchToken() already alerts for common missing prerequisites; this covers timing/SSO/redirect cases.
+      alert(
+        "Could not retrieve access/refresh token after requesting one.\n\n" +
+          "Tip: Ensure you are actively logged into WFM in this browser context, then try again."
+      );
+      setLabel("Error", 1500);
+      return;
+    }
+
+    const editDate = thisClient.editdatetime || new Date().toISOString();
+
+    // --- 5. build properties file contents ---
+    const propsLines = [
+      "report.api.execute.for.external.client=true",
+      "report.api.gateway.access.token.appkey=", // intentionally blank
+      `volume_name=${tenantId}`,
+      `report.api.access.token.qparam.client.id=${clientId}`,
+      `access.token=${accessToken}`,
+      `report.api.access.token.qparam.client.secret=${clientSecret}`,
+      `refresh.token=${refreshToken}`,
+      "report.api.gateway.access.token.authchain=OAuthLdapService",
+      `report.api.env.vanity.url=${vanityHost}`,
+      "report.api.gateway.access.token.is.ssl.enable=true",
+    ];
+
+    const propsText = propsLines.join("\n");
+
+    // keep a reference for potential future use if needed
+    window.lastBirtPropertiesText = propsText;
+    window.lastBirtPropertiesMeta = {
+      clientUrl,
+      tenantId,
+      editDate,
+    };
+
+    // --- 6. open popup window with BIRT properties + buttons ---
+    const escapedPropsText = propsText
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+
+    const rootStyles = getComputedStyle(document.documentElement);
+    const primary = rootStyles.getPropertyValue("--primary-color").trim();
+    const secondary = rootStyles.getPropertyValue("--secondary-color").trim();
+    const accent = rootStyles.getPropertyValue("--accent-color").trim();
+    const highlight = rootStyles.getPropertyValue("--highlight-color").trim();
+    const textOnBtn = rootStyles.getPropertyValue("--buttontext-color").trim();
+
+    const popupHtml = `
+      <html>
+        <head>
+          <title>BIRT Properties</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              margin: 0;
+              padding: 16px;
+              background-color: ${primary};
+              line-height: 1.5;
+            }
+            h1 {
+              font-size: 1.4rem;
+              font-weight: bold;
+              margin-bottom: 0.25rem;
+              color: ${accent};
+            }
+            .meta {
+              font-size: 0.85rem;
+              font-weight: bold;
+              color: ${accent};
+              margin-bottom: 12px;
+            }
+            .btn-row {
+              margin-bottom: 10px;
+            }
+            button {
+              font-family: inherit;
+              font-size: 0.9rem;
+              padding: 6px 12px;
+              margin-right: 8px;
+              border-radius: 4px;
+              border: 1px solid ${secondary};
+              background-color: ${accent};
+              color: ${textOnBtn};
+              cursor: pointer;
+            }
+            button:hover {
+              background-color: ${highlight};
+            }
+            pre {
+              background: ${textOnBtn};
+              border: 2px solid ${accent};
+              radius: 6px;
+              padding: 10px;
+              white-space: pre;
+              overflow-x: auto;
+              font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+              font-size: 0.9rem;
+              color: ${accent};
+            }
+          </style>
+        </head>
+        <body>
+          <h1>BIRT Properties</h1>
+          <div class="meta">
+            Tenant: ${tenantId}<br/>
+            Client URL: ${clientUrl}<br/>
+            Last Edit: ${editDate}
+          </div>
+          <div class="btn-row">
+            <button id="copy-birt">Copy To Clipboard</button>
+            <button id="download-birt">Download To File</button>
+          </div>
+          <pre id="birt-text">${escapedPropsText}</pre>
+        </body>
+      </html>
+    `;
+
+    const w = window.open(
+      "",
+      "_blank",
+      "width=800,height=600,scrollbars=yes,resizable=yes"
+    );
+    if (!w) {
+      alert(
+        "Unable to open BIRT popup window. Please allow popups for this extension."
+      );
+      setLabel("Error", 1500);
+      return;
+    }
+
+    w.document.write(popupHtml);
+    w.document.close();
+
+    // wire copy + download in the child window (no inline script)
+    const setupChildHandlers = () => {
+      const copyBtn = w.document.getElementById("copy-birt");
+      const dlBtn = w.document.getElementById("download-birt");
+      const pre = w.document.getElementById("birt-text");
+
+      if (!copyBtn || !dlBtn || !pre) return;
+
+      copyBtn.addEventListener("click", async () => {
+        try {
+          try {
+            w.focus();
+          } catch (_) {}
+
+          const text = pre.innerText || pre.textContent || "";
+          if (!text.trim()) {
+            copyBtn.textContent = "No Content";
+            setTimeout(() => (copyBtn.textContent = "Copy To Clipboard"), 1500);
+            return;
+          }
+
+          if (w.navigator?.clipboard?.writeText) {
+            await w.navigator.clipboard.writeText(text);
+          } else {
+            const ta = w.document.createElement("textarea");
+            ta.value = text;
+            ta.style.position = "fixed";
+            ta.style.left = "-9999px";
+            w.document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            w.document.execCommand("copy");
+            w.document.body.removeChild(ta);
+          }
+
+          copyBtn.textContent = "Copied!";
+          setTimeout(() => (copyBtn.textContent = "Copy To Clipboard"), 1500);
+        } catch (err) {
+          console.error("Copy BIRT properties failed:", err);
+          copyBtn.textContent = "Copy Failed";
+          setTimeout(() => (copyBtn.textContent = "Copy To Clipboard"), 1500);
+        }
+      });
+
+      dlBtn.addEventListener("click", async () => {
+        try {
+          const text = pre.innerText || pre.textContent || "";
+          const defaultFileName = "custom_reportplugin.properties";
+
+          if (!text.trim()) {
+            dlBtn.textContent = "No Content";
+            setTimeout(() => (dlBtn.textContent = "Download To File"), 1500);
+            return;
+          }
+
+          if (w.showSaveFilePicker) {
+            try {
+              const fileHandle = await w.showSaveFilePicker({
+                suggestedName: defaultFileName,
+                types: [
+                  {
+                    description: "Properties Files",
+                    accept: { "text/plain": [".properties"] },
+                  },
+                ],
+              });
+              const writable = await fileHandle.createWritable();
+              await writable.write(text);
+              await writable.close();
+            } catch (err) {
+              if (err && err.name === "AbortError") {
+                return; // user cancelled – silent exit
+              }
+              downloadFileWithContext(
+                w.document,
+                w.URL,
+                defaultFileName,
+                text,
+                "text/plain"
+              );
+            }
+          } else {
             downloadFileWithContext(
               w.document,
               w.URL,
