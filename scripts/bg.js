@@ -3,9 +3,12 @@
 // Global state
 let ACCESSPANEL_GLOBAL_OPEN = false;
 
-// Track which tabs we’ve already configured (Edge can close the side panel if
-// we spam setOptions on every onUpdated event).
+// Track per-tab side panel configuration so we don’t spam setOptions.
+// Edge can close the side panel if setOptions is called repeatedly during navigation.
 const tabPanelState = new Map(); // tabId -> { enabled: boolean, path: string }
+
+// Edge timing resilience: reopen retries per tab
+const openRetryTimers = new Map(); // tabId -> { interval, timeout }
 
 // URL validation helpers
 function isValidWfmSessionUrl(url) {
@@ -60,8 +63,7 @@ async function ensureSidePanelOptions(tabId, enabled) {
   const next = { enabled: !!enabled, path: "accesspanel.html" };
   const prev = tabPanelState.get(tabId);
 
-  // Only set when something changed (prevents Edge side panel from closing
-  // due to repeated setOptions calls during navigation).
+  // Only set when something changed.
   if (prev && prev.enabled === next.enabled && prev.path === next.path) return;
 
   try {
@@ -87,13 +89,82 @@ async function configureAllTabs(enabled) {
   }
 }
 
+function clearOpenRetries(tabId) {
+  const timers = openRetryTimers.get(tabId);
+  if (!timers) return;
+  try {
+    if (timers.interval) clearInterval(timers.interval);
+    if (timers.timeout) clearTimeout(timers.timeout);
+  } catch {}
+  openRetryTimers.delete(tabId);
+}
+
+// Try to reopen for a short period; Edge can reject open() during rapid tab transitions.
+function scheduleReopenRetries(tabId, windowId = null) {
+  if (!ACCESSPANEL_GLOBAL_OPEN || !tabId) return;
+
+  // avoid stacking retries
+  clearOpenRetries(tabId);
+
+  const start = Date.now();
+  const MAX_MS = 2000; // keep short; enough to survive tab-close focus handoff
+  const EVERY_MS = 150;
+
+  const attempt = async () => {
+    if (!ACCESSPANEL_GLOBAL_OPEN) return;
+
+    try {
+      // Ensure per-tab options are correct before opening
+      await ensureSidePanelOptions(tabId, true);
+
+      // Only try to open if the tab still exists and is active in that window.
+      // (Side panel is tied to active tab.)
+      const [activeTab] = await chrome.tabs.query(
+        windowId
+          ? { active: true, windowId }
+          : { active: true, currentWindow: true }
+      );
+
+      if (!activeTab?.id) return;
+
+      // If the active tab changed, move the retry target to the active tab.
+      const targetId = activeTab.id;
+
+      await ensureSidePanelOptions(targetId, true);
+      await chrome.sidePanel.open({ tabId: targetId });
+
+      // success: stop retrying
+      clearOpenRetries(tabId);
+    } catch {
+      // ignore; we’ll retry until timeout
+    }
+
+    if (Date.now() - start > MAX_MS) {
+      clearOpenRetries(tabId);
+    }
+  };
+
+  // kick immediately, then repeat
+  attempt().catch(() => {});
+  const interval = setInterval(() => {
+    attempt().catch(() => {});
+  }, EVERY_MS);
+
+  const timeout = setTimeout(() => {
+    clearOpenRetries(tabId);
+  }, MAX_MS + 250);
+
+  openRetryTimers.set(tabId, { interval, timeout });
+}
+
 // Re-open panel on the active tab (helps when Edge closes it after new tab / navigation)
 async function reopenPanelIfNeeded(tabId) {
   if (!ACCESSPANEL_GLOBAL_OPEN || !tabId) return;
   try {
     await chrome.sidePanel.open({ tabId });
   } catch {
-    // If Edge refuses (timing), we just ignore. Next activation will retry.
+    // If Edge refuses (timing), retry briefly.
+    scheduleReopenRetries(tabId);
   }
 }
 
@@ -174,10 +245,17 @@ async function handleTabCreated(tab) {
 // When user switches tabs, keep panel “sticky” by reopening if global open
 async function handleTabActivated(activeInfo) {
   const tabId = activeInfo?.tabId;
+  const windowId = activeInfo?.windowId;
   if (!tabId) return;
 
   await ensureSidePanelOptions(tabId, ACCESSPANEL_GLOBAL_OPEN);
-  await reopenPanelIfNeeded(tabId);
+
+  // Try to keep it sticky on activation
+  if (ACCESSPANEL_GLOBAL_OPEN) {
+    // activation is a common moment where Edge might have just closed the panel
+    // so use the retry version to be resilient.
+    scheduleReopenRetries(tabId, windowId);
+  }
 }
 
 async function handleTabUpdate(tabId, changeInfo, tab) {
@@ -213,12 +291,14 @@ async function handleTabUpdate(tabId, changeInfo, tab) {
   }
 }
 
-async function handleTabRemoved(tabId) {
+async function handleTabRemoved(tabId, removeInfo) {
   // Clean cached panel state for this tab
   try {
     tabPanelState.delete(tabId);
   } catch {}
+  clearOpenRetries(tabId);
 
+  // Handle linked tab closure
   try {
     const { hermesLinkedTabId } = await chrome.storage.session.get(
       "hermesLinkedTabId"
@@ -228,6 +308,32 @@ async function handleTabRemoved(tabId) {
     }
   } catch (e) {
     console.error("Failed to handle tab removal:", e?.message || e);
+  }
+
+  // Edge resilience: if a tab is closed, Edge may close the panel during the focus handoff.
+  // Reopen on the newly-active tab in that same window.
+  try {
+    if (!ACCESSPANEL_GLOBAL_OPEN) return;
+    if (removeInfo?.isWindowClosing) return;
+
+    // Let Edge finish selecting the fallback tab first
+    setTimeout(async () => {
+      try {
+        const [activeTab] = await chrome.tabs.query({
+          active: true,
+          windowId: removeInfo?.windowId,
+        });
+
+        if (!activeTab?.id) return;
+
+        await ensureSidePanelOptions(activeTab.id, true);
+        scheduleReopenRetries(activeTab.id, removeInfo?.windowId);
+      } catch {
+        // ignore
+      }
+    }, 50);
+  } catch {
+    // ignore
   }
 }
 
