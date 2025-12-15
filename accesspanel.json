@@ -222,6 +222,10 @@
 		"releasenotes": {
 			"1.0.0": {
 				"0": "Initial release after Hermes proto-type"
+			},
+			"1.0.1": {
+				"0": "Updated manifest version to 1.0.1",
+				"1": "Updates to bg.js to better control sidepanel and prevent unexpected closures"
 			}
 		}
 	}
