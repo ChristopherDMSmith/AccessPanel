@@ -2,8 +2,8 @@
 	"name": "AccessPanel",
 	"details": {
 		"description": "WFM API Access and Token Management",
-		"version": "1.0.0",
-		"release_date": "2025-12-14",
+		"version": "1.0.1",
+		"release_date": "2026-01-14",
 		"author": "Christopher Smith",
 		"contact": "https://github.com/ChristopherDMSmith",
 		"urls": {
@@ -222,6 +222,10 @@
 		"releasenotes": {
 			"1.0.0": {
 				"0": "Initial release after Hermes proto-type"
+			},
+			"1.0.1": {
+				"0": "Updated manifest version to 1.0.1",
+				"1": "Updates to bg.js to better control sidepanel and prevent unexpected closures"
 			}
 		}
 	}
