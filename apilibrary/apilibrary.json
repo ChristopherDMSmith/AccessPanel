@@ -2961,7 +2961,7 @@
 			"url": "/v1/timekeeping/timecard/multi_read",
 			"devLink": {
 				"urlText": "Get help on this API ?",
-				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-timecard-data-for-multiple-employees"
+				"url": "https://adp-developer.mykronos.com/wfmgr/reference/retrieve-timecards-as-manager"
 			},
 			"queryParametersHelp": "Query Parameters optional.",
 			"queryParameters": [
