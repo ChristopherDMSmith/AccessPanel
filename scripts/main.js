@@ -832,48 +832,37 @@ async function restoreTokenTimers() {
 // =========================== //
 
 // ===== CLIENT URL/ID FIELDS AND BUTTONS ===== //
-// Tenant section collapsed
+// Toggle Tenant Information section
 function toggleTenantSection() {
   const toggleButton = document.getElementById("toggle-tenant-section");
   const content = document.getElementById("tenant-section-content");
-  const wrapper = content?.parentElement;
-  if (!toggleButton || !content || !wrapper) return;
+
+  if (!toggleButton || !content) return;
 
   const expanded = !content.classList.contains("expanded");
   content.classList.toggle("expanded", expanded);
 
-  if (expanded) {
-    wrapper.style.height = `${
-      content.scrollHeight + toggleButton.offsetHeight
-    }px`;
-    toggleButton.textContent = "▲ Hide Tenant Information ▲";
-  } else {
-    wrapper.style.height = `${toggleButton.offsetHeight + 15}px`;
-    toggleButton.textContent = "▼ Show Tenant Information ▼";
-  }
+  toggleButton.textContent = expanded
+    ? "▲ Hide Tenant Information ▲"
+    : "▼ Show Tenant Information ▼";
 
   chrome.storage.local.set({ tenantSectionExpanded: expanded });
 }
 
-// Tenant section expanded
+// Restore Tenant Information section state
 function restoreTenantSection() {
   chrome.storage.local.get("tenantSectionExpanded", (result) => {
     const isExpanded = !!result.tenantSectionExpanded;
     const toggleButton = document.getElementById("toggle-tenant-section");
     const content = document.getElementById("tenant-section-content");
-    const wrapper = content?.parentElement;
-    if (!toggleButton || !content || !wrapper) return;
+
+    if (!toggleButton || !content) return;
 
     content.classList.toggle("expanded", isExpanded);
-    if (isExpanded) {
-      wrapper.style.height = `${
-        content.scrollHeight + toggleButton.offsetHeight
-      }px`;
-      toggleButton.textContent = "▲ Hide Tenant Information ▲";
-    } else {
-      wrapper.style.height = `${toggleButton.offsetHeight + 15}px`;
-      toggleButton.textContent = "▼ Show Tenant Information ▼";
-    }
+
+    toggleButton.textContent = isExpanded
+      ? "▲ Hide Tenant Information ▲"
+      : "▼ Show Tenant Information ▼";
   });
 }
 
@@ -1441,19 +1430,7 @@ async function generateBirtPropertiesClick() {
             return;
           }
 
-          if (w.navigator?.clipboard?.writeText) {
-            await w.navigator.clipboard.writeText(text);
-          } else {
-            const ta = w.document.createElement("textarea");
-            ta.value = text;
-            ta.style.position = "fixed";
-            ta.style.left = "-9999px";
-            w.document.body.appendChild(ta);
-            ta.focus();
-            ta.select();
-            w.document.execCommand("copy");
-            w.document.body.removeChild(ta);
-          }
+          await w.navigator.clipboard.writeText(text);
 
           copyBtn.textContent = "Copied!";
           setTimeout(() => (copyBtn.textContent = "Copy To Clipboard"), 1500);
@@ -1577,24 +1554,7 @@ async function copyClientUrlClick() {
       return;
     }
 
-    // use clipboard api; fallback if needed
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      await navigator.clipboard.writeText(val);
-    } else {
-      // fallback approach
-      const ta = document.createElement("textarea");
-      ta.value = val;
-      ta.setAttribute("readonly", "");
-      ta.style.position = "fixed";
-      ta.style.left = "-9999px";
-      document.body.appendChild(ta);
-      ta.select();
-
-      const ok = document.execCommand("copy");
-      document.body.removeChild(ta);
-
-      if (!ok) throw new Error("execCommand(copy) returned false");
-    }
+    await navigator.clipboard.writeText(val);
 
     setButtonTempText(btn, "URL Copied", 2000, originalText);
   } catch (e) {
@@ -1677,22 +1637,7 @@ async function copyClientIdClick() {
       return;
     }
 
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      await navigator.clipboard.writeText(val);
-    } else {
-      const ta = document.createElement("textarea");
-      ta.value = val;
-      ta.setAttribute("readonly", "");
-      ta.style.position = "fixed";
-      ta.style.left = "-9999px";
-      document.body.appendChild(ta);
-      ta.select();
-
-      const ok = document.execCommand("copy");
-      document.body.removeChild(ta);
-
-      if (!ok) throw new Error("execCommand(copy) returned false");
-    }
+    await navigator.clipboard.writeText(val);
 
     setButtonTempText(btn, "Client ID Copied", 2000, originalText);
   } catch (e) {
@@ -1787,22 +1732,7 @@ async function copyClientSecretClick() {
       return;
     }
 
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      await navigator.clipboard.writeText(val);
-    } else {
-      const ta = document.createElement("textarea");
-      ta.value = val;
-      ta.setAttribute("readonly", "");
-      ta.style.position = "fixed";
-      ta.style.left = "-9999px";
-      document.body.appendChild(ta);
-      ta.select();
-
-      const ok = document.execCommand("copy");
-      document.body.removeChild(ta);
-
-      if (!ok) throw new Error("execCommand(copy) returned false");
-    }
+    await navigator.clipboard.writeText(val);
 
     setButtonTempText(btn, "Client Secret Copied", 2000, originalText);
   } catch (e) {
@@ -1897,22 +1827,7 @@ async function copyTenantIdClick() {
       return;
     }
 
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      await navigator.clipboard.writeText(val);
-    } else {
-      const ta = document.createElement("textarea");
-      ta.value = val;
-      ta.setAttribute("readonly", "");
-      ta.style.position = "fixed";
-      ta.style.left = "-9999px";
-      document.body.appendChild(ta);
-      ta.select();
-
-      const ok = document.execCommand("copy");
-      document.body.removeChild(ta);
-
-      if (!ok) throw new Error("execCommand(copy) returned false");
-    }
+    await navigator.clipboard.writeText(val);
 
     setButtonTempText(btn, "Tenant ID Copied", 2000, originalText);
   } catch (e) {
@@ -1927,44 +1842,33 @@ async function copyTenantIdClick() {
 function toggleAccessSection() {
   const toggleButton = document.getElementById("toggle-access-section");
   const content = document.getElementById("access-section-content");
-  const wrapper = content?.parentElement;
-  if (!toggleButton || !content || !wrapper) return;
+
+  if (!toggleButton || !content) return;
 
   const expanded = !content.classList.contains("expanded");
   content.classList.toggle("expanded", expanded);
 
-  if (expanded) {
-    wrapper.style.height = `${
-      content.scrollHeight + toggleButton.offsetHeight
-    }px`;
-    toggleButton.textContent = "▲ Hide API Token Options ▲";
-  } else {
-    wrapper.style.height = `${toggleButton.offsetHeight + 15}px`;
-    toggleButton.textContent = "▼ Show API Token Options ▼";
-  }
+  toggleButton.textContent = expanded
+    ? "▲ Hide API Token Options ▲"
+    : "▼ Show API Token Options ▼";
 
   chrome.storage.local.set({ accessSectionExpanded: expanded });
 }
 
-// Access token section expanded
+
 function restoreAccessSection() {
   chrome.storage.local.get("accessSectionExpanded", (result) => {
     const isExpanded = !!result.accessSectionExpanded;
     const toggleButton = document.getElementById("toggle-access-section");
     const content = document.getElementById("access-section-content");
-    const wrapper = content?.parentElement;
-    if (!toggleButton || !content || !wrapper) return;
+
+    if (!toggleButton || !content) return;
 
     content.classList.toggle("expanded", isExpanded);
-    if (isExpanded) {
-      wrapper.style.height = `${
-        content.scrollHeight + toggleButton.offsetHeight
-      }px`;
-      toggleButton.textContent = "▲ Hide API Token Options ▲";
-    } else {
-      wrapper.style.height = `${toggleButton.offsetHeight + 15}px`;
-      toggleButton.textContent = "▼ Show API Token Options ▼";
-    }
+
+    toggleButton.textContent = isExpanded
+      ? "▲ Hide API Token Options ▲"
+      : "▼ Show API Token Options ▼";
   });
 }
 
@@ -2716,50 +2620,37 @@ const MYAPIS_KEY = "hermes_myapis"; // [{id,name,method,endpoint,body,createdAt,
 let EXPORT_API_URL_VAR = "apiUrl";
 let EXPORT_ACCESS_TOKEN_VAR = "accessToken";
 
-// Toggle API library visibility section collapsed / expanded
+// Toggle API Library section
 function toggleApiLibrary() {
   const toggleButton = document.getElementById("toggle-api-library");
   const content = document.getElementById("api-library-content");
-  const wrapper = content.parentElement;
 
-  // toggle expanded/collapsed state
-  const isExpanded = content.classList.toggle("expanded");
+  if (!toggleButton || !content) return;
 
-  // dynamically calculate the height
-  if (isExpanded) {
-    wrapper.style.height = `${
-      content.scrollHeight + toggleButton.offsetHeight
-    }px`;
-    toggleButton.textContent = "▲ Hide API Library ▲";
-  } else {
-    wrapper.style.height = `${toggleButton.offsetHeight + 15}px`;
-    toggleButton.textContent = "▼ Show API Library ▼";
-  }
+  const expanded = !content.classList.contains("expanded");
+  content.classList.toggle("expanded", expanded);
 
-  // persist the state in local storage
-  chrome.storage.local.set({ apiLibraryExpanded: isExpanded });
+  toggleButton.textContent = expanded
+    ? "▲ Hide API Library ▲"
+    : "▼ Show API Library ▼";
+
+  chrome.storage.local.set({ apiLibraryExpanded: expanded });
 }
 
-// Restore API library visibility on load
+// Restore API Library section state
 function restoreApiLibrary() {
   chrome.storage.local.get("apiLibraryExpanded", (result) => {
-    const isExpanded = result.apiLibraryExpanded || false;
+    const isExpanded = !!result.apiLibraryExpanded;
     const toggleButton = document.getElementById("toggle-api-library");
     const content = document.getElementById("api-library-content");
-    const wrapper = content.parentElement;
 
-    // set initial state based on stored value
-    if (isExpanded) {
-      content.classList.add("expanded");
-      wrapper.style.height = `${
-        content.scrollHeight + toggleButton.offsetHeight
-      }px`;
-      toggleButton.textContent = "▲ Hide API Library ▲";
-    } else {
-      content.classList.remove("expanded");
-      wrapper.style.height = `${toggleButton.offsetHeight + 15}px`;
-      toggleButton.textContent = "▼ Show API Library ▼";
-    }
+    if (!toggleButton || !content) return;
+
+    content.classList.toggle("expanded", isExpanded);
+
+    toggleButton.textContent = isExpanded
+      ? "▲ Hide API Library ▲"
+      : "▼ Show API Library ▼";
   });
 }
 
