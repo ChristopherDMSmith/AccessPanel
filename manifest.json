@@ -23,6 +23,10 @@
     "type": "module"
   },
 
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self';"
+  },
+
   "icons": {
     "16": "icons/icon16.png",
     "32": "icons/icon32.png",
@@ -39,7 +43,7 @@
   ],
 
   "host_permissions": [
-    "*://*.mykronos.com/*",
+    "https://*.mykronos.com/*",
     "https://adpvantage.adp.com/*",
     "https://testadpvantage.adp.com/*"
   ]
