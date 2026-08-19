@@ -8,6 +8,7 @@ const SESSION_ONLY_CLIENT_FIELDS = new Set([
   "clientsecret",
   "accesstoken",
   "refreshtoken",
+  "accessTokenSource",
   "effectivedatetime",
   "expirationdatetime",
   "refreshExpirationDateTime",
@@ -823,17 +824,29 @@ async function restoreTokenTimers() {
   const clientData = data[clienturl] || {};
   const currentDateTime = new Date();
 
-  // restore access token timer
+  // Restore access token status/timer
   const accessTokenTimerBox = document.getElementById("timer");
+
   if (clientData.accesstoken) {
-    const expirationTime = new Date(clientData.expirationdatetime);
-    if (currentDateTime < expirationTime) {
-      const remainingSeconds = Math.floor(
-        (expirationTime - currentDateTime) / 1000
-      );
-      startAccessTokenTimer(remainingSeconds, accessTokenTimerBox);
+    if (clientData.accessTokenSource === "manual") {
+      stopAccessTokenTimer(accessTokenTimerBox);
+      accessTokenTimerBox.textContent = "Manual";
     } else {
-      accessTokenTimerBox.textContent = "--:--";
+      const expirationTime = new Date(clientData.expirationdatetime);
+
+      if (
+        clientData.expirationdatetime &&
+        Number.isFinite(expirationTime.getTime()) &&
+        currentDateTime < expirationTime
+      ) {
+        const remainingSeconds = Math.floor(
+          (expirationTime - currentDateTime) / 1000
+        );
+
+        startAccessTokenTimer(remainingSeconds, accessTokenTimerBox);
+      } else {
+        accessTokenTimerBox.textContent = "--:--";
+      }
     }
   } else {
     accessTokenTimerBox.textContent = "--:--";
@@ -1614,11 +1627,13 @@ function restoreAccessSection() {
   });
 }
 
-// Populate access token field and start timer if token is valid
+// Populate access token field and restore its status
 async function populateAccessToken() {
   const clienturl = await getClientUrl();
   const accessTokenBox = document.getElementById("access-token");
   const timerBox = document.getElementById("timer");
+
+  if (!accessTokenBox || !timerBox) return;
 
   if (!clienturl) {
     accessTokenBox.value = "Requires WFMgr Login";
@@ -1627,27 +1642,41 @@ async function populateAccessToken() {
   }
 
   const data = await loadClientData();
-  const currentDateTime = new Date();
+  const clientData = data[clienturl] || {};
 
-  if (data[clienturl]?.accesstoken) {
-    const expirationTime = new Date(data[clienturl].expirationdatetime);
-
-    if (currentDateTime > expirationTime) {
-      accessTokenBox.value = "Access Token Expired";
-      timerBox.textContent = "--:--";
-    } else {
-      accessTokenBox.value = data[clienturl].accesstoken;
-
-      // calculate remaining time and start the timer
-      const remainingSeconds = Math.floor(
-        (expirationTime - currentDateTime) / 1000
-      );
-      startAccessTokenTimer(remainingSeconds, timerBox);
-    }
-  } else {
+  if (!clientData.accesstoken) {
     accessTokenBox.value = "Get New Access Token";
     timerBox.textContent = "--:--";
+    return;
   }
+
+  accessTokenBox.value = clientData.accesstoken;
+
+  // Manual tokens have no known expiration time.
+  if (clientData.accessTokenSource === "manual") {
+    stopAccessTokenTimer(timerBox);
+    timerBox.textContent = "Manual";
+    return;
+  }
+
+  const expirationTime = new Date(clientData.expirationdatetime);
+  const currentDateTime = new Date();
+
+  if (
+    !clientData.expirationdatetime ||
+    !Number.isFinite(expirationTime.getTime()) ||
+    currentDateTime > expirationTime
+  ) {
+    accessTokenBox.value = "Access Token Expired";
+    timerBox.textContent = "--:--";
+    return;
+  }
+
+  const remainingSeconds = Math.floor(
+    (expirationTime - currentDateTime) / 1000
+  );
+
+  startAccessTokenTimer(remainingSeconds, timerBox);
 }
 
 // Get access token button (returns true if token retrieval was initiated)
@@ -1688,11 +1717,8 @@ async function fetchToken() {
 
   const tokenurl = `${clienturl}accessToken?clientId=${clientID}`;
 
-  await fetchTokenDirectly(tokenurl, clienturl, clientID);
-
-  return true;
+  return await fetchTokenDirectly(tokenurl, clienturl, clientID);
 }
-
 
 // Get access token normal mode (used by fetchToken())
 async function fetchTokenDirectly(tokenurl, clienturl, clientID) {
@@ -1760,6 +1786,7 @@ async function processTokenResponse(result, baseClientUrl, clientID, tokenurl) {
       tokenurl, // keep full /accessToken?clientId=... for later use
       apiurl: data[baseClientUrl]?.apiurl || `${baseClientUrl}api`,
       accesstoken: accessToken,
+      accessTokenSource: "automatic",
       refreshtoken: refreshToken,
 
       effectivedatetime: now.toISOString(),
@@ -1778,6 +1805,79 @@ async function processTokenResponse(result, baseClientUrl, clientID, tokenurl) {
   } catch (error) {
     console.error("Failed to process token response:", error);
     setButtonFailText(button, "Token Failed!");
+  }
+}
+
+// Apply a manually entered access token to the current browser session
+async function applyManualAccessTokenClick() {
+  const button = document.getElementById("apply-token");
+  const originalText = button?.textContent || "Apply Token";
+
+  const accessTokenBox = document.getElementById("access-token");
+  const timerBox = document.getElementById("timer");
+
+  const token = accessTokenBox?.value?.trim() || "";
+
+  const invalidValues = new Set([
+    "",
+    "Get Token",
+    "Get New Access Token",
+    "Access Token Expired",
+    "Requires WFMgr Login",
+  ]);
+
+  if (invalidValues.has(token)) {
+    setButtonFailText(button, "No Token", 2000, originalText);
+    return;
+  }
+
+  const clienturl = await getClientUrl();
+
+  if (!clienturl) {
+    alert(
+      "Client URL is required. Please refresh or set the Client URL first."
+    );
+    setButtonFailText(button, "No Client URL", 2000, originalText);
+    return;
+  }
+
+  try {
+    const data = await loadClientData();
+
+    const clientData = {
+      ...(data[clienturl] || {}),
+      accesstoken: token,
+      accessTokenSource: "manual",
+      editdatetime: new Date().toISOString(),
+    };
+
+    // A manually supplied token has no expiration or refresh metadata
+    // that AccessPanel can reliably determine.
+    delete clientData.effectivedatetime;
+    delete clientData.expirationdatetime;
+    delete clientData.refreshtoken;
+    delete clientData.refreshExpirationDateTime;
+
+    data[clienturl] = clientData;
+
+    await saveClientData(data);
+
+    stopAccessTokenTimer(timerBox);
+    stopRefreshTokenTimer(document.getElementById("refresh-timer"));
+
+    await chrome.storage.session.remove([
+      "accessTokenTimer",
+      "refreshTokenTimer",
+    ]);
+
+    timerBox.textContent = "Manual";
+
+    await populateRefreshToken();
+
+    setButtonTempText(button, "Token Applied", 2000, originalText);
+  } catch (error) {
+    console.error("Failed to apply manual Access Token:", error);
+    setButtonFailText(button, "Apply Failed", 2000, originalText);
   }
 }
 
@@ -3292,7 +3392,9 @@ async function ensureApiReadyContext() {
 
   // 3) access token (refresh if missing/expired/near-expiry)
   const tokenMissing = !clientData.accesstoken;
-  const tokenStale = isTokenExpiredOrNear(clientData.expirationdatetime, 10);
+  const tokenStale =
+    clientData.accessTokenSource !== "manual" &&
+    isTokenExpiredOrNear(clientData.expirationdatetime, 10);
 
   if (tokenMissing || tokenStale) {
     if (!clientData.clientid && clientId) {
@@ -3506,10 +3608,9 @@ async function executeApiCall() {
 
     // Token check
     const tokenMissing = !clientData.accesstoken;
-    const tokenNearOrExpired = isTokenExpiredOrNear(
-      clientData.expirationdatetime,
-      10
-    );
+    const tokenNearOrExpired =
+      clientData.accessTokenSource !== "manual" &&
+      isTokenExpiredOrNear(clientData.expirationdatetime, 10);
 
     if (tokenMissing || tokenNearOrExpired) {
       // Ensure minimal fields exist in storage so token retrieval doesn’t fail
@@ -5348,6 +5449,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     { onceKey: "reveal" }
   );
   onAsync("get-token", "click", fetchToken);
+  onAsync("apply-token", "click", applyManualAccessTokenClick);
   on("copy-token", "click", copyAccessToken);
   on(
     "toggle-refresh-token",
