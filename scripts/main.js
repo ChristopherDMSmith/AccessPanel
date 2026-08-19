@@ -542,7 +542,7 @@ function buildThemeMenuFromSelect() {
   const menu = document.getElementById("theme-menu");
   if (!select || !menu) return;
 
-  menu.innerHTML = "";
+  menu.replaceChildren();
   [...select.options].forEach((opt) => {
     if (!opt.value) return;
     const btn = document.createElement("button");
@@ -783,11 +783,17 @@ function startLoadingAnimation(button) {
   // store original text for later restoration
   const originalText = button.textContent;
 
-  button.innerHTML = `Waiting... <span class="hourglass">${hourglassFrames[frameIndex]}</span>`;
-  button.disabled = true;
+  button.replaceChildren();
 
-  const hourglassSpan = button.querySelector(".hourglass");
+  const waitingText = document.createTextNode("Waiting... ");
+  const hourglassSpan = document.createElement("span");
+
+  hourglassSpan.className = "hourglass";
+  hourglassSpan.textContent = hourglassFrames[frameIndex];
   hourglassSpan.style.display = "inline-block";
+
+  button.append(waitingText, hourglassSpan);
+  button.disabled = true;
 
   return {
     interval: setInterval(() => {
@@ -2279,7 +2285,7 @@ async function populateApiDropdown() {
   const sel = document.getElementById("api-selector");
   if (!sel) return;
 
-  sel.innerHTML = "";
+  sel.replaceChildren();
   clearDevLinkBanner();
 
   // Placeholder
@@ -2345,21 +2351,21 @@ async function loadApiLibrary() {
   }
 }
 
-// Clear Existing Parameters Button
+// Clear existing API parameters
 function clearParameters() {
-  const queryContainer = document.getElementById("query-parameters-container");
-  const bodyContainer = document.getElementById("body-parameters-container");
-  const pathContainer = document.getElementById("path-parameters-container");
+  const queryContainer = document.getElementById(
+    "query-parameters-container"
+  );
+  const bodyContainer = document.getElementById(
+    "body-parameters-container"
+  );
+  const pathContainer = document.getElementById(
+    "path-parameters-container"
+  );
 
-  if (queryContainer) {
-    queryContainer.innerHTML = ""; // clear query parameters
-  }
-  if (bodyContainer) {
-    bodyContainer.innerHTML = ""; // clear body parameters
-  }
-  if (pathContainer) {
-    pathContainer.innerHTML = ""; // clear path parameters
-  }
+  queryContainer?.replaceChildren();
+  bodyContainer?.replaceChildren();
+  pathContainer?.replaceChildren();
 }
 
 // Show or clear the Developer Portal link for the selected public API
@@ -2453,7 +2459,7 @@ async function populatePathParameters(selectedApiKey) {
   const host = document.getElementById("path-parameters-container");
   if (!host) return;
 
-  host.innerHTML = "";
+  host.replaceChildren();
 
   // Ad-Hoc requests do not use path parameter UI
   if (
@@ -2529,7 +2535,7 @@ async function populateQueryParameters(selectedApiKey) {
     const queryContainer = document.getElementById(
       "query-parameters-container"
     );
-    queryContainer.innerHTML = ""; // clear existing parameters
+    queryContainer.replaceChildren();
 
     if (selectedApiKey === "adHocGet" || selectedApiKey === "adHocPost") {
       const queryHeader = document.createElement("div");
@@ -2585,7 +2591,7 @@ async function populateQueryParameters(selectedApiKey) {
         // placeholder
         const ph = document.createElement("option");
         ph.value = "";
-        ph.textContent = param.description || /*"Select an option"*/ "";
+        ph.textContent = param.description || "";
         ph.disabled = true;
         ph.selected = true;
         ph.hidden = true;
@@ -2625,7 +2631,7 @@ async function populateQueryParameters(selectedApiKey) {
 
         const ph = document.createElement("option");
         ph.value = "";
-        ph.textContent = param.description || /*"Select an option"*/ "";
+        ph.textContent = param.description || "";
         ph.disabled = true;
         ph.selected = true;
         ph.hidden = true;
@@ -2757,7 +2763,7 @@ async function populateBodyParameters(selectedApiKey) {
       return;
     }
 
-    bodyParamContainer.innerHTML = "";
+    bodyParamContainer.replaceChildren();
 
     // Ad-hoc POST: full JSON textarea
     if (selectedApiKey === "adHocPost") {
@@ -2891,7 +2897,7 @@ async function populateBodyParameters(selectedApiKey) {
         const placeholderOption = document.createElement("option");
         placeholderOption.value = "";
         placeholderOption.textContent =
-          param.description || /*"Select an option"*/ "";
+          param.description || "";
         placeholderOption.disabled = true;
         placeholderOption.selected = true;
         placeholderOption.hidden = true;
@@ -2929,7 +2935,7 @@ async function populateBodyParameters(selectedApiKey) {
         const placeholderOption = document.createElement("option");
         placeholderOption.value = "";
         placeholderOption.textContent =
-          param.description || /*"Select an option"*/ "";
+          param.description || "";
         placeholderOption.disabled = true;
         placeholderOption.selected = true;
         placeholderOption.hidden = true;
@@ -3333,20 +3339,19 @@ async function waitForUpdatedToken(clienturl, maxRetries = 5, delayMs = 1000) {
   return null; // <-- no throw
 }
 
-// Clear response UI for new data V1
+// Clear API response for a new request
 function clearApiResponse() {
   const responseSection = document.getElementById("response-section");
+
   if (responseSection) {
-    responseSection.innerHTML = "<pre>Awaiting API Response...</pre>";
+    const pre = document.createElement("pre");
+    pre.textContent = "Awaiting API Response...";
+    responseSection.replaceChildren(pre);
   }
 
-  // clear cached response object
   window.lastApiResponseObject = null;
 
-  // disable response-dependent buttons (Download / Copy)
-  if (typeof updateResponseDependentButtons === "function") {
-    updateResponseDependentButtons(false);
-  }
+  updateResponseDependentButtons(false);
 }
 
 // Handle API Library selection
@@ -3775,30 +3780,42 @@ async function executeApiCall() {
   }
 }
 
-// Display API response (default = raw view) V1
+// Display API response (default = raw view)
 async function displayApiResponse(response, apiKey) {
   const responseSection = document.getElementById("response-section");
-  window.lastApiResponseObject = response; // stash for popout/toggle
+  if (!responseSection) return;
 
-  // preserve/create popout button
+  // Cache response for popout and raw/tree toggle
+  window.lastApiResponseObject = response;
+
+  // Preserve/create popout button
   let popoutButton = document.getElementById("popout-response");
+
   if (!popoutButton) {
     popoutButton = document.createElement("button");
     popoutButton.id = "popout-response";
     popoutButton.className = "btn3";
-    popoutButton.innerHTML = `
-      Popout Response 
-      <img src="icons/external-link.png" alt="Popout" class="btn-icon">
-    `;
+
+    const label = document.createTextNode("Popout Response ");
+
+    const icon = document.createElement("img");
+    icon.src = "icons/external-link.png";
+    icon.alt = "";
+    icon.className = "btn-icon";
+
+    popoutButton.append(label, icon);
     popoutButton.addEventListener("click", popoutResponse);
+
     responseSection.prepend(popoutButton);
   }
 
-  // remove existing export csv button; we will re-add only if current API supports it
+  // Remove any CSV export button from the previous response.
   const existingExport = document.getElementById("export-api-csv");
-  if (existingExport) existingExport.remove();
+  if (existingExport) {
+    existingExport.remove();
+  }
 
-  // load api library and set up export csv button if needed
+  // Load selected public API definition for optional CSV export.
   const apiLibrary = await loadApiLibrary();
   const selectedApi = apiLibrary[apiKey];
 
@@ -3812,45 +3829,51 @@ async function displayApiResponse(response, apiKey) {
     console.warn("API Key Not Found in Library:", apiKey);
   }
 
+  // Add CSV export only when the selected library API supports it.
   if (selectedApi?.exportMap) {
-    let exportCsvButton = document.getElementById("export-api-csv");
-    if (!exportCsvButton) {
-      exportCsvButton = document.createElement("button");
-      exportCsvButton.id = "export-api-csv";
-      exportCsvButton.className = "btn3";
-      exportCsvButton.innerHTML = `
-        Export CSV
-        <img src="icons/export-csv.png" alt="CSV" class="btn-icon">
-      `;
-      exportCsvButton.addEventListener("click", () => {
-        exportApiResponseToCSV(response, selectedApi.exportMap, apiKey);
-      });
-      responseSection.appendChild(exportCsvButton);
-    }
+    const exportCsvButton = document.createElement("button");
+    exportCsvButton.id = "export-api-csv";
+    exportCsvButton.className = "btn3";
+
+    const label = document.createTextNode("Export CSV ");
+
+    const icon = document.createElement("img");
+    icon.src = "icons/export-csv.png";
+    icon.alt = "";
+    icon.className = "btn-icon";
+
+    exportCsvButton.append(label, icon);
+
+    exportCsvButton.addEventListener("click", () => {
+      exportApiResponseToCSV(response, selectedApi.exportMap, apiKey);
+    });
+
+    responseSection.appendChild(exportCsvButton);
   }
 
-  // ensure tree/raw toggle exists (default = raw)
+  // Ensure raw/tree toggle exists.
   ensureViewToggle();
 
-  // clear prior render
-  [...responseSection.querySelectorAll(".json-tree, pre")].forEach((n) =>
-    n.remove()
-  );
+  // Clear the previous rendered response only.
+  responseSection
+    .querySelectorAll(".json-tree, pre")
+    .forEach((node) => node.remove());
 
-  // raw by default
+  // Raw view is the default.
   const pre = document.createElement("pre");
   pre.textContent = JSON.stringify(response, null, 2);
   responseSection.appendChild(pre);
 
-  // set toggle button state to raw
+  // Reset toggle state to raw.
   const toggle = document.getElementById("toggle-view");
   if (toggle) {
     toggle.dataset.mode = "raw";
     toggle.textContent = "Tree View";
   }
 
-  // enable buttons
+  // Enable response-dependent controls.
   updateResponseDependentButtons(true);
+
   const downloadButton = document.getElementById("download-response");
   if (downloadButton) {
     downloadButton.disabled = false;
