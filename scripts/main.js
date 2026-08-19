@@ -72,6 +72,50 @@ function downloadFileWithContext(doc, urlApi, filename, content, mimeType) {
   setTimeout(() => urlApi.revokeObjectURL(url), 0);
 }
 
+// Get current theme colors for popup windows
+function getPopupThemeColors() {
+  const styles = getComputedStyle(document.documentElement);
+
+  return {
+    primary:
+      styles.getPropertyValue("--primary-color").trim() || "#f5f5f5",
+    secondary:
+      styles.getPropertyValue("--secondary-color").trim() || "#0059B3",
+    accent:
+      styles.getPropertyValue("--accent-color").trim() || "#00AEEF",
+    highlight:
+      styles.getPropertyValue("--highlight-color").trim() || "#007ACC",
+    buttonText:
+      styles.getPropertyValue("--buttontext-color").trim() || "#FFFFFF",
+  };
+}
+
+// Open and initialize a popup window without document.write()
+function createPopupWindow(title, features, cssText = "") {
+  const popup = window.open("", "_blank", features);
+  if (!popup) return null;
+
+  const doc = popup.document;
+
+  doc.title = title;
+
+  // Clear the default blank document safely
+  doc.head.replaceChildren();
+  doc.body.replaceChildren();
+
+  const titleElement = doc.createElement("title");
+  titleElement.textContent = title;
+  doc.head.appendChild(titleElement);
+
+  if (cssText) {
+    const style = doc.createElement("style");
+    style.textContent = cssText;
+    doc.head.appendChild(style);
+  }
+
+  return popup;
+}
+
 // Format local date as YYYY-MM-DD with optional day offset.
 function formatLocalYMD(daysOffset = 0, base = new Date()) {
   // Start from local midnight to avoid DST/clock noise
@@ -844,306 +888,6 @@ function restoreTenantSection() {
   });
 }
 
-// Pull tenant from TMS button
-async function pullApiFromTmsClick() {
-  const btn = document.getElementById("tms-pull-api");
-  if (!btn) return;
-
-  try {
-    // ensure AccessPanel UI is in an active state (not wrong tab / mismatched TMS tenant)
-    if (document.body.classList.contains("tab-inactive")) {
-      alert(
-        "Requires an active Tenant Management System (TMS) tenant matching your current AccessPanel link."
-      );
-      setButtonFailText(btn, "Invalid Session");
-      return;
-    }
-
-    const [tab] = await chrome.tabs.query({
-      active: true,
-      currentWindow: true,
-    });
-    if (!tab || !tab.url) {
-      alert("Unable to detect active browser tab.");
-      setButtonFailText(btn, "No Active Tab");
-      return;
-    }
-
-    // only allow on TMS vantage URLs
-    let isTms = false;
-    try {
-      const u = new URL(tab.url);
-      const origin = u.origin.toLowerCase();
-      isTms =
-        origin.startsWith("https://adpvantage.adp.com") ||
-        origin.startsWith("https://testadpvantage.adp.com");
-    } catch (e) {
-      isTms = false;
-    }
-
-    if (!isTms) {
-      alert(
-        "Pull From TMS is only available when viewing the Tenant Management System (TMS) tenant popup."
-      );
-      setButtonFailText(btn, "Not on TMS");
-      return;
-    }
-
-    // scrape values from the TMS popup in the active tab
-    const execResults = await chrome.scripting.executeScript({
-      target: { tabId: tab.id, allFrames: true },
-      func: async () => {
-        const found = {
-          idInput: null,
-          secretInput: null,
-          revealSwitch: null,
-          tenantAssertionInput: null,
-        };
-
-        const walk = (root) => {
-          if (!root) return;
-          const walker = document.createTreeWalker(
-            root,
-            NodeFilter.SHOW_ELEMENT,
-            null
-          );
-          let node = walker.currentNode;
-          while (node) {
-            if (node.tagName === "SDF-INPUT") {
-              if (
-                !found.idInput &&
-                node.id === "apiAccessClientID" &&
-                node.shadowRoot
-              ) {
-                const idInput = node.shadowRoot.querySelector("input#input");
-                if (idInput) found.idInput = idInput;
-              } else if (
-                !found.secretInput &&
-                node.id === "apiAccessClientSecret" &&
-                node.shadowRoot
-              ) {
-                const secretInput =
-                  node.shadowRoot.querySelector("input#input");
-                if (secretInput) found.secretInput = secretInput;
-              }
-
-              // look for the "Tenant SAML Assertion URL" field by its label text
-              if (!found.tenantAssertionInput && node.shadowRoot) {
-                const labelEl = node.shadowRoot.querySelector(
-                  ".sdf-form-control-wrapper--label, label[part='label']"
-                );
-                if (labelEl && labelEl.textContent) {
-                  const labelText = labelEl.textContent.trim();
-                  if (labelText.startsWith("Tenant SAML Assertion URL")) {
-                    const input = node.shadowRoot.querySelector("input#input");
-                    if (input) {
-                      found.tenantAssertionInput = input;
-                    }
-                  }
-                }
-              }
-            } else if (
-              !found.revealSwitch &&
-              node.tagName === "SDF-SWITCH" &&
-              node.id === "isRevealAPIAccessClientSecret"
-            ) {
-              found.revealSwitch = node;
-            }
-
-            if (node.shadowRoot) {
-              walk(node.shadowRoot);
-            }
-
-            node = walker.nextNode();
-          }
-        };
-
-        const readSecretState = (input) => {
-          if (!input) {
-            return { value: null, visible: false, disabled: false, type: "" };
-          }
-          const value = (input.value || "").trim();
-          const disabled = !!input.disabled;
-          const type = input.type || "";
-          const visible = !disabled && type === "text" && !!value;
-          return { value: value || null, visible, disabled, type };
-        };
-
-        walk(document);
-
-        const clientId = found.idInput
-          ? (found.idInput.value || "").trim()
-          : null;
-
-        // derive tenant ID from "Tenant SAML Assertion URL"
-        let tenantId = null;
-        if (found.tenantAssertionInput) {
-          const rawUrl = (found.tenantAssertionInput.value || "").trim();
-          if (rawUrl) {
-            try {
-              const url = new URL(rawUrl);
-              const parts = url.pathname.split("/").filter(Boolean);
-              const idx = parts.indexOf("authn");
-              if (idx >= 0 && idx + 1 < parts.length) {
-                tenantId = parts[idx + 1];
-              }
-            } catch (e) {
-              console.error("Failed to parse Tenant SAML Assertion URL:", e);
-            }
-          }
-        }
-
-        let secretState = readSecretState(found.secretInput);
-        let secretToggled = false;
-
-        // if secret isn't visible yet but we have the Reveal toggle,
-        // briefly toggle it on to read the value, then toggle it back off.
-        if (!secretState.visible && found.revealSwitch) {
-          const ariaChecked = found.revealSwitch.getAttribute("aria-checked");
-          if (ariaChecked === "false") {
-            // toggle reveal ON
-            found.revealSwitch.click();
-            secretToggled = true;
-
-            // give the UI a moment to update
-            await new Promise((resolve) => setTimeout(resolve, 200));
-            secretState = readSecretState(found.secretInput);
-
-            // toggle reveal back OFF so the UI returns to its original state
-            found.revealSwitch.click();
-          }
-        }
-
-        return {
-          clientId,
-          clientSecret: secretState.value,
-          secretVisible: secretState.visible,
-          secretToggled,
-          tenantId,
-        };
-      },
-    });
-
-    // Pick the first frame that actually returned something
-    let data = null;
-    if (Array.isArray(execResults)) {
-      for (const r of execResults) {
-        if (r && r.result && (r.result.clientId || r.result.clientSecret)) {
-          data = r.result;
-          break;
-        }
-      }
-    }
-
-    if (!data) {
-      setButtonFailText(btn, "No Data");
-      alert("Unable to locate the API Access fields in the TMS popup.");
-      return;
-    }
-
-    let anySuccess = false;
-    const messages = [];
-
-    // --- Handle Client ID ---
-    if (data.clientId) {
-      const idInput = document.getElementById("client-id");
-      if (idInput) {
-        idInput.value = data.clientId;
-        try {
-          await saveClientIDClick(); // reuse your existing save flow
-          anySuccess = true;
-          messages.push("Client ID pulled from TMS and saved in AccessPanel.");
-        } catch (e) {
-          console.error("Failed to save Client ID after TMS pull:", e);
-          messages.push(
-            "Client ID was pulled from TMS, but saving in AccessPanel failed. Check the console logs."
-          );
-        }
-      } else {
-        messages.push(
-          "Client ID was found in TMS, but the AccessPanel Client ID field is not available."
-        );
-      }
-    } else {
-      messages.push("Client ID was not found in the TMS popup or is empty.");
-    }
-
-    // --- Handle Client Secret ---
-    if (data.clientSecret && data.secretVisible) {
-      const secretInput = document.getElementById("client-secret");
-      if (secretInput) {
-        secretInput.value = data.clientSecret;
-        try {
-          await saveClientSecretClick();
-          anySuccess = true;
-          messages.push(
-            "Client Secret pulled from TMS and saved in AccessPanel."
-          );
-        } catch (e) {
-          console.error("Failed to save Client Secret after TMS pull:", e);
-          messages.push(
-            "Client Secret was pulled from TMS, but saving in AccessPanel failed. Check the console logs."
-          );
-        }
-      } else {
-        messages.push(
-          "Client Secret was found in TMS, but the AccessPanel Client Secret field is not available."
-        );
-      }
-    } else if (data.secretToggled && !data.clientSecret) {
-      messages.push(
-        "Tried to reveal the Client Secret in TMS, but it still appeared empty. You may need to reveal it manually and try again."
-      );
-    } else if (!data.clientSecret) {
-      messages.push(
-        "Client Secret was not found in the TMS popup or is empty."
-      );
-    } else if (!data.secretVisible) {
-      messages.push(
-        "Client Secret appears to be masked in TMS and could not be read. Please use the Reveal toggle in TMS and try again."
-      );
-    }
-
-    // --- Handle Tenant ID ---
-    if (data.tenantId) {
-      const tenantIdInput = document.getElementById("tenant-id");
-      if (tenantIdInput) {
-        tenantIdInput.value = data.tenantId;
-        try {
-          await saveTenantIdClick(); // reuse your existing save flow
-          anySuccess = true;
-          messages.push("Tenant ID pulled from TMS and saved in AccessPanel.");
-        } catch (e) {
-          console.error("Failed to save Tenant ID after TMS pull:", e);
-          messages.push(
-            "Tenant ID was pulled from TMS, but saving in AccessPanel failed. Check the console logs."
-          );
-        }
-      } else {
-        messages.push(
-          "Tenant ID was found in TMS, but the AccessPanel Tenant ID field is not available."
-        );
-      }
-    } else {
-      messages.push(
-        "Tenant ID was not found in the TMS popup or could not be derived from the SAML Assertion URL."
-      );
-    }
-
-    if (anySuccess) {
-      setButtonTempText(btn, "Pulled From TMS");
-    } else {
-      setButtonFailText(btn, "No Data");
-    }
-
-    alert(messages.join("\n"));
-  } catch (e) {
-    console.error("Pull From TMS failed:", e);
-    setButtonFailText(btn, "Error");
-    alert("Pull From TMS failed. Check the console logs for more details.");
-  }
-}
-
 // Generate BIRT Properties Button
 async function generateBirtPropertiesClick() {
   const btn = document.getElementById("generate-birt-file");
@@ -1153,6 +897,7 @@ async function generateBirtPropertiesClick() {
 
   const setLabel = (text, autoResetMs = null) => {
     btn.textContent = text;
+
     if (autoResetMs) {
       setTimeout(() => {
         btn.textContent = originalLabel;
@@ -1161,17 +906,15 @@ async function generateBirtPropertiesClick() {
   };
 
   try {
-    // quick visual feedback that the button was clicked
     setLabel("Generating...");
 
-    // --- 1. basic field checks (Client ID / Secret / Tenant ID) ---
-    const clientIdInput = document.getElementById("client-id");
-    const clientSecretInput = document.getElementById("client-secret");
-    const tenantIdInput = document.getElementById("tenant-id");
-
-    const clientId = clientIdInput?.value.trim() || "";
-    const clientSecret = clientSecretInput?.value.trim() || "";
-    const tenantId = tenantIdInput?.value.trim() || "";
+    // --- 1. Validate required fields ---
+    const clientId =
+      document.getElementById("client-id")?.value.trim() || "";
+    const clientSecret =
+      document.getElementById("client-secret")?.value.trim() || "";
+    const tenantId =
+      document.getElementById("tenant-id")?.value.trim() || "";
 
     if (!clientId || !clientSecret || !tenantId) {
       alert(
@@ -1183,12 +926,14 @@ async function generateBirtPropertiesClick() {
           .filter(Boolean)
           .join("\n")
       );
+
       setLabel("Error", 1500);
       return;
     }
 
-    // --- 2. get the current client URL and vanity host ---
+    // --- 2. Get current client URL and vanity host ---
     const clientUrl = await getClientUrl();
+
     if (!clientUrl) {
       alert(
         "No valid client URL detected. Make sure AccessPanel is linked to a tenant."
@@ -1198,32 +943,35 @@ async function generateBirtPropertiesClick() {
     }
 
     let vanityHost = "";
+
     try {
       const urlObj = new URL(clientUrl);
       vanityHost = urlObj.hostname || "";
+
       if (!vanityHost || !vanityHost.includes("mykronos.com")) {
         throw new Error("Not a mykronos.com vanity URL");
       }
-    } catch (e) {
-      console.error("Failed to parse vanity URL from Tenant URL.", e);
+    } catch (error) {
+      console.error("Failed to parse vanity URL from Tenant URL.", error);
+
       alert(
         "Unable to parse a valid vanity hostname from the Tenant URL.\n" +
           "Expected something like https://<tenant>.mykronos.com"
       );
+
       setLabel("Error", 1500);
       return;
     }
 
-    // --- 3. request a fresh token (fetchToken is incognito-aware) ---
-    // NOTE: fetchToken() will:
-    // - validate session
-    // - validate client URL
-    // - validate client ID
-    // - in incognito, open a new tab retrieve token JSON
-    // - in normal mode, fetch directly
-    await fetchToken();
+    // --- 3. Request a fresh token ---
+    const tokenRequested = await fetchToken();
 
-    // --- 4. wait for tokens to appear in storage ---
+    if (!tokenRequested) {
+      setLabel("Error", 1500);
+      return;
+    }
+
+    // --- 4. Wait for access + refresh tokens ---
     const waitForTokens = async (
       clientUrlKey,
       maxWaitMs = 12000,
@@ -1235,7 +983,6 @@ async function generateBirtPropertiesClick() {
         const data = await loadClientData();
         const client = data[clientUrlKey] || {};
 
-        // BIRT requires BOTH
         if (client.accesstoken && client.refreshtoken) {
           return client;
         }
@@ -1243,31 +990,31 @@ async function generateBirtPropertiesClick() {
         await new Promise((resolve) => setTimeout(resolve, intervalMs));
       }
 
-      // final check before giving up
       const data = await loadClientData();
       return data[clientUrlKey] || {};
     };
 
     const thisClient = await waitForTokens(clientUrl);
+
     const accessToken = thisClient.accesstoken || "";
     const refreshToken = thisClient.refreshtoken || "";
 
     if (!accessToken || !refreshToken) {
-      // fetchToken() already alerts for common missing prerequisites; this covers timing/SSO/redirect cases.
       alert(
         "Could not retrieve access/refresh token after requesting one.\n\n" +
           "Tip: Ensure you are actively logged into WFM in this browser context, then try again."
       );
+
       setLabel("Error", 1500);
       return;
     }
 
     const editDate = thisClient.editdatetime || new Date().toISOString();
 
-    // --- 5. build properties file contents ---
+    // --- 5. Build BIRT properties file contents ---
     const propsLines = [
       "report.api.execute.for.external.client=true",
-      "report.api.gateway.access.token.appkey=", // intentionally blank
+      "report.api.gateway.access.token.appkey=",
       `volume_name=${tenantId}`,
       `report.api.access.token.qparam.client.id=${clientId}`,
       `access.token=${accessToken}`,
@@ -1280,7 +1027,6 @@ async function generateBirtPropertiesClick() {
 
     const propsText = propsLines.join("\n");
 
-    // keep a reference for potential future use if needed
     window.lastBirtPropertiesText = propsText;
     window.lastBirtPropertiesMeta = {
       clientUrl,
@@ -1288,95 +1034,73 @@ async function generateBirtPropertiesClick() {
       editDate,
     };
 
-    // --- 6. open popup window with BIRT properties + buttons ---
-    const escapedPropsText = propsText
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
+    // --- 6. Open BIRT Properties popup ---
+    const colors = getPopupThemeColors();
 
-    const rootStyles = getComputedStyle(document.documentElement);
-    const primary = rootStyles.getPropertyValue("--primary-color").trim();
-    const secondary = rootStyles.getPropertyValue("--secondary-color").trim();
-    const accent = rootStyles.getPropertyValue("--accent-color").trim();
-    const highlight = rootStyles.getPropertyValue("--highlight-color").trim();
-    const textOnBtn = rootStyles.getPropertyValue("--buttontext-color").trim();
+    const popupCss = `
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 16px;
+        background-color: ${colors.primary};
+        line-height: 1.5;
+      }
 
-    const popupHtml = `
-      <html>
-        <head>
-          <title>BIRT Properties</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              margin: 0;
-              padding: 16px;
-              background-color: ${primary};
-              line-height: 1.5;
-            }
-            h1 {
-              font-size: 1.4rem;
-              font-weight: bold;
-              margin-bottom: 0.25rem;
-              color: ${accent};
-            }
-            .meta {
-              font-size: 0.85rem;
-              font-weight: bold;
-              color: ${accent};
-              margin-bottom: 12px;
-            }
-            .btn-row {
-              margin-bottom: 10px;
-            }
-            button {
-              font-family: inherit;
-              font-size: 0.9rem;
-              padding: 6px 12px;
-              margin-right: 8px;
-              border-radius: 4px;
-              border: 1px solid ${secondary};
-              background-color: ${accent};
-              color: ${textOnBtn};
-              cursor: pointer;
-            }
-            button:hover {
-              background-color: ${highlight};
-            }
-            pre {
-              background: ${textOnBtn};
-              border: 2px solid ${accent};
-              radius: 6px;
-              padding: 10px;
-              white-space: pre;
-              overflow-x: auto;
-              font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-              font-size: 0.9rem;
-              color: ${accent};
-            }
-          </style>
-        </head>
-        <body>
-          <h1>BIRT Properties</h1>
-          <div class="meta">
-            Tenant: ${tenantId}<br/>
-            Client URL: ${clientUrl}<br/>
-            Last Edit: ${editDate}
-          </div>
-          <div class="btn-row">
-            <button id="copy-birt">Copy To Clipboard</button>
-            <button id="download-birt">Download To File</button>
-          </div>
-          <pre id="birt-text">${escapedPropsText}</pre>
-        </body>
-      </html>
+      h1 {
+        font-size: 1.4rem;
+        font-weight: bold;
+        margin: 0 0 0.25rem 0;
+        color: ${colors.accent};
+      }
+
+      .meta {
+        font-size: 0.85rem;
+        font-weight: bold;
+        color: ${colors.accent};
+        margin-bottom: 12px;
+      }
+
+      .btn-row {
+        margin-bottom: 10px;
+      }
+
+      button {
+        font-family: inherit;
+        font-size: 0.9rem;
+        padding: 6px 12px;
+        margin-right: 8px;
+        border-radius: 4px;
+        border: 1px solid ${colors.secondary};
+        background-color: ${colors.accent};
+        color: ${colors.buttonText};
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: ${colors.highlight};
+      }
+
+      pre {
+        background: ${colors.buttonText};
+        border: 2px solid ${colors.accent};
+        border-radius: 6px;
+        padding: 10px;
+        white-space: pre;
+        overflow-x: auto;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco,
+          Consolas, "Liberation Mono", "Courier New", monospace;
+        font-size: 0.9rem;
+        color: ${colors.accent};
+      }
     `;
 
-    const w = window.open(
-      "",
-      "_blank",
-      "width=800,height=600,scrollbars=yes,resizable=yes"
+    const popup = createPopupWindow(
+      "BIRT Properties",
+      "width=800,height=600,scrollbars=yes,resizable=yes",
+      popupCss
     );
-    if (!w) {
+
+    if (!popup) {
       alert(
         "Unable to open BIRT popup window. Please allow popups for this extension."
       );
@@ -1384,104 +1108,138 @@ async function generateBirtPropertiesClick() {
       return;
     }
 
-    w.document.write(popupHtml);
-    w.document.close();
+    const doc = popup.document;
 
-    // wire copy + download in the child window (no inline script)
-    const setupChildHandlers = () => {
-      const copyBtn = w.document.getElementById("copy-birt");
-      const dlBtn = w.document.getElementById("download-birt");
-      const pre = w.document.getElementById("birt-text");
+    const heading = doc.createElement("h1");
+    heading.textContent = "BIRT Properties";
 
-      if (!copyBtn || !dlBtn || !pre) return;
+    const meta = doc.createElement("div");
+    meta.className = "meta";
 
-      copyBtn.addEventListener("click", async () => {
-        try {
+    const tenantLine = doc.createElement("div");
+    tenantLine.textContent = `Tenant: ${tenantId}`;
+
+    const urlLine = doc.createElement("div");
+    urlLine.textContent = `Client URL: ${clientUrl}`;
+
+    const editLine = doc.createElement("div");
+    editLine.textContent = `Last Edit: ${editDate}`;
+
+    meta.append(tenantLine, urlLine, editLine);
+
+    const buttonRow = doc.createElement("div");
+    buttonRow.className = "btn-row";
+
+    const copyBtn = doc.createElement("button");
+    copyBtn.type = "button";
+    copyBtn.textContent = "Copy To Clipboard";
+
+    const downloadBtn = doc.createElement("button");
+    downloadBtn.type = "button";
+    downloadBtn.textContent = "Download To File";
+
+    buttonRow.append(copyBtn, downloadBtn);
+
+    const pre = doc.createElement("pre");
+    pre.textContent = propsText;
+
+    doc.body.append(heading, meta, buttonRow, pre);
+
+    // --- 7. Copy BIRT properties ---
+    copyBtn.addEventListener("click", async () => {
+      try {
+        popup.focus();
+
+        const text = pre.textContent || "";
+
+        if (!text.trim()) {
+          copyBtn.textContent = "No Content";
+
+          setTimeout(() => {
+            copyBtn.textContent = "Copy To Clipboard";
+          }, 1500);
+
+          return;
+        }
+
+        await popup.navigator.clipboard.writeText(text);
+
+        copyBtn.textContent = "Copied!";
+
+        setTimeout(() => {
+          copyBtn.textContent = "Copy To Clipboard";
+        }, 1500);
+      } catch (error) {
+        console.error("Copy BIRT properties failed:", error);
+
+        copyBtn.textContent = "Copy Failed";
+
+        setTimeout(() => {
+          copyBtn.textContent = "Copy To Clipboard";
+        }, 1500);
+      }
+    });
+
+    // --- 8. Download BIRT properties ---
+    downloadBtn.addEventListener("click", async () => {
+      try {
+        const text = pre.textContent || "";
+        const defaultFileName = "custom_reportplugin.properties";
+
+        if (!text.trim()) {
+          downloadBtn.textContent = "No Content";
+
+          setTimeout(() => {
+            downloadBtn.textContent = "Download To File";
+          }, 1500);
+
+          return;
+        }
+
+        if (popup.showSaveFilePicker) {
           try {
-            w.focus();
-          } catch (_) {}
-
-          const text = pre.innerText || pre.textContent || "";
-          if (!text.trim()) {
-            copyBtn.textContent = "No Content";
-            setTimeout(() => (copyBtn.textContent = "Copy To Clipboard"), 1500);
-            return;
-          }
-
-          await w.navigator.clipboard.writeText(text);
-
-          copyBtn.textContent = "Copied!";
-          setTimeout(() => (copyBtn.textContent = "Copy To Clipboard"), 1500);
-        } catch (err) {
-          console.error("Copy BIRT properties failed:", err);
-          copyBtn.textContent = "Copy Failed";
-          setTimeout(() => (copyBtn.textContent = "Copy To Clipboard"), 1500);
-        }
-      });
-
-      dlBtn.addEventListener("click", async () => {
-        try {
-          const text = pre.innerText || pre.textContent || "";
-          const defaultFileName = "custom_reportplugin.properties";
-
-          if (!text.trim()) {
-            dlBtn.textContent = "No Content";
-            setTimeout(() => (dlBtn.textContent = "Download To File"), 1500);
-            return;
-          }
-
-          if (w.showSaveFilePicker) {
-            try {
-              const fileHandle = await w.showSaveFilePicker({
-                suggestedName: defaultFileName,
-                types: [
-                  {
-                    description: "Properties Files",
-                    accept: { "text/plain": [".properties"] },
+            const fileHandle = await popup.showSaveFilePicker({
+              suggestedName: defaultFileName,
+              types: [
+                {
+                  description: "Properties Files",
+                  accept: {
+                    "text/plain": [".properties"],
                   },
-                ],
-              });
-              const writable = await fileHandle.createWritable();
-              await writable.write(text);
-              await writable.close();
-            } catch (err) {
-              if (err && err.name === "AbortError") {
-                return; // user cancelled – silent exit
-              }
-              downloadFileWithContext(
-                w.document,
-                w.URL,
-                defaultFileName,
-                text,
-                "text/plain"
-              );
+                },
+              ],
+            });
+
+            const writable = await fileHandle.createWritable();
+            await writable.write(text);
+            await writable.close();
+
+            return;
+          } catch (error) {
+            if (error?.name === "AbortError") {
+              return;
             }
-          } else {
-            downloadFileWithContext(
-              w.document,
-              w.URL,
-              defaultFileName,
-              text,
-              "text/plain"
-            );
+
+            // Fall through to standard download
           }
-        } catch (err) {
-          console.error("Download BIRT properties failed:", err);
-          alert("Failed to download the BIRT properties file.");
         }
-      });
-    };
 
-    if (w.document.readyState === "complete") {
-      setupChildHandlers();
-    } else {
-      w.addEventListener("load", setupChildHandlers);
-    }
+        downloadFileWithContext(
+          popup.document,
+          popup.URL,
+          defaultFileName,
+          text,
+          "text/plain"
+        );
+      } catch (error) {
+        console.error("Download BIRT properties failed:", error);
+        alert("Failed to download the BIRT properties file.");
+      }
+    });
 
-    // success: brief positive feedback, then reset
     setLabel("Generated", 1500);
-  } catch (e) {
-    console.error("Generate BIRT Properties failed:", e);
+  } catch (error) {
+    console.error("Generate BIRT Properties failed:", error);
     alert("Failed to generate BIRT properties.");
     setLabel("Error", 1500);
   }
@@ -1889,6 +1647,7 @@ async function populateAccessToken() {
 // Get access token button (returns true if token retrieval was initiated)
 async function fetchToken() {
   const clienturl = await getClientUrl();
+
   if (!clienturl) {
     alert(
       "Client URL is required. Please refresh or set the Client URL first."
@@ -1901,23 +1660,33 @@ async function fetchToken() {
     return false;
   }
 
-  const clientID = document.getElementById("client-id")?.value?.trim() || "";
+  const clientID =
+    document.getElementById("client-id")?.value?.trim() || "";
+
   if (!clientID) {
     alert("Please enter a Client ID first.");
     return false;
   }
 
+  // Access token retrieval is intentionally unsupported in incognito.
+  // The previous incognito implementation required script injection into
+  // a temporary token page, which AccessPanel no longer uses.
+  if (await isIncognitoContext()) {
+    alert(
+      "Access token retrieval is not supported in an Incognito window.\n\n" +
+        "Please use AccessPanel from a normal browser session, or use your " +
+        "standard manual API access method while working in Incognito."
+    );
+    return false;
+  }
+
   const tokenurl = `${clienturl}accessToken?clientId=${clientID}`;
 
-  const incognito = await isIncognitoContext();
-  if (incognito) {
-    retrieveTokenViaNewTab(tokenurl);
-  } else {
-    fetchTokenDirectly(tokenurl, clienturl, clientID);
-  }
+  await fetchTokenDirectly(tokenurl, clienturl, clientID);
 
   return true;
 }
+
 
 // Get access token normal mode (used by fetchToken())
 async function fetchTokenDirectly(tokenurl, clienturl, clientID) {
@@ -1944,133 +1713,7 @@ async function fetchTokenDirectly(tokenurl, clienturl, clientID) {
   }
 }
 
-// Get access token incognito mode (used by fetchToken())
-async function retrieveTokenViaNewTab(tokenurl) {
-  return new Promise((resolve) => {
-    chrome.tabs.create({ url: tokenurl, active: true }, async (tab) => {
-      if (chrome.runtime.lastError || !tab?.id) {
-        console.error("Failed to create token tab:", chrome.runtime.lastError);
-        alert("Failed to open token tab.");
-        return resolve(false);
-      }
-
-      const tabId = tab.id;
-      let finished = false;
-
-      const cleanupAndClose = () => {
-        try {
-          chrome.tabs.onUpdated.removeListener(onUpdated);
-        } catch (e) {
-          // ignore
-        }
-
-        // close (don’t fail the flow if it’s already gone)
-        chrome.tabs.remove(tabId, () => {
-          const err = chrome.runtime.lastError?.message || "";
-          if (err && !err.toLowerCase().includes("no tab with id")) {
-            console.warn("Error closing token tab:", chrome.runtime.lastError);
-          }
-        });
-      };
-
-      // safety timeout in case onUpdated never fires (network/redirect edge cases)
-      const timeoutMs = 25000;
-      const timeoutId = setTimeout(() => {
-        if (finished) return;
-        finished = true;
-        alert("Token retrieval timed out. Please try again.");
-        cleanupAndClose();
-        resolve(false);
-      }, timeoutMs);
-
-      const onUpdated = async (updatedTabId, changeInfo) => {
-        if (updatedTabId !== tabId) return;
-        if (changeInfo.status !== "complete") return;
-
-        // stop listening as soon as the tab is complete
-        chrome.tabs.onUpdated.removeListener(onUpdated);
-
-        chrome.scripting.executeScript(
-          {
-            target: { tabId },
-            function: scrapeTokenFromPage,
-          },
-          async (injectionResults) => {
-            if (finished) return;
-            finished = true;
-            clearTimeout(timeoutId);
-
-            if (chrome.runtime.lastError) {
-              alert("Failed to retrieve token (script injection failed).");
-              cleanupAndClose();
-              return resolve(false);
-            }
-
-            const payload = injectionResults?.[0]?.result;
-
-            if (!payload?.ok) {
-              alert("Failed to retrieve token from the page.");
-              cleanupAndClose();
-              return resolve(false);
-            }
-
-            // payload.text is the raw <pre> contents; parse in extension context
-            let tokenJson;
-            try {
-              tokenJson = JSON.parse(payload.text);
-            } catch (e) {
-              console.error("Token page did not return valid JSON.");
-              alert("Token response was not valid JSON.");
-              cleanupAndClose();
-              return resolve(false);
-            }
-
-            // retrieve the existing client ID from storage
-            const baseClientUrl = new URL(tokenurl).origin + "/";
-            const storedData = await loadClientData();
-            const existingClientID =
-              storedData?.[baseClientUrl]?.clientid || "unknown-client";
-
-            await processTokenResponse(
-              tokenJson,
-              baseClientUrl,
-              existingClientID,
-              tokenurl
-            );
-
-            cleanupAndClose();
-            resolve(true);
-          }
-        );
-      };
-
-      // isten for tab load completion
-      chrome.tabs.onUpdated.addListener(onUpdated);
-    });
-  });
-}
-
-// Scrape token from browser tab (used by retrieveTokenViaNewTab())
-function scrapeTokenFromPage() {
-  try {
-    const preElement = document.querySelector("pre");
-    if (!preElement) {
-      return { ok: false, error: "Token <pre> element not found." };
-    }
-
-    const text = preElement.innerText?.trim();
-    if (!text) {
-      return { ok: false, error: "Token page <pre> was empty." };
-    }
-
-    // Return raw text; parse JSON in the extension context
-    return { ok: true, text };
-  } catch (error) {
-    return { ok: false, error: String(error) };
-  }
-}
-
-// Process Token (used by fetchTokenDirectly() and retrieveTokenViaNewTab())
+// Process Token (used by fetchTokenDirectly())
 async function processTokenResponse(result, baseClientUrl, clientID, tokenurl) {
   const button = document.getElementById("get-token");
 
@@ -4217,8 +3860,11 @@ async function displayApiResponse(response, apiKey) {
 
 // JSON tree view renderer
 function renderJsonTree(data, rootEl, { collapsedDepth = 1 } = {}) {
-  rootEl.innerHTML = "";
-  const el = buildNode(data, undefined, 0, collapsedDepth);
+  rootEl.replaceChildren();
+
+  const doc = rootEl.ownerDocument || document;
+  const el = buildNode(data, undefined, 0, collapsedDepth, doc);
+
   rootEl.appendChild(el);
 }
 
@@ -4229,14 +3875,14 @@ function containerBadge(value) {
 }
 
 // JSON tree view node builder (with counts)
-function buildNode(value, key, depth, collapsedDepth) {
+function buildNode(value, key, depth, collapsedDepth, doc = document) {
   const isObjLike = (v) => v && typeof v === "object" && v !== null;
 
   if (isObjLike(value)) {
-    const details = document.createElement("details");
+    const details = doc.createElement("details");
     details.open = depth < collapsedDepth;
 
-    const summary = document.createElement("summary");
+    const summary = doc.createElement("summary");
     const badge = containerBadge(value);
 
     // Notepad++-style labels: "key {2}"  /  "values [0]"  /  "{3}" or "[1]" for root nodes
@@ -4245,18 +3891,18 @@ function buildNode(value, key, depth, collapsedDepth) {
 
     if (Array.isArray(value)) {
       for (let i = 0; i < value.length; i++) {
-        details.appendChild(buildNode(value[i], i, depth + 1, collapsedDepth));
+        details.appendChild(buildNode(value[i], i, depth + 1, collapsedDepth, doc));
       }
     } else {
       const keys = Object.keys(value);
       for (const k of keys) {
-        details.appendChild(buildNode(value[k], k, depth + 1, collapsedDepth));
+        details.appendChild(buildNode(value[k], k, depth + 1, collapsedDepth, doc));
       }
     }
     return details;
   } else {
     // leaf
-    const row = document.createElement("div");
+    const row = doc.createElement("div");
     row.className = "json-leaf";
     row.textContent =
       key != null ? `${key}: ${formatScalar(value)}` : formatScalar(value);
@@ -4424,323 +4070,344 @@ function copyApiResponse() {
   }
 }
 
-// Helper for RAW Popout To Avoid Breaking HTML
-function escapeHtml(s) {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
 // Request details button
 function showRequestDetails() {
-  // pull theme colors from the current document root
-  const rootStyles = getComputedStyle(document.documentElement);
-  const primary =
-    rootStyles.getPropertyValue("--primary-color").trim() || "#f5f5f5";
-  const secondary =
-    rootStyles.getPropertyValue("--secondary-color").trim() || "#0059B3";
-  const accent =
-    rootStyles.getPropertyValue("--accent-color").trim() || "#00AEEF";
-  const highlight =
-    rootStyles.getPropertyValue("--highlight-color").trim() || "#007ACC";
-  const textOnBtn =
-    rootStyles.getPropertyValue("--buttontext-color").trim() || "#FFFFFF";
+  const colors = getPopupThemeColors();
 
+  // No request has been sent yet
   if (!lastRequestDetails) {
-    const noDetailsHtml = `
-      <html>
-        <head>
-          <title>No Request Details</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              padding: 20px;
-              margin: 0;
-              background-color: ${primary};
-              color: ${accent};
-              line-height: 1.5;
-            }
-            h1 {
-              color: ${accent};
-              margin-bottom: 0.5rem;
-              font-size: 1.3rem;
-              font-weight: bold;
-            }
-            p {
-              margin: 0;
-              font-size: 0.8rem;
-            }
-          </style>
-        </head>
-        <body>
-          <h1>No request details available.</h1>
-          <p>Send a request first to view request details.</p>
-        </body>
-      </html>
+    const popupCss = `
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        margin: 0;
+        background-color: ${colors.primary};
+        color: ${colors.accent};
+        line-height: 1.5;
+      }
+
+      h1 {
+        color: ${colors.accent};
+        margin: 0 0 0.5rem 0;
+        font-size: 1.3rem;
+        font-weight: bold;
+      }
+
+      p {
+        margin: 0;
+        font-size: 0.8rem;
+      }
     `;
 
-    const noDetailsWindow = window.open(
-      "",
-      "_blank",
-      "width=400,height=300,scrollbars=yes,resizable=yes"
+    const popup = createPopupWindow(
+      "No Request Details",
+      "width=400,height=300,scrollbars=yes,resizable=yes",
+      popupCss
     );
-    if (!noDetailsWindow) return;
-    noDetailsWindow.document.write(noDetailsHtml);
-    noDetailsWindow.document.close();
+
+    if (!popup) return;
+
+    const doc = popup.document;
+
+    const heading = doc.createElement("h1");
+    heading.textContent = "No request details available.";
+
+    const message = doc.createElement("p");
+    message.textContent = "Send a request first to view request details.";
+
+    doc.body.append(heading, message);
     return;
   }
 
-  const safeMethod = escapeHtml(String(lastRequestDetails.method || ""));
-  const safeUrl = escapeHtml(String(lastRequestDetails.url || ""));
-  const safeHeaders = escapeHtml(
-    JSON.stringify(lastRequestDetails.headers || {}, null, 2)
-  );
-  const safeBody = escapeHtml(
-    lastRequestDetails.body != null && lastRequestDetails.body !== ""
-      ? String(lastRequestDetails.body)
-      : "No body"
-  );
+  // Request details popup
+  const popupCss = `
+    body {
+      font-family: Arial, sans-serif;
+      padding: 16px;
+      margin: 0;
+      line-height: 1.6;
+      background-color: ${colors.primary};
+      color: ${colors.accent};
+    }
 
-  const requestDetailsHtml = `
-    <html>
-      <head>
-        <title>Request Details</title>
-        <style>
-          body {
-            font-family: Arial, sans-serif;
-            padding: 16px;
-            margin: 0;
-            line-height: 1.6;
-            background-color: ${primary};
-            color: ${accent};
-          }
-          h1 {
-            color: ${accent};
-            font-size: 1.4rem;
-            font-weight: bold;
-            margin: 0 0 0.75rem 0;
-          }
-          h2 {
-            color: ${accent};
-            font-size: .9rem;
-            margin: 1rem 0 0.35rem 0;
-          }
-          .meta-line {
-            margin: 0.15rem 0;
-            font-size: 0.8rem;
-          }
-          .meta-line strong {
-            font-weight: bold;
-          }
-          pre {
-            background: ${textOnBtn};
-            border: 2px solid ${accent};
-            border-radius: 6px;
-            padding: 10px;
-            overflow-x: auto;
-            white-space: pre;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-            font-size: 0.7rem;
-            color: ${accent};
-          }
-        </style>
-      </head>
-      <body>
-        <h1>Request Details</h1>
-        <p class="meta-line"><strong>Method:</strong> ${safeMethod}</p>
-        <p class="meta-line"><strong>URL:</strong> ${safeUrl}</p>
+    h1 {
+      color: ${colors.accent};
+      font-size: 1.4rem;
+      font-weight: bold;
+      margin: 0 0 0.75rem 0;
+    }
 
-        <h2>Headers</h2>
-        <pre>${safeHeaders}</pre>
+    h2 {
+      color: ${colors.accent};
+      font-size: 0.9rem;
+      margin: 1rem 0 0.35rem 0;
+    }
 
-        <h2>Body</h2>
-        <pre>${safeBody}</pre>
-      </body>
-    </html>
+    .meta-line {
+      margin: 0.15rem 0;
+      font-size: 0.8rem;
+    }
+
+    .meta-label {
+      font-weight: bold;
+    }
+
+    pre {
+      background: ${colors.buttonText};
+      border: 2px solid ${colors.accent};
+      border-radius: 6px;
+      padding: 10px;
+      overflow-x: auto;
+      white-space: pre;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco,
+        Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.7rem;
+      color: ${colors.accent};
+    }
   `;
 
-  const detailsWindow = window.open(
-    "",
-    "_blank",
-    "width=1000,height=600,scrollbars=yes,resizable=yes"
+  const popup = createPopupWindow(
+    "Request Details",
+    "width=1000,height=600,scrollbars=yes,resizable=yes",
+    popupCss
   );
-  if (!detailsWindow) return;
-  detailsWindow.document.write(requestDetailsHtml);
-  detailsWindow.document.close();
+
+  if (!popup) return;
+
+  const doc = popup.document;
+
+  const heading = doc.createElement("h1");
+  heading.textContent = "Request Details";
+
+  // Method
+  const methodLine = doc.createElement("p");
+  methodLine.className = "meta-line";
+
+  const methodLabel = doc.createElement("span");
+  methodLabel.className = "meta-label";
+  methodLabel.textContent = "Method: ";
+
+  const methodValue = doc.createElement("span");
+  methodValue.textContent = String(lastRequestDetails.method || "");
+
+  methodLine.append(methodLabel, methodValue);
+
+  // URL
+  const urlLine = doc.createElement("p");
+  urlLine.className = "meta-line";
+
+  const urlLabel = doc.createElement("span");
+  urlLabel.className = "meta-label";
+  urlLabel.textContent = "URL: ";
+
+  const urlValue = doc.createElement("span");
+  urlValue.textContent = String(lastRequestDetails.url || "");
+
+  urlLine.append(urlLabel, urlValue);
+
+  // Headers
+  const headersHeading = doc.createElement("h2");
+  headersHeading.textContent = "Headers";
+
+  const headersPre = doc.createElement("pre");
+  headersPre.textContent = JSON.stringify(
+    lastRequestDetails.headers || {},
+    null,
+    2
+  );
+
+  // Body
+  const bodyHeading = doc.createElement("h2");
+  bodyHeading.textContent = "Body";
+
+  const bodyPre = doc.createElement("pre");
+  bodyPre.textContent =
+    lastRequestDetails.body != null && lastRequestDetails.body !== ""
+      ? String(lastRequestDetails.body)
+      : "No body";
+
+  doc.body.append(
+    heading,
+    methodLine,
+    urlLine,
+    headersHeading,
+    headersPre,
+    bodyHeading,
+    bodyPre
+  );
 }
 
-// Popout response button (API Response)
+// Popout API response
 function popoutResponse() {
   const data = window.lastApiResponseObject;
+  const colors = getPopupThemeColors();
 
-  // pull theme colors from the current document root
-  const rootStyles = getComputedStyle(document.documentElement);
-  const primary =
-    rootStyles.getPropertyValue("--primary-color").trim() || "#f5f5f5";
-  const secondary =
-    rootStyles.getPropertyValue("--secondary-color").trim() || "#0059B3";
-  const accent =
-    rootStyles.getPropertyValue("--accent-color").trim() || "#00AEEF";
-  const highlight =
-    rootStyles.getPropertyValue("--highlight-color").trim() || "#007ACC";
-  const textOnBtn =
-    rootStyles.getPropertyValue("--buttontext-color").trim() || "#FFFFFF";
-
+  // No response available
   if (!data) {
-    // themed "no response" popup
-    const noResponseHtml = `
-      <html>
-        <head>
-          <title>No Response</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              padding: 20px;
-              margin: 0;
-              background-color: ${primary};
-              color: ${accent};
-              line-height: 1.5;
-            }
-            h1 {
-              color: ${accent};
-              margin-bottom: 0.5rem;
-              font-size: 1.3rem;
-              font-weight: bold;
-            }
-            p {
-              margin: 0;
-              font-size: 0.95rem;
-            }
-          </style>
-        </head>
-        <body>
-          <h1>No response available.</h1>
-          <p>Please send an API request to generate a response.</p>
-        </body>
-      </html>`;
-    const w = window.open(
-      "",
-      "_blank",
-      "width=400,height=300,scrollbars=yes,resizable=yes"
+    const popupCss = `
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        margin: 0;
+        background-color: ${colors.primary};
+        color: ${colors.accent};
+        line-height: 1.5;
+      }
+
+      h1 {
+        color: ${colors.accent};
+        margin: 0 0 0.5rem 0;
+        font-size: 1.3rem;
+        font-weight: bold;
+      }
+
+      p {
+        margin: 0;
+        font-size: 0.95rem;
+      }
+    `;
+
+    const popup = createPopupWindow(
+      "No Response",
+      "width=400,height=300,scrollbars=yes,resizable=yes",
+      popupCss
     );
-    if (!w) return;
-    w.document.write(noResponseHtml);
-    w.document.close();
+
+    if (!popup) return;
+
+    const doc = popup.document;
+
+    const heading = doc.createElement("h1");
+    heading.textContent = "No response available.";
+
+    const message = doc.createElement("p");
+    message.textContent =
+      "Please send an API request to generate a response.";
+
+    doc.body.append(heading, message);
     return;
   }
 
-  const mode = document.getElementById("toggle-view")?.dataset.mode || "raw";
+  const mode =
+    document.getElementById("toggle-view")?.dataset.mode || "raw";
 
+  // Raw response popup
   if (mode === "raw") {
-    // RAW popout – themed like BIRT popup
-    const responseHtml = `
-      <html>
-        <head>
-          <title>API Response</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              padding: 16px;
-              margin: 0;
-              line-height: 1.6;
-              background-color: ${primary};
-              color: ${accent};
-            }
-            h1 {
-              color: ${accent};
-              font-size: 1.4rem;
-              font-weight: bold;
-              margin: 0 0 0.75rem 0;
-            }
-            pre {
-              background: ${textOnBtn};
-              border: 2px solid ${accent};
-              border-radius: 6px;
-              padding: 10px;
-              overflow-x: auto;
-              white-space: pre;
-              font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-              font-size: 0.7rem;
-              color: ${accent};
-            }
-          </style>
-        </head>
-        <body>
-          <h1>API Response</h1>
-          <pre>${escapeHtml(JSON.stringify(data, null, 2))}</pre>
-        </body>
-      </html>`;
-    const w = window.open(
-      "",
-      "_blank",
-      "width=800,height=900,scrollbars=yes,resizable=yes"
+    const popupCss = `
+      body {
+        font-family: Arial, sans-serif;
+        padding: 16px;
+        margin: 0;
+        line-height: 1.6;
+        background-color: ${colors.primary};
+        color: ${colors.accent};
+      }
+
+      h1 {
+        color: ${colors.accent};
+        font-size: 1.4rem;
+        font-weight: bold;
+        margin: 0 0 0.75rem 0;
+      }
+
+      pre {
+        background: ${colors.buttonText};
+        border: 2px solid ${colors.accent};
+        border-radius: 6px;
+        padding: 10px;
+        overflow-x: auto;
+        white-space: pre;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco,
+          Consolas, "Liberation Mono", "Courier New", monospace;
+        font-size: 0.7rem;
+        color: ${colors.accent};
+      }
+    `;
+
+    const popup = createPopupWindow(
+      "API Response",
+      "width=800,height=900,scrollbars=yes,resizable=yes",
+      popupCss
     );
-    if (!w) return;
-    w.document.write(responseHtml);
-    w.document.close();
-  } else {
-    // TREE popout (no inline script: pre-render HTML in the parent)
-    const container = document.createElement("div");
-    container.className = "json-tree";
 
-    // reuse existing renderer to build DOM in this temp container
-    renderJsonTree(data, container, { collapsedDepth: 1 });
+    if (!popup) return;
 
-    // serialize the built tree to static HTML
-    const treeHtml = container.outerHTML;
+    const doc = popup.document;
 
-    const responseHtml = `
-      <html>
-        <head>
-          <title>API Response (Tree)</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              padding: 16px;
-              margin: 0;
-              line-height: 1.6;
-              background-color: ${primary};
-              color: ${accent};
-            }
-            h1 {
-              color: ${accent};
-              margin: 0 0 0.5rem 0;
-              font-size: 1.4rem;
-              font-weight: bold;
-            }
-            .json-tree {
-              font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-              background: ${textOnBtn};
-              border: 2px solid ${accent};
-              border-radius: 6px;
-              padding: 10px;
-              color: ${accent};
-            }
-            .json-tree details {
-              margin-left: 0.75rem;
-            }
-            .json-tree summary {
-              cursor: pointer;
-              outline: none;
-            }
-            .json-tree .json-leaf {
-              margin-left: 1.5rem;
-              white-space: pre-wrap;
-            }
-          </style>
-        </head>
-        <body>
-          <h1>API Response (Tree)</h1>
-          ${treeHtml}
-        </body>
-      </html>`;
-    const w = window.open(
-      "",
-      "_blank",
-      "width=900,height=1000,scrollbars=yes,resizable=yes"
-    );
-    if (!w) return;
-    w.document.write(responseHtml);
-    w.document.close();
+    const heading = doc.createElement("h1");
+    heading.textContent = "API Response";
+
+    const pre = doc.createElement("pre");
+    pre.textContent = JSON.stringify(data, null, 2);
+
+    doc.body.append(heading, pre);
+    return;
   }
+
+  // Tree response popup
+  const popupCss = `
+    body {
+      font-family: Arial, sans-serif;
+      padding: 16px;
+      margin: 0;
+      line-height: 1.6;
+      background-color: ${colors.primary};
+      color: ${colors.accent};
+    }
+
+    h1 {
+      color: ${colors.accent};
+      margin: 0 0 0.5rem 0;
+      font-size: 1.4rem;
+      font-weight: bold;
+    }
+
+    .json-tree {
+      font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo,
+        Consolas, monospace;
+      background: ${colors.buttonText};
+      border: 2px solid ${colors.accent};
+      border-radius: 6px;
+      padding: 10px;
+      color: ${colors.accent};
+    }
+
+    .json-tree details {
+      margin-left: 0.75rem;
+    }
+
+    .json-tree summary {
+      cursor: pointer;
+      outline: none;
+    }
+
+    .json-tree .json-leaf {
+      margin-left: 1.5rem;
+      white-space: pre-wrap;
+    }
+  `;
+
+  const popup = createPopupWindow(
+    "API Response (Tree)",
+    "width=900,height=1000,scrollbars=yes,resizable=yes",
+    popupCss
+  );
+
+  if (!popup) return;
+
+  const doc = popup.document;
+
+  const heading = doc.createElement("h1");
+  heading.textContent = "API Response (Tree)";
+
+  const tree = doc.createElement("div");
+  tree.className = "json-tree";
+
+  renderJsonTree(data, tree, {
+    collapsedDepth: 1,
+  });
+
+  doc.body.append(heading, tree);
 }
 
 // Export JSON response to CSV button
@@ -5090,8 +4757,9 @@ async function checkHermesConnectionClick() {
 }
 
 window.HermesLink = (function () {
-  const ENFORCE_ACTIVE_TAB_OVERLAY = true; // set to true to overlay on non-linked tabs always
+  const ENFORCE_ACTIVE_TAB_OVERLAY = true;
   const PING_INTERVAL = 60 * 1000; // 1 minute polling
+
   const SESSION_KEYS = {
     TAB_ID: "hermesLinkedTabId",
     WINDOW_ID: "hermesLinkedWindowId",
@@ -5109,42 +4777,36 @@ window.HermesLink = (function () {
       hint: "Session active in this tab",
       overlay: null,
     },
+
     STALE: {
       banner: "Session Needs Attention: ",
       hint: "Your session may have expired. Please refresh the page.",
       overlay:
         "Session may have expired. Return to WFM to refresh your session.",
     },
+
     INVALID: {
       banner: "Invalid Session: ",
       hint: "Please return to a valid WFM page.",
       overlay: "Invalid WFM session. Return to a valid WFM page to continue.",
     },
+
     WRONG_TAB: {
       banner: "Not Active Tab: ",
       hint: "Check Connection or link this tab.",
       overlay:
         "Session not validated in this tab. Click Check Connection or Link This Tab Instead.",
     },
-    // TMS-specific states
+
+    // TMS is allowed for manual AccessPanel use.
+    // AccessPanel does not inspect or validate TMS page content.
     TMS_OK: {
       banner: "Active (TMS): ",
-      hint: "Using Tenant Management System for the linked WFM tenant.",
+      hint: "AccessPanel available for manual use in Tenant Management System.",
       overlay: null,
     },
-    TMS_NO_VANITY: {
-      banner: "TMS: Vanity URL Required",
-      hint: 'Enter or expose the "Vanity Non-SSO URL" for this tenant to use AccessPanel here.',
-      overlay:
-        'AccessPanel can only run on TMS when the "Vanity Non-SSO URL" is filled in and visible for this tenant.',
-    },
-    TMS_MISMATCH: {
-      banner: "TMS Tenant Mismatch",
-      hint: 'The "Vanity Non-SSO URL" in TMS does not match the active HerAccessPanelmes WFM session.',
-      overlay:
-        "This TMS tenant does not match your active AccessPanel session. Open the matching tenant or relink AccessPanel in WFM.",
-    },
-    // developer portal – always allow manual use
+
+    // Developer portal is allowed for manual use.
     DEV_OK: {
       banner: "Developer Portal: ",
       hint: "AccessPanel UI enabled for manual copy/paste from the developer portal.",
@@ -5152,13 +4814,12 @@ window.HermesLink = (function () {
     },
   };
 
-  // ---- TMS helpers ---- //
-
-  // 1) ss this a TMS URL we should even consider?
+  // Determine whether the active tab is an allowed TMS page.
   const isTmsUrl = (url) => {
     try {
       const u = new URL(url);
       const origin = u.origin.toLowerCase();
+
       return (
         origin.startsWith("https://adpvantage.adp.com") ||
         origin.startsWith("https://testadpvantage.adp.com")
@@ -5168,11 +4829,12 @@ window.HermesLink = (function () {
     }
   };
 
-  // 1b) Is this a developer portal URL where AccessPanel should stay enabled?
+  // Determine whether the active tab is an allowed developer portal page.
   const isDevPortalUrl = (url) => {
     try {
       const u = new URL(url);
       const origin = u.origin.toLowerCase();
+
       return (
         origin.startsWith("https://adp-developer.mykronos.com") ||
         origin.startsWith("https://sso-hlp02.gss-kcfn.mykronos.com")
@@ -5182,211 +4844,88 @@ window.HermesLink = (function () {
     }
   };
 
+  // Determine whether the active tab is a Boomi platform page.
   const isBoomiUrl = (url) => {
     try {
       const u = new URL(url);
       const host = u.hostname.toLowerCase();
-      // matches platform.boomi.com and any subdomain like foo.platform.boomi.com
+
       return (
-        host === "platform.boomi.com" || host.endsWith(".platform.boomi.com")
+        host === "platform.boomi.com" ||
+        host.endsWith(".platform.boomi.com")
       );
     } catch {
       return false;
     }
   };
 
-  // 2) normalize any raw vanity string into the same shape as getVanityUrl()
-  //    and compare only by protocol + host (ignore path and trailing slash).
+  // Normalize a WFM vanity URL for same-tenant comparison.
+  // Compare protocol + hostname only and ignore path/trailing slash.
   const normalizeVanity = (raw) => {
     if (!raw) return null;
+
     let value = String(raw).trim();
     if (!value) return null;
 
-    // if user didn’t include the scheme, assume https
     if (!/^https?:\/\//i.test(value)) {
       value = "https://" + value;
     }
 
     try {
-      // reuse existing logic that knows how to flip to -nosso, environment, etc.
-      const normalizedUrl = getVanityUrl(value); // e.g. "https://24hf-nosso.prd.mykronos.com/"
-
+      const normalizedUrl = getVanityUrl(value);
       const parsed = new URL(normalizedUrl);
-      // compare scheme + hostname only; ignore trailing slash or path
+
       return `${parsed.protocol}//${parsed.hostname}`.toLowerCase();
-    } catch (e) {
+    } catch {
       return null;
     }
   };
 
-  // 3) read the TMS "Vanity Non-SSO URL" from the page in the active tab (search all frames)
-  const getTmsVanityForTab = async (tabId) => {
-    try {
-      const results = await chrome.scripting.executeScript({
-        target: { tabId, allFrames: true },
-        func: () => {
-          // recursively search document + all shadow roots for the "Vanity Non-SSO URL" field
-          const findVanityInput = (root) => {
-            if (!root) return null;
-
-            const isVanityField = (sdfInput) => {
-              if (!sdfInput || sdfInput.tagName !== "SDF-INPUT") return false;
-
-              // 1) direct ID match
-              if (sdfInput.id === "vanityNonSSOURL") return true;
-
-              // 2) label text match inside its shadow root
-              if (!sdfInput.shadowRoot) return false;
-
-              const labelEl = sdfInput.shadowRoot.querySelector(
-                ".sdf-form-control-wrapper--label, label[part='label']"
-              );
-              if (!labelEl || !labelEl.textContent) return false;
-
-              const labelText = labelEl.textContent.trim();
-              return labelText.startsWith("Vanity Non-SSO URL");
-            };
-
-            // direct root query first
-            const direct = root.querySelector
-              ? root.querySelector("sdf-input#vanityNonSSOURL")
-              : null;
-            if (direct && direct.shadowRoot && isVanityField(direct)) {
-              const input = direct.shadowRoot.querySelector("input#input");
-              if (input) return input;
-            }
-
-            // walk all elements, dive into shadow roots
-            const walker = document.createTreeWalker(
-              root,
-              NodeFilter.SHOW_ELEMENT,
-              null
-            );
-
-            let node = walker.currentNode;
-            while (node) {
-              if (node.tagName === "SDF-INPUT" && isVanityField(node)) {
-                if (node.shadowRoot) {
-                  const input = node.shadowRoot.querySelector("input#input");
-                  if (input) return input;
-                }
-              }
-
-              if (node.shadowRoot) {
-                const fromShadow = findVanityInput(node.shadowRoot);
-                if (fromShadow) return fromShadow;
-              }
-
-              node = walker.nextNode();
-            }
-
-            return null;
-          };
-
-          try {
-            const input = findVanityInput(document);
-            return input ? input.value.trim() : null;
-          } catch (e) {
-            console.error("TMS vanity search failed:", e);
-            return null;
-          }
-        },
-      });
-
-      // results = [{frameId, result}, ...]; pick first non-null result
-      if (Array.isArray(results)) {
-        for (const r of results) {
-          if (r && r.result) {
-            return String(r.result).trim() || null;
-          }
-        }
-      }
-
-      return null;
-    } catch (e) {
-      return null;
-    }
-  };
-
-  // 4) core TMS check: does the TMS tenant match the linked WFM session?
-  const checkTmsTenantMatchesSession = async (
-    currentTab,
-    hermesLinkedOrigin
-  ) => {
-    if (!currentTab?.url || !isTmsUrl(currentTab.url)) {
-      return { ok: false, reason: "not_tms" };
-    }
-
-    if (!hermesLinkedOrigin) {
-      // No linked WFM session – TMS cannot be used yet
-      return { ok: false, reason: "no_link" };
-    }
-
-    const sessionVanity = normalizeVanity(hermesLinkedOrigin);
-    if (!sessionVanity) {
-      return { ok: false, reason: "no_link" };
-    }
-
-    const tmsVanityRaw = await getTmsVanityForTab(currentTab.id);
-    if (!tmsVanityRaw) {
-      return { ok: false, reason: "no_tms_vanity" };
-    }
-
-    const tmsVanity = normalizeVanity(tmsVanityRaw);
-    if (!tmsVanity) {
-      return { ok: false, reason: "bad_tms_vanity" };
-    }
-
-    const match = tmsVanity === sessionVanity;
-
-    if (!match) {
-      return { ok: false, reason: "vanity_mismatch" };
-    }
-
-    return { ok: true, reason: "match" };
-  };
-
-  // state management
   const state = {
     isInitialized: false,
     checkingState: false,
   };
 
-  // helper functions
+  // Get active tab.
   const getActiveTab = async () => {
     try {
       const [tab] = await chrome.tabs.query({
         active: true,
         currentWindow: true,
       });
+
       return tab || null;
-    } catch (e) {
-      console.error("Failed to get active tab:", e);
+    } catch (error) {
+      console.error("Failed to get active tab:", error);
       return null;
     }
   };
 
+  // Get linked-session state.
   const getLinkedState = async () => {
     try {
       return await chrome.storage.session.get(Object.values(SESSION_KEYS));
-    } catch (e) {
-      console.error("Failed to get linked state:", e);
+    } catch (error) {
+      console.error("Failed to get linked state:", error);
       return {};
     }
   };
 
+  // Update linked-session state.
   const updateLinkedState = async (newState) => {
     try {
       const timestamp = new Date().toISOString();
+
       await chrome.storage.session.set({
         ...newState,
         hermesLastValidation: timestamp,
       });
-    } catch (e) {
-      console.error("Failed to update linked state:", e);
+    } catch (error) {
+      console.error("Failed to update linked state:", error);
     }
   };
 
+  // Update AccessPanel UI based on the active browser context.
   const updateUI = async (validationResult = null) => {
     const {
       hermesLinkedTabId,
@@ -5399,16 +4938,18 @@ window.HermesLink = (function () {
     const isLinkedTab = currentTab?.id === hermesLinkedTabId;
 
     const isTms = currentTab ? isTmsUrl(currentTab.url) : false;
-    const isDevPortal = currentTab ? isDevPortalUrl(currentTab.url) : false;
+    const isDevPortal = currentTab
+      ? isDevPortalUrl(currentTab.url)
+      : false;
     const isBoomi = currentTab ? isBoomiUrl(currentTab.url) : false;
 
-    // reuse this for WFM-specific behavior (e.g., relink button)
+    // Validate the active tab as a normal WFM tab.
     const currentTabValidation = currentTab
       ? validateWebPage(currentTab.url)
       : { valid: false };
 
-    // figure out if the current WFM tab is the same tenant as the linked one.
-    // if so, we can treat it as effectively "active" even if it's not the exact linked tab.
+    // Determine whether the current WFM tab belongs to the same tenant
+    // as the linked WFM session.
     let sameTenantAsLinked = false;
     let sessionVanity = null;
 
@@ -5419,52 +4960,28 @@ window.HermesLink = (function () {
     if (currentTab && currentTabValidation.valid && sessionVanity) {
       try {
         const currentVanity = normalizeVanity(currentTab.url);
-        sameTenantAsLinked = !!currentVanity && currentVanity === sessionVanity;
-      } catch (e) {
+
+        sameTenantAsLinked =
+          !!currentVanity && currentVanity === sessionVanity;
+      } catch {
         sameTenantAsLinked = false;
       }
     }
 
-    // if on TMS (and NOT on the linked WFM tab), check the tenant/vanity match
-    let tmsCheck = null;
-    if (!isLinkedTab && isTms) {
-      try {
-        tmsCheck = await checkTmsTenantMatchesSession(
-          currentTab,
-          hermesLinkedOrigin
-        );
-      } catch (e) {
-        tmsCheck = { ok: false, reason: "error" };
-      }
-    }
-
-    // determine current status
+    // Determine current UI state.
     let currentStatus = "OK";
 
     if (isDevPortal && !isLinkedTab) {
-      // developer portal is always allowed for manual use – no overlay, no disable.
+      // Developer portal is allowed for manual use.
       currentStatus = "DEV_OK";
-    } else if (isTms && tmsCheck) {
-      if (tmsCheck.ok) {
-        // TMS tenant matches the linked WFM session → allow full UI
-        currentStatus = "TMS_OK";
-      } else if (
-        tmsCheck.reason === "no_tms_vanity" ||
-        tmsCheck.reason === "bad_tms_vanity"
-      ) {
-        currentStatus = "TMS_NO_VANITY";
-      } else if (tmsCheck.reason === "vanity_mismatch") {
-        currentStatus = "TMS_MISMATCH";
-      } else if (tmsCheck.reason === "no_link") {
-        // no linked WFM session yet – behave like a normal wrong-tab state
-        currentStatus = "WRONG_TAB";
-      } else {
-        currentStatus = "WRONG_TAB";
-      }
+    } else if (isTms) {
+      // TMS is allowed for manual AccessPanel use.
+      // No TMS DOM data is read or inspected.
+      currentStatus = "TMS_OK";
     } else {
-      // normal WFM-driven logic (WFM/mykronos tabs)
+      // Normal WFM-driven behavior.
       if (!isLinkedTab && sameTenantAsLinked) {
-        // different tab, but same tenant as the linked session → treat as active
+        // Different tab, but same tenant as linked session.
         currentStatus = "OK";
       } else if (!isLinkedTab) {
         currentStatus = "WRONG_TAB";
@@ -5479,6 +4996,7 @@ window.HermesLink = (function () {
 
     // ----- Overlay -----
     const overlay = document.getElementById("hermes-overlay");
+
     if (overlay) {
       const overlayMessage = document.querySelector(".overlay-content p");
       const relinkButton = document.getElementById("hermes-relink-tab");
@@ -5487,18 +5005,15 @@ window.HermesLink = (function () {
         overlayMessage.textContent = statusConfig.overlay;
       }
 
-      // relink button only makes sense on valid WFM tabs
+      // Relink is only valid for normal WFM tabs.
       if (relinkButton) {
-        if (currentTabValidation.valid) {
-          relinkButton.style.display = "inline-block";
-        } else {
-          relinkButton.style.display = "none";
-        }
+        relinkButton.style.display = currentTabValidation.valid
+          ? "inline-block"
+          : "none";
       }
 
-      // for OK, TMS_OK, DEV_OK, we never show the overlay.
-      // if ENFORCE_ACTIVE_TAB_OVERLAY is false, we also avoid overlay for WRONG_TAB
-      // so the UI stays usable even when you’re not on the linked tab.
+      // OK, TMS_OK and DEV_OK never show the overlay.
+      // If ENFORCE_ACTIVE_TAB_OVERLAY is false, WRONG_TAB is also soft.
       const isSoftWrongTab =
         currentStatus === "WRONG_TAB" && !ENFORCE_ACTIVE_TAB_OVERLAY;
 
@@ -5510,24 +5025,35 @@ window.HermesLink = (function () {
       overlay.classList.toggle("visible", overlayVisible);
     }
 
-    // ----- banner -----
+    // ----- Banner -----
     const banner = document.getElementById("hermes-link-banner");
+
     if (banner) {
       const status = document.getElementById("hermes-link-status");
       const target = document.getElementById("hermes-link-target");
       const hint = document.getElementById("hermes-link-hint");
 
-      if (status) status.textContent = statusConfig.banner;
-      if (target) target.textContent = currentTab?.title || "";
-      if (hint) hint.textContent = hermesValidationMessage || statusConfig.hint;
+      if (status) {
+        status.textContent = statusConfig.banner;
+      }
+
+      if (target) {
+        target.textContent = currentTab?.title || "";
+      }
+
+      if (hint) {
+        hint.textContent =
+          hermesValidationMessage || statusConfig.hint;
+      }
     }
 
-    // tab is considered "active" when:
-    //   - we’re on the linked WFM tab (OK),
-    //   - we’re on a matching TMS tenant (TMS_OK),
-    //   - we’re on an allowed developer portal (DEV_OK).
-    // if ENFORCE_ACTIVE_TAB_OVERLAY is false, WRONG_TAB is treated as a soft state:
-    // banner + hints still show, but we don’t disable the UI.
+    // Tab is considered active when:
+    //   - we're on the linked or same WFM tenant (OK),
+    //   - we're on TMS for manual AccessPanel use (TMS_OK),
+    //   - we're on an allowed developer portal (DEV_OK).
+    //
+    // If ENFORCE_ACTIVE_TAB_OVERLAY is false, WRONG_TAB becomes a soft
+    // state: banner/hints remain visible but the UI stays usable.
     const isSoftWrongTabForUi =
       currentStatus === "WRONG_TAB" && !ENFORCE_ACTIVE_TAB_OVERLAY;
 
@@ -5539,37 +5065,55 @@ window.HermesLink = (function () {
     document.body.classList.toggle("tab-inactive", shouldDisableUi);
   };
 
-  // session validation
+  // Validate linked WFM session.
   const validateSession = async () => {
     const { hermesLinkedUrl, hermesLinkedTabId } = await getLinkedState();
 
     if (!hermesLinkedUrl || !hermesLinkedTabId) {
-      return { ok: false, code: "nolink", message: "No linked session found" };
+      return {
+        ok: false,
+        code: "nolink",
+        message: "No linked session found",
+      };
     }
 
     try {
-      const tab = await chrome.tabs.get(hermesLinkedTabId).catch(() => null);
+      const tab = await chrome.tabs
+        .get(hermesLinkedTabId)
+        .catch(() => null);
+
       if (!tab) {
         await updateLinkedState({
           hermesLinkedStatus: "stale",
           hermesValidationMessage: "Linked tab was closed",
         });
-        return { ok: false, code: "closed", message: "Linked tab was closed" };
+
+        return {
+          ok: false,
+          code: "closed",
+          message: "Linked tab was closed",
+        };
       }
 
       const validation = validateWebPage(tab.url);
+
       if (!validation.valid) {
         await updateLinkedState({
           hermesLinkedStatus: "stale",
           hermesValidationMessage: validation.message,
         });
-        return { ok: false, code: "invalid", validation };
+
+        return {
+          ok: false,
+          code: "invalid",
+          validation,
+        };
       }
 
-      // keep HermesLink in sync with whatever WFM URL is
-      // actually loaded in that tab (handles “switched tenants
-      // in the same tab”).
+      // Keep HermesLink synchronized with the WFM URL actually loaded
+      // in the linked tab. This handles switching tenants in the same tab.
       let newOrigin = null;
+
       try {
         newOrigin = new URL(tab.url).origin;
       } catch {
@@ -5585,28 +5129,39 @@ window.HermesLink = (function () {
         hermesValidationMessage: "Session active",
       });
 
-      return { ok: true, code: "ok", validation };
-    } catch (e) {
+      return {
+        ok: true,
+        code: "ok",
+        validation,
+      };
+    } catch {
       await updateLinkedState({
         hermesLinkedStatus: "stale",
         hermesValidationMessage: "Unable to verify session",
       });
-      return { ok: false, code: "error", message: "Session check failed" };
+
+      return {
+        ok: false,
+        code: "error",
+        message: "Session check failed",
+      };
     }
   };
 
-  // core functionality
   const core = {
     async validateAndUpdateState() {
       if (state.checkingState) return;
+
       state.checkingState = true;
 
       try {
         const validationResult = await validateSession();
+
         await updateUI(validationResult.validation);
+
         return validationResult;
-      } catch (e) {
-        console.error("State check failed:", e);
+      } catch (error) {
+        console.error("State check failed:", error);
       } finally {
         state.checkingState = false;
       }
@@ -5615,13 +5170,11 @@ window.HermesLink = (function () {
     async initialize() {
       if (state.isInitialized) return;
 
-      // initial state check
       await this.validateAndUpdateState();
 
-      // set up periodic check
       setInterval(() => {
-        this.validateAndUpdateState().catch((e) =>
-          console.error("Periodic check failed:", e)
+        this.validateAndUpdateState().catch((error) =>
+          console.error("Periodic check failed:", error)
         );
       }, PING_INTERVAL);
 
@@ -5629,20 +5182,24 @@ window.HermesLink = (function () {
     },
   };
 
-  // initialize core
+  // Initialize linked-session management.
   core
     .initialize()
-    .catch((e) => console.error("Failed to initialize HermesLink:", e));
+    .catch((error) =>
+      console.error("Failed to initialize HermesLink:", error)
+    );
 
-  // public api
+  // Public API
   return {
     checkState: () => core.validateAndUpdateState(),
+
     relinkToCurrentTab: async (tab) => {
       if (!tab?.url) {
         throw new Error("No active tab");
       }
 
       const validation = validateWebPage(tab.url);
+
       if (!validation.valid) {
         throw new Error(validation.message);
       }
@@ -5659,9 +5216,16 @@ window.HermesLink = (function () {
 
       await core.validateAndUpdateState();
     },
+
     getBaseUrl: async () => {
-      const { hermesLinkedOrigin, hermesLinkedStatus } = await getLinkedState();
-      return hermesLinkedStatus === "ok" ? hermesLinkedOrigin : null;
+      const {
+        hermesLinkedOrigin,
+        hermesLinkedStatus,
+      } = await getLinkedState();
+
+      return hermesLinkedStatus === "ok"
+        ? hermesLinkedOrigin
+        : null;
     },
   };
 })();
@@ -5724,7 +5288,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   ensureMasked("refresh-token");
 
   // tenant information section
-  onAsync("tms-pull-api", "click", pullApiFromTmsClick);
   onAsync("generate-birt-file", "click", generateBirtPropertiesClick);
   on(
     "toggle-client-url",
