@@ -42,8 +42,6 @@
   ],
 
   "host_permissions": [
-    "https://*.mykronos.com/*",
-    "https://adpvantage.adp.com/*",
-    "https://testadpvantage.adp.com/*"
+    "https://*.mykronos.com/*"
   ]
 }
