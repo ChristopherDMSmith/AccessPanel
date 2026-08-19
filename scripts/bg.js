@@ -135,6 +135,7 @@ async function migrateTo110() {
     // Remove legacy persistent request data and timer counters
     await chrome.storage.local.remove([
       "hermes_myapis",
+      "hermes_preferences",
       "accessTokenTimer",
       "refreshTokenTimer",
     ]);

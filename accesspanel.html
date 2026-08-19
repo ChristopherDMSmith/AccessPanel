@@ -116,7 +116,6 @@
          <div class="dropdown">
             <button class="menu-btn">Admin ▾</button>
             <div class="dropdown-content">
-               <a href="#" id="admin-settings">Preferences</a>
                <a href="#" id="clear-all-data">Clear All Tenant Data</a>
                <a href="#" id="clear-client-data">Clear Current Tenant Data</a>
             </div>
@@ -362,40 +361,6 @@
                      <button id="view-request-details" class="icon-btn" title="View Sent Request Details" disabled aria-label="View Request">
                      <img src="icons/request-view.png" alt="" />
                      </button>
-                     <!-- Export Request -->
-                     <button
-                        id="save-request-definition"
-                        class="icon-btn"
-                        title="Export Sent Request As Collection (Postman/Bruno)" disabled
-                        >
-                     <img
-                        src="icons/collection-save.png"
-                        alt="Save Request"
-                        class="btn-icon"
-                        />
-                     </button>
-                     <button
-                        id="export-bruno-request"
-                        class="icon-btn"
-                        title="Export Sent Request As Request (Bruno)" disabled
-                        >
-                     <img
-                        src="icons/bruno-save.png"
-                        alt="Export Request (Bruno)"
-                        class="btn-icon"
-                        />
-                     </button>
-                     <button
-                        id="export-env"
-                        class="icon-btn"
-                        title="Export Environment (Postman/Bruno)"
-                        >
-                     <img
-                        src="icons/env-save.png"
-                        alt="Export Environment (Postman/Bruno)"
-                        class="btn-icon"
-                        />
-                     </button>
                      <!-- Copy Response (semi-frequent) -->
                      <button id="copy-api-response" class="icon-btn" title="Copy Response" disabled aria-label="Copy Response">
                      <img src="icons/copy.png" alt="" />
@@ -409,54 +374,6 @@
                <div id="response-section" class="response-section">
                   <pre>Awaiting API Send Request & Response...</pre>
                   <!-- Response will appear here -->
-               </div>
-               <!-- Settings / Preferences overlay -->
-               <div id="settings-overlay" hidden>
-                  <div class="overlay-card">
-                     <!-- Top header with Restore Defaults -->
-                     <div class="settings-header">
-                        <h4>Preferences</h4>
-                        <button class="btn2" id="settings-restore-defaults">Restore Defaults</button>
-                     </div>
-                     <!-- Postman / Bruno section -->
-                     <div class="settings-section">
-                        <div class="settings-section-title">
-                           Postman / Bruno Export Variable Names
-                        </div>
-                        <p class="settings-section-help">
-                           These variable names are used when exporting collections or requests so they match
-                           your existing environments in Postman or Bruno.
-                        </p>
-                        <div class="settings-box">
-                           <div class="settings-list">
-                              <div class="settings-row">
-                                 <label for="settings-api-url-var">API URL variable</label>
-                                 <input
-                                    id="settings-api-url-var"
-                                    type="text"
-                                    class="input-box"
-                                    placeholder="apiUrl"
-                                    />
-                              </div>
-                              <div class="settings-row">
-                                 <label for="settings-access-token-var">Access Token variable</label>
-                                 <input
-                                    id="settings-access-token-var"
-                                    type="text"
-                                    class="input-box"
-                                    placeholder="accessToken"
-                                    />
-                              </div>
-                           </div>
-                        </div>
-                     </div>
-                     <!-- Bottom toolbar: Save / Cancel -->
-                     <div class="myapis-toolbar">
-                        <div class="spacer"></div>
-                        <button class="btn" id="settings-save-exit">Save &amp; Exit</button>
-                        <button class="btn2" id="settings-cancel">Cancel</button>
-                     </div>
-                  </div>
                </div>
             </div>
          </div>

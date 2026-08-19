@@ -12,7 +12,6 @@ const SESSION_ONLY_CLIENT_FIELDS = new Set([
   "expirationdatetime",
   "refreshExpirationDateTime",
 ]);
-const PREFS_KEY = "hermes_preferences";
 let accessTokenTimerInterval = null;
 let refreshTokenTimerInterval = null;
 let lastRequestDetails = null;
@@ -49,12 +48,6 @@ function onAsync(id, event, handler, options = {}) {
     },
     options
   );
-}
-
-// Dedicated event handler so listener wiring stays simplified
-function adminSettingsClick(e) {
-  e.preventDefault();
-  openSettingsOverlay();
 }
 
 // Download utility for export functions
@@ -165,77 +158,6 @@ function initTitleBarActions() {
 // ============================= //
 
 // ===== MENU BAR | ADMIN FUNCTIONS ===== //
-// Load preferences from storage
-function loadPreferences() {
-  return new Promise((resolve) => {
-    chrome.storage.local.get([PREFS_KEY], (res) => {
-      const prefs = res[PREFS_KEY] || {};
-      EXPORT_API_URL_VAR = prefs.apiUrlVar || "apiUrl";
-      EXPORT_ACCESS_TOKEN_VAR = prefs.accessTokenVar || "accessToken";
-      resolve();
-    });
-  });
-}
-
-// Save preferences to storage
-function savePreferencesToStorage(apiUrlVar, accessTokenVar) {
-  const prefs = {
-    apiUrlVar: apiUrlVar || "apiUrl",
-    accessTokenVar: accessTokenVar || "accessToken",
-  };
-  return new Promise((resolve) => {
-    chrome.storage.local.set({ [PREFS_KEY]: prefs }, resolve);
-  });
-}
-
-// Open settings overlay and populate form
-function openSettingsOverlay() {
-  const overlay = document.getElementById("settings-overlay");
-  const apiUrlInput = document.getElementById("settings-api-url-var");
-  const tokenInput = document.getElementById("settings-access-token-var");
-
-  if (!overlay || !apiUrlInput || !tokenInput) return;
-
-  apiUrlInput.value = EXPORT_API_URL_VAR || "apiUrl";
-  tokenInput.value = EXPORT_ACCESS_TOKEN_VAR || "accessToken";
-
-  overlay.hidden = false;
-}
-
-// Close settings overlay
-function closeSettingsOverlay() {
-  const overlay = document.getElementById("settings-overlay");
-  if (overlay) overlay.hidden = true;
-}
-
-// Restore default settings in form
-function restoreSettingsDefaultsInForm() {
-  const apiUrlInput = document.getElementById("settings-api-url-var");
-  const tokenInput = document.getElementById("settings-access-token-var");
-  if (apiUrlInput) apiUrlInput.value = "apiUrl";
-  if (tokenInput) tokenInput.value = "accessToken";
-}
-
-// Save settings from form to storage
-async function saveSettingsFromForm() {
-  const apiUrlInput = document.getElementById("settings-api-url-var");
-  const tokenInput = document.getElementById("settings-access-token-var");
-  if (!apiUrlInput || !tokenInput) return;
-
-  let apiVar = apiUrlInput.value.trim() || "apiUrl";
-  let tokenVar = tokenInput.value.trim() || "accessToken";
-
-  // strip {{ }} if user pasted them
-  apiVar = apiVar.replace(/^\{\{|\}\}$/g, "");
-  tokenVar = tokenVar.replace(/^\{\{|\}\}$/g, "");
-
-  EXPORT_API_URL_VAR = apiVar;
-  EXPORT_ACCESS_TOKEN_VAR = tokenVar;
-
-  await savePreferencesToStorage(apiVar, tokenVar);
-  closeSettingsOverlay();
-}
-
 // Menu initializer
 function initMenus() {
   const bar = document.querySelector(".menu-bar");
@@ -325,7 +247,11 @@ async function clearAllData() {
     return;
 
   await Promise.all([
-    chrome.storage.local.remove([storageKey, "hermes_myapis"]),
+    chrome.storage.local.remove([
+      storageKey,
+      "hermes_myapis",
+      "hermes_preferences",
+    ]),
     chrome.storage.session.remove(sessionStorageKey),
   ]);
 
@@ -2662,9 +2588,6 @@ function ensureBodyFontControls(headerEl) {
 // =============================================== //
 
 // ===== API LIBRARY FUNCTIONS ===== //
-let EXPORT_API_URL_VAR = "apiUrl";
-let EXPORT_ACCESS_TOKEN_VAR = "accessToken";
-
 // Toggle API Library section
 function toggleApiLibrary() {
   const toggleButton = document.getElementById("toggle-api-library");
@@ -3826,16 +3749,6 @@ async function resetCurrentApiParameters() {
 
   // 2) clear current param ui
   clearParameters();
-  /*if (typeof clearParameters === "function") {
-    clearParameters();
-  } else {
-    const q = document.getElementById("query-parameters-container");
-    const b = document.getElementById("body-parameters-container");
-    const p = document.getElementById("path-parameters-container");
-    if (q) q.innerHTML = "";
-    if (b) b.innerHTML = "";
-    if (p) p.innerHTML = "";
-  }*/
 
   // 3) repopulate from library defaults
   await populatePathParameters(selectedApiKey);
@@ -4403,18 +4316,8 @@ function ensureViewToggle() {
 
 // Enable/disable buttons that depend on having a last sent request
 function updateRequestDependentButtons(enabled) {
-  const ids = [
-    "view-request-details",
-    "save-request-definition",
-    "export-bruno-request",
-  ];
-
-  ids.forEach((id) => {
-    const btn = document.getElementById(id);
-    if (btn) {
-      btn.disabled = !enabled;
-    }
-  });
+  const btn = document.getElementById("view-request-details");
+  if (btn) btn.disabled = !enabled;
 }
 
 // Enable/disable buttons that depend on having a response in the UI
@@ -4489,467 +4392,6 @@ async function downloadApiResponse(response, apiName) {
   } catch (error) {
     console.error("Failed to download API response:", error);
     alert("Failed to save the file.");
-  }
-}
-
-// Save request definition as collection (Postman v2.1+/Bruno)
-async function saveRequestDefinition() {
-  try {
-    if (!lastRequestDetails) {
-      alert("No request details available. Send a request first.");
-      return;
-    }
-
-    const { method, url, headers = {}, body } = lastRequestDetails;
-
-    // ----- 1) build a sensible default name -----
-    const apiSel = document.getElementById("api-selector");
-    const selectedKey = apiSel?.value || "";
-    let defaultName = "";
-
-    // parse the URL early so we can reuse it
-    let urlObj;
-    try {
-      urlObj = new URL(url);
-    } catch {
-      urlObj = { href: url, pathname: url, origin: "" };
-    }
-    const pathName = urlObj.pathname || "/";
-
-    try {
-      const apiLibrary = await loadApiLibrary();
-
-      // public API: use library entry's "name"
-      if (selectedKey && apiLibrary[selectedKey]) {
-        defaultName = apiLibrary[selectedKey].name || "";
-      }
-    } catch {
-      // silent fallback to method + path
-    }
-
-    // fallback default name using method + path
-    if (!defaultName) {
-      defaultName = `${method} ${pathName}`;
-    }
-
-    // ----- 2) ask user for a friendly name -----
-    const MAX_NAME = 120;
-    const requestDisplayName =
-      prompt(
-        "Save request definition as: (120 Character Limit)",
-        defaultName
-      )?.trim() || "";
-
-    if (!requestDisplayName) return; // user cancelled or left blank
-
-    if (requestDisplayName.length > MAX_NAME) {
-      alert(
-        `Name is too long (${requestDisplayName.length}). Please keep it under ${MAX_NAME} characters.`
-      );
-      return;
-    }
-
-    // ----- 3) build headers: keep all, but mask Authorization -----
-    const headerArray = Object.entries(headers).map(([key, value]) => {
-      let v = String(value);
-      if (key.toLowerCase() === "authorization") {
-        v = `Bearer {{${EXPORT_ACCESS_TOKEN_VAR}}}`;
-      }
-      return { key, value: v };
-    });
-
-    // ----- 4) transform URL to use {{apiUrl}} where possible -----
-    let exportedUrl = urlObj.href || url;
-    try {
-      const full = urlObj.href || url;
-      const marker = "/api/";
-      const idx = full.toLowerCase().indexOf(marker);
-      if (idx !== -1) {
-        const afterApi = full.substring(idx + marker.length - 1); // keep leading '/'
-        exportedUrl = `{{${EXPORT_API_URL_VAR}}}` + afterApi;
-      }
-    } catch {
-      // silent: keep full URL
-    }
-
-    // ----- 5) create a safe filename from the chosen name -----
-    const rawSlug = requestDisplayName.replace(/\s+/g, "-");
-    const safeSlug = rawSlug
-      .replace(/[^a-zA-Z0-9_-]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .toLowerCase();
-
-    const fileName =
-      (safeSlug || "api-accesspanel-request") + ".postman_collection.json";
-
-    // ----- 6) build Postman v2.1 collection with 1 request -----
-    const collection = {
-      info: {
-        name: `AccessPanel – ${requestDisplayName}`,
-        schema:
-          "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-      },
-      item: [
-        {
-          name: requestDisplayName,
-          request: {
-            method,
-            header: headerArray,
-            url: exportedUrl,
-            auth: { type: "noauth" },
-            ...(body
-              ? {
-                  body: {
-                    mode: "raw",
-                    raw: body,
-                    options: { raw: { language: "json" } },
-                  },
-                }
-              : {}),
-          },
-        },
-      ],
-    };
-
-    const jsonText = JSON.stringify(collection, null, 2);
-
-    // ----- 7) save file -----
-    if (window.showSaveFilePicker) {
-      try {
-        const handle = await window.showSaveFilePicker({
-          suggestedName: fileName,
-          types: [
-            {
-              description: "Postman Collection",
-              accept: { "application/json": [".json"] },
-            },
-          ],
-        });
-
-        const writable = await handle.createWritable();
-        await writable.write(jsonText);
-        await writable.close();
-        return;
-      } catch (e) {
-        if (e && e.name === "AbortError") {
-          return; // user cancelled – silent exit
-        }
-        // Non-fatal: fall back to download helper
-      }
-    }
-
-    // Fallback for browsers without File System Access API (or if picker failed)
-    downloadFile(fileName, jsonText, "application/json");
-  } catch (err) {
-    console.error("Failed to save request definition:", err);
-    alert("Failed to save request definition.");
-  }
-}
-
-// Export request (Bruno .bru) ===== //
-async function saveBrunoRequest() {
-  try {
-    if (!lastRequestDetails) {
-      alert("No request details available. Send a request first.");
-      return;
-    }
-
-    const { method, url, headers = {}, body } = lastRequestDetails;
-
-    // ----- 1) build a sensible default name ----- //
-    const apiSel = document.getElementById("api-selector");
-    const selectedKey = apiSel?.value || "";
-    let defaultName = "";
-
-    // parse URL early so we can reuse it
-    let urlObj;
-    try {
-      urlObj = new URL(url);
-    } catch {
-      urlObj = { href: url, pathname: url, origin: "" };
-    }
-    const pathName = urlObj.pathname || "/";
-
-    try {
-      const apiLibrary = await loadApiLibrary();
-
-      // public API: use library entry's "name"
-      if (selectedKey && apiLibrary[selectedKey]) {
-        defaultName = apiLibrary[selectedKey].name || "";
-      }
-    } catch {
-      // silent: fallback to method + path
-    }
-
-    if (!defaultName) {
-      defaultName = `${method} ${pathName}`;
-    }
-
-    const MAX_NAME = 120;
-    const requestDisplayName =
-      prompt(
-        "Save Bruno request as: (120 Character Limit)",
-        defaultName
-      )?.trim() || "";
-
-    if (!requestDisplayName) return; // user cancelled or empty
-    if (requestDisplayName.length > MAX_NAME) {
-      alert(
-        `Name is too long (${requestDisplayName.length}). Please keep it under ${MAX_NAME} characters.`
-      );
-      return;
-    }
-
-    // ----- 2) transform URL to use {{apiUrl}} if possible ----- //
-    let exportedUrl = urlObj.href || url;
-    try {
-      const full = urlObj.href || url;
-      const marker = "/api/";
-      const idx = full.toLowerCase().indexOf(marker);
-      if (idx !== -1) {
-        const afterApi = full.substring(idx + marker.length - 1); // keep leading '/'
-        exportedUrl = `{{${EXPORT_API_URL_VAR}}}` + afterApi;
-      }
-    } catch {
-      // silent: keep full URL
-    }
-
-    // ----- 3) build headers block (Authorization masked) ----- //
-    const headerLines = Object.entries(headers)
-      .map(([key, value]) => {
-        let v = String(value);
-        if (key.toLowerCase() === "authorization") {
-          v = `Bearer {{${EXPORT_ACCESS_TOKEN_VAR}}}`;
-        }
-        return `  ${key}: ${v}`;
-      })
-      .join("\n");
-
-    // ----- 4) prepare body + method block ----- //
-    const verb = (method || "GET").toLowerCase();
-    const hasBody = typeof body === "string" && body.trim() !== "";
-
-    let prettyBody = "";
-    if (hasBody) {
-      try {
-        const parsed = JSON.parse(body);
-        prettyBody = JSON.stringify(parsed, null, 2);
-      } catch {
-        prettyBody = body;
-      }
-    }
-
-    const indentedBody = hasBody
-      ? prettyBody
-          .split("\n")
-          .map((line) => "  " + line)
-          .join("\n")
-      : "";
-
-    // ----- 5) build .bru file content ----- //
-    let bru = "";
-
-    bru += "meta {\n";
-    bru += `  name: ${requestDisplayName}\n`;
-    bru += "  type: http\n";
-    bru += "  seq: 1\n";
-    bru += "}\n\n";
-
-    bru += `${verb} {\n`;
-    bru += `  url: ${exportedUrl}\n`;
-    bru += `  body: ${hasBody ? "json" : "none"}\n`;
-    bru += "  auth: none\n";
-    bru += "}\n\n";
-
-    bru += "headers {\n";
-    if (headerLines) bru += headerLines + "\n";
-    bru += "}\n\n";
-
-    if (hasBody) {
-      bru += "body:json {\n";
-      bru += `${indentedBody}\n`;
-      bru += "}\n\n";
-    }
-
-    bru += "settings {\n";
-    bru += "  encodeUrl: true\n";
-    bru += "}\n";
-
-    // ----- 6) build filename from name ----- //
-    const rawSlug = requestDisplayName.replace(/\s+/g, "-");
-    const safeSlug = rawSlug
-      .replace(/[^a-zA-Z0-9_-]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .toLowerCase();
-
-    const fileName = (safeSlug || "api-accesspanel-request") + ".bru";
-
-    // ----- 7) save .bru file ----- //
-    if (window.showSaveFilePicker) {
-      try {
-        const handle = await window.showSaveFilePicker({
-          suggestedName: fileName,
-          types: [
-            {
-              description: "Bruno Request (.bru)",
-              accept: { "text/plain": [".bru"] },
-            },
-          ],
-        });
-
-        const writable = await handle.createWritable();
-        await writable.write(bru);
-        await writable.close();
-        return;
-      } catch (e) {
-        if (e && e.name === "AbortError") {
-          // user canceled – silent exit
-          return;
-        }
-        // Non-fatal: fall back to download helper
-      }
-    }
-
-    // Fallback (or no File System Access API support)
-    downloadFile(fileName, bru, "text/plain");
-  } catch (err) {
-    console.error("Failed to export Bruno request:", err);
-    alert("Failed to export Bruno request.");
-  }
-}
-
-// ===== Export environment (Postman/Bruno) ===== //
-async function exportEnvironmentDefinition() {
-  const btn = document.getElementById("export-env");
-
-  // Use the same logic as populateClientUrlField / the UI, not lastRequestDetails
-  let base = null;
-  try {
-    base = await getClientUrl();
-  } catch (e) {
-    console.error("exportEnvironmentDefinition: getClientUrl failed:", e);
-  }
-
-  if (!base) {
-    alert(
-      "Unable to determine API URL for the current tenant. Make sure you are on a valid ADP WFM page."
-    );
-    return;
-  }
-
-  const apiUrl = toApiUrl(base); // e.g. https://<tenant>.mykronos.com/api
-
-  // Parse apiUrl to get hostname and build ID / defaults
-  let urlObj;
-  try {
-    urlObj = new URL(apiUrl);
-  } catch {
-    alert("Could not determine environment host from the API URL.");
-    return;
-  }
-
-  // Prompt for environment name (default to hostname)
-  const defaultEnvName = urlObj.hostname || "API Environment";
-  const nameInput = window.prompt(
-    "Enter a name for this environment:",
-    defaultEnvName
-  );
-  if (nameInput === null) return; // user cancelled
-  const envName = nameInput.trim() || defaultEnvName;
-
-  // Build environment ID from hostname + timestamp,
-  // then replace '.', '/', ':' with '-'
-  const marker = ".mykronos.com";
-  let hostBase = urlObj.hostname || "environment";
-  if (hostBase.includes(marker)) {
-    hostBase = hostBase.split(marker)[0];
-  }
-
-  const nowIso = new Date().toISOString(); // 2025-11-26T14:28:22.923Z
-  const rawId = `${hostBase}${nowIso}`;
-  const envId = rawId.replace(/[./:]/g, "-");
-
-  // Variable names from Preferences (fall back to defaults if not set)
-  const apiUrlVarName = EXPORT_API_URL_VAR || "apiUrl";
-  const accessTokenVarName = EXPORT_ACCESS_TOKEN_VAR || "accessToken";
-
-  // Load panel version from accesspanel.json for _postman_exported_using
-  let exportedUsing = "AccessPanel/unknown";
-  try {
-    const panelMeta = await fetch("accesspanel.json").then((res) => res.json());
-    const version = panelMeta?.details?.version || "unknown";
-    exportedUsing = `AccessPanel/${version}`;
-  } catch {
-    // silent fallback to AccessPanel/unknown
-  }
-
-  const environment = {
-    id: envId,
-    name: envName,
-    values: [
-      {
-        key: apiUrlVarName,
-        value: apiUrl,
-        type: "default",
-        enabled: true,
-      },
-      {
-        key: accessTokenVarName,
-        value: "", // never export the real token
-        type: "default",
-        enabled: true,
-      },
-    ],
-    color: null,
-    _postman_variable_scope: "global",
-    _postman_exported_at: nowIso,
-    _postman_exported_using: exportedUsing,
-  };
-
-  const safeName = envName.replace(/[^a-z0-9_\- ]/gi, "_");
-  const fileName = `${safeName || "AccessPanel_Env"}.postman_environment.json`;
-  const content = JSON.stringify(environment, null, 2);
-
-  try {
-    if (window.showSaveFilePicker) {
-      const handle = await window.showSaveFilePicker({
-        suggestedName: fileName,
-        types: [
-          {
-            description: "JSON Files",
-            accept: { "application/json": [".json"] },
-          },
-        ],
-      });
-
-      const writable = await handle.createWritable();
-      await writable.write(content);
-      await writable.close();
-    } else {
-      // Fallback for browsers that don't support showSaveFilePicker
-      downloadFile(fileName, content, "application/json");
-    }
-
-    if (btn) {
-      const originalTitle = btn.title;
-      btn.title = "Environment exported!";
-      setTimeout(() => {
-        btn.title = originalTitle;
-      }, 2000);
-    }
-  } catch (error) {
-    if (error && error.name === "AbortError") {
-      // user cancelled the save dialog – silent exit
-      return;
-    }
-    console.error("Failed to export environment:", error);
-    if (btn) {
-      const originalTitle = btn.title;
-      btn.title = "Export failed";
-      setTimeout(() => {
-        btn.title = originalTitle;
-      }, 2000);
-    }
   }
 }
 
@@ -6228,7 +5670,6 @@ window.HermesLink = (function () {
 
 // ===== EVENT LISTENERS ===== //
 document.addEventListener("DOMContentLoaded", async () => {
-  await loadPreferences();
   await purgeExpiredTokensInStorage();
 
   // Initial UI population
@@ -6260,14 +5701,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   restoreApiLibrary();
 
   // admin menu + settings overlay
-  on("admin-settings", "click", adminSettingsClick);
   onAsync("clear-all-data", "click", clearAllData);
   onAsync("clear-client-data", "click", clearClientData);
-  on("settings-restore-defaults", "click", restoreSettingsDefaultsInForm);
-  on("settings-cancel", "click", closeSettingsOverlay);
-  onAsync("settings-save-exit", "click", async () => {
-    await saveSettingsFromForm();
-  });
 
   // links menu
   onAsync("links-developer-portal", "click", linksDeveloperPortal);
@@ -6351,9 +5786,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   onAsync("reset-params", "click", onResetParamsClick);
   onAsync("copy-api-response", "click", copyApiResponse);
   on("view-request-details", "click", showRequestDetails);
-  onAsync("save-request-definition", "click", saveRequestDefinition);
-  onAsync("export-bruno-request", "click", saveBrunoRequest);
-  onAsync("export-env", "click", exportEnvironmentDefinition);
 
   updateRequestDependentButtons(false);
   updateResponseDependentButtons(false);
