@@ -96,12 +96,76 @@ async function setSidePanelEnabledForAll(enabled) {
   );
 }
 
+// Migrate persisted data from pre-1.1.0 releases
+async function migrateTo110() {
+  const STORAGE_KEY = "clientdata";
+
+  const SENSITIVE_FIELDS = [
+    "clientsecret",
+    "accesstoken",
+    "refreshtoken",
+    "effectivedatetime",
+    "expirationdatetime",
+    "refreshExpirationDateTime",
+  ];
+
+  try {
+    const result = await chrome.storage.local.get(STORAGE_KEY);
+    const clientData = result[STORAGE_KEY] || {};
+
+    let clientDataChanged = false;
+
+    for (const client of Object.values(clientData)) {
+      if (!client || typeof client !== "object") continue;
+
+      for (const field of SENSITIVE_FIELDS) {
+        if (Object.prototype.hasOwnProperty.call(client, field)) {
+          delete client[field];
+          clientDataChanged = true;
+        }
+      }
+    }
+
+    if (clientDataChanged) {
+      await chrome.storage.local.set({
+        [STORAGE_KEY]: clientData,
+      });
+    }
+
+    // Remove legacy persistent request data and timer counters
+    await chrome.storage.local.remove([
+      "hermes_myapis",
+      "accessTokenTimer",
+      "refreshTokenTimer",
+    ]);
+  } catch (error) {
+    console.error(
+      "AccessPanel 1.1.0 storage migration failed:",
+      error?.message || error
+    );
+  }
+}
+
 // Event handler functions
 async function handleStartup() {
   try {
     ACCESSPANEL_GLOBAL_OPEN = await getGlobalOpen();
   } catch (error) {
     console.error("Startup state retrieval failed:", error?.message || error);
+  }
+}
+
+// Handle extension install/update lifecycle
+async function handleInstalled(details) {
+  await handleStartup();
+
+  if (details?.reason !== "update") return;
+
+  const previousVersion = details.previousVersion || "";
+
+  // 1.1.0 removes sensitive data persisted by 1.0.x releases
+  if (previousVersion.startsWith("1.0.")) {
+    await migrateTo110();
   }
 }
 
@@ -247,7 +311,7 @@ async function handleTabRemoved(tabId) {
 
 // Event Listeners
 chrome.runtime.onStartup?.addListener(handleStartup);
-chrome.runtime.onInstalled?.addListener(handleStartup);
+chrome.runtime.onInstalled?.addListener(handleInstalled);
 handleStartup().catch(() => {});
 chrome.action.onClicked.addListener(handleToolbarClick);
 chrome.tabs.onUpdated.addListener(handleTabUpdate);

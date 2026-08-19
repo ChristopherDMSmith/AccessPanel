@@ -3,11 +3,19 @@
 // ===== GLOBALS ===== //
 const LOGGING_ENABLED = false;
 const storageKey = "clientdata";
+const sessionStorageKey = "clientdata_session";
+const SESSION_ONLY_CLIENT_FIELDS = new Set([
+  "clientsecret",
+  "accesstoken",
+  "refreshtoken",
+  "effectivedatetime",
+  "expirationdatetime",
+  "refreshExpirationDateTime",
+]);
 const PREFS_KEY = "hermes_preferences";
 let accessTokenTimerInterval = null;
 let refreshTokenTimerInterval = null;
 let lastRequestDetails = null;
-let HERMES_MYAPIS_MODE = false;
 
 // ===== UTILITIES ===== //
 // Event handler attachment utility
@@ -316,11 +324,10 @@ async function clearAllData() {
   if (!confirm("Are you sure you want to clear ALL stored tenant data?"))
     return;
 
-  await new Promise((resolve) => {
-    chrome.storage.local.remove(storageKey, () => {
-      resolve();
-    });
-  });
+  await Promise.all([
+    chrome.storage.local.remove([storageKey, "hermes_myapis"]),
+    chrome.storage.session.remove(sessionStorageKey),
+  ]);
 
   // Stop timers and reset UI
   const accessTokenTimerBox = document.getElementById("timer");
@@ -665,26 +672,71 @@ async function helpSupport() {
   }
 }
 
-// ===== LOCAL STORAGE FUNCTIONS ===== //
-// Load client data from local storage
+
+// ===== CLIENT DATA STORAGE FUNCTIONS ===== //
+// Load client data from persistent + session storage
 async function loadClientData() {
-  return new Promise((resolve) => {
-    chrome.storage.local.get([storageKey], (result) => {
-      resolve(result[storageKey] || {});
-    });
-  });
+  const [localResult, sessionResult] = await Promise.all([
+    chrome.storage.local.get(storageKey),
+    chrome.storage.session.get(sessionStorageKey),
+  ]);
+
+  const localData = localResult[storageKey] || {};
+  const sessionData = sessionResult[sessionStorageKey] || {};
+
+  const mergedData = {};
+  const tenantKeys = new Set([
+    ...Object.keys(localData),
+    ...Object.keys(sessionData),
+  ]);
+
+  for (const tenantKey of tenantKeys) {
+    mergedData[tenantKey] = {
+      ...(localData[tenantKey] || {}),
+      ...(sessionData[tenantKey] || {}),
+    };
+  }
+
+  return mergedData;
 }
 
-// Save client data to local storage
+// Save client data, separating persistent configuration
+// from session-only authentication data
 async function saveClientData(data) {
-  return new Promise((resolve) => {
-    chrome.storage.local.set(
-      {
-        [storageKey]: data,
-      },
-      () => resolve()
-    );
-  });
+  const localData = {};
+  const sessionData = {};
+
+  for (const [tenantKey, clientData] of Object.entries(data || {})) {
+    if (!clientData || typeof clientData !== "object") continue;
+
+    const persistentClientData = {};
+    const sessionClientData = {};
+
+    for (const [field, value] of Object.entries(clientData)) {
+      if (SESSION_ONLY_CLIENT_FIELDS.has(field)) {
+        sessionClientData[field] = value;
+      } else {
+        persistentClientData[field] = value;
+      }
+    }
+
+    if (Object.keys(persistentClientData).length > 0) {
+      localData[tenantKey] = persistentClientData;
+    }
+
+    if (Object.keys(sessionClientData).length > 0) {
+      sessionData[tenantKey] = sessionClientData;
+    }
+  }
+
+  await Promise.all([
+    chrome.storage.local.set({
+      [storageKey]: localData,
+    }),
+    chrome.storage.session.set({
+      [sessionStorageKey]: sessionData,
+    }),
+  ]);
 }
 // =================================== //
 
@@ -2170,7 +2222,7 @@ function startAccessTokenTimer(seconds, timerBox) {
       timerBox.textContent = "--:--";
 
       // clear the remaining time in storage
-      chrome.storage.local.remove("accessTokenTimer");
+      chrome.storage.session.remove("accessTokenTimer");
     } else {
       const minutes = Math.floor(remainingTime / 60);
       const seconds = remainingTime % 60;
@@ -2180,7 +2232,7 @@ function startAccessTokenTimer(seconds, timerBox) {
       remainingTime--;
 
       // save the remaining time to storage
-      chrome.storage.local.set({
+      chrome.storage.session.set({
         accessTokenTimer: remainingTime,
       });
     }
@@ -2198,9 +2250,6 @@ function stopAccessTokenTimer(timerBox) {
     accessTokenTimerInterval = null;
     timerBox.textContent = "--:--"; // reset the timer box
   }
-
-  // clear timer from storage
-  //chrome.storage.local.remove("accessTokenTimer");
 }
 
 // Stop all token timers
@@ -2368,7 +2417,7 @@ async function refreshAccessToken() {
       currentDateTime.getTime() + expires_in * 1000
     );
 
-    // update local storage
+    // update client data storage
     data[clienturl] = {
       ...client,
       accesstoken: access_token,
@@ -2413,7 +2462,7 @@ function startRefreshTokenTimer(seconds, timerBox) {
       remainingTime--;
 
       // save the remaining time to storage
-      chrome.storage.local.set({
+      chrome.storage.session.set({
         refreshTokenTimer: remainingTime,
       });
     }
@@ -2430,9 +2479,6 @@ function stopRefreshTokenTimer(timerBox) {
     refreshTokenTimerInterval = null;
     timerBox.textContent = "--:--";
   }
-
-  // clear timer from storage
-  //chrome.storage.local.remove("refreshTokenTimer");
 }
 
 // Copy refresh token button
@@ -2616,7 +2662,6 @@ function ensureBodyFontControls(headerEl) {
 // =============================================== //
 
 // ===== API LIBRARY FUNCTIONS ===== //
-const MYAPIS_KEY = "hermes_myapis"; // [{id,name,method,endpoint,body,createdAt,updatedAt}]
 let EXPORT_API_URL_VAR = "apiUrl";
 let EXPORT_ACCESS_TOKEN_VAR = "accessToken";
 
@@ -2654,38 +2699,6 @@ function restoreApiLibrary() {
   });
 }
 
-// Load saved My API's
-async function getSavedMyApis() {
-  return new Promise((resolve) => {
-    chrome.storage.local.get([MYAPIS_KEY], (res) =>
-      resolve(res[MYAPIS_KEY] || [])
-    );
-  });
-}
-
-// Load saved My API entry by selector value "myapi:<id>"
-async function loadSavedEntryByKey(selectedKey) {
-  if (!selectedKey || !selectedKey.startsWith("myapi:")) return null;
-  const id = selectedKey.slice(6);
-  const { hermes_myapis } = await new Promise((resolve) =>
-    chrome.storage.local.get(["hermes_myapis"], resolve)
-  );
-  const list = hermes_myapis || [];
-  return list.find((x) => x.id === id) || null;
-}
-
-// Save My API entry to user local storage
-async function setSavedMyApis(list) {
-  return new Promise((resolve) =>
-    chrome.storage.local.set({ [MYAPIS_KEY]: list }, resolve)
-  );
-}
-
-// Generate unique key for My API entry
-function genId() {
-  return "a" + Math.random().toString(36).slice(2) + Date.now().toString(36);
-}
-
 // Clear DevLink
 function clearDevLinkBanner() {
   const a = document.getElementById("api-devlink");
@@ -2695,69 +2708,23 @@ function clearDevLinkBanner() {
   a.textContent = "";
 }
 
-// Populate public API library
-async function populateApiDropdownPublic() {
+// Populate API Library dropdown
+async function populateApiDropdown() {
   const sel = document.getElementById("api-selector");
   if (!sel) return;
-  HERMES_MYAPIS_MODE = false;
+
   sel.innerHTML = "";
   clearDevLinkBanner();
 
-  // switch-to-my-api
-  const toMy = document.createElement("option");
-  toMy.value = "__VIEW_MY_APIS__";
-  toMy.textContent = "View My APIs…";
-  sel.appendChild(toMy);
+  // Placeholder
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = "Select API...";
+  placeholder.disabled = true;
+  placeholder.selected = true;
+  sel.appendChild(placeholder);
 
-  // placeholder for public api drop down
-  sel.insertAdjacentHTML(
-    "beforeend",
-    '<option value="" disabled selected>Select Public API...</option>'
-  );
-
-  // load and list public library
-  const resp = await fetch("apilibrary/apilibrary.json");
-  if (!resp.ok)
-    throw new Error(`Failed to fetch API library. HTTP ${resp.status}`);
-  const data = await resp.json();
-  const lib = data.apiLibrary || {};
-
-  for (const key in lib) {
-    if (key.startsWith("_")) continue;
-    const opt = document.createElement("option");
-    opt.value = key;
-    opt.textContent = lib[key].name;
-    sel.appendChild(opt);
-  }
-}
-
-// Populate My API List Dropdown
-async function populateApiDropdownMyApis() {
-  const sel = document.getElementById("api-selector");
-  if (!sel) return;
-  HERMES_MYAPIS_MODE = true;
-  sel.innerHTML = "";
-  clearDevLinkBanner();
-
-  // switch-to-public
-  const toPub = document.createElement("option");
-  toPub.value = "__VIEW_PUBLIC_APIS__";
-  toPub.textContent = "View Public APIs…";
-  sel.appendChild(toPub);
-
-  // manage My APIs
-  const manage = document.createElement("option");
-  manage.value = "__MANAGE_MY_APIS__";
-  manage.textContent = "Manage My APIs…";
-  sel.appendChild(manage);
-
-  // placeholder
-  sel.insertAdjacentHTML(
-    "beforeend",
-    '<option value="" disabled selected>Select My API…</option>'
-  );
-
-  // ---- Ad-Hoc entries available directly in My APIs mode ----
+  // Ad-Hoc requests
   const adhocGet = document.createElement("option");
   adhocGet.value = "adHocGet";
   adhocGet.textContent = "Ad-Hoc GET";
@@ -2768,38 +2735,34 @@ async function populateApiDropdownMyApis() {
   adhocPost.textContent = "Ad-Hoc POST";
   sel.appendChild(adhocPost);
 
-  const sep = document.createElement("option");
-  sep.value = "__SEP__";
-  sep.textContent = "────────";
-  sep.disabled = true;
-  sel.appendChild(sep);
+  const separator = document.createElement("option");
+  separator.textContent = "────────";
+  separator.disabled = true;
+  sel.appendChild(separator);
 
-  // load saved list
-  const items = await getSavedMyApis();
-
-  if (!items.length) {
-    const empty = document.createElement("option");
-    empty.value = "__EMPTY__";
-    empty.textContent = "(No saved APIs yet)";
-    empty.disabled = true;
-    sel.appendChild(empty);
-    return;
+  // Public API Library
+  const response = await fetch("apilibrary/apilibrary.json");
+  if (!response.ok) {
+    throw new Error(`Failed to fetch API library. HTTP ${response.status}`);
   }
 
-  // append saved entries
-  items.forEach((item) => {
-    const opt = document.createElement("option");
-    opt.value = `myapi:${item.id}`;
-    opt.textContent = `${item.name} (${item.method})`;
-    opt.title = `${item.method} ${item.endpoint}`;
-    sel.appendChild(opt);
-  });
-}
+  const data = await response.json();
+  const library = data.apiLibrary || {};
 
-// Wrapper to handle public vs My API's
-async function populateApiDropdown() {
-  if (HERMES_MYAPIS_MODE) return populateApiDropdownMyApis();
-  return populateApiDropdownPublic();
+  for (const key in library) {
+    if (
+      key.startsWith("_") ||
+      key === "adHocGet" ||
+      key === "adHocPost"
+    ) {
+      continue;
+    }
+
+    const option = document.createElement("option");
+    option.value = key;
+    option.textContent = library[key].name;
+    sel.appendChild(option);
+  }
 }
 
 // Load API public library from apilibrary.json
@@ -2833,15 +2796,14 @@ function clearParameters() {
   }
 }
 
-// Show / clear the Dev Portal Link Banner for a given API object (public API's only)
+// Show or clear the Developer Portal link for the selected public API
 function renderDevLinkBanner(selectedApiKey, apiObjOrNull) {
   const a = document.getElementById("api-devlink");
   if (!a) return;
 
-  // hide for my apis & ad-hoc and for missing devlink data
+  // hide for ad-hoc and for missing devlink data
   if (
     !apiObjOrNull ||
-    selectedApiKey.startsWith("myapi:") ||
     selectedApiKey === "adHocGet" ||
     selectedApiKey === "adHocPost" ||
     !apiObjOrNull.devLink ||
@@ -2927,11 +2889,10 @@ async function populatePathParameters(selectedApiKey) {
 
   host.innerHTML = "";
 
-  // ad-hoc modes don’t use path param ui
+  // Ad-Hoc requests do not use path parameter UI
   if (
     selectedApiKey === "adHocGet" ||
-    selectedApiKey === "adHocPost" ||
-    selectedApiKey?.startsWith("myapi:")
+    selectedApiKey === "adHocPost"
   ) {
     return;
   }
@@ -3822,251 +3783,25 @@ function clearApiResponse() {
   }
 }
 
-// API entry selector
+// Handle API Library selection
 async function handleApiSelection(selectedKey) {
-  // whenever a new API is selected, reset buttons and last request
-  if (typeof updateRequestDependentButtons === "function") {
-    updateRequestDependentButtons(false);
-  }
-  if (typeof updateResponseDependentButtons === "function") {
-    updateResponseDependentButtons(false);
-  }
-  if (typeof clearApiResponse === "function") {
-    clearApiResponse();
-  } else {
-    const responseSection = document.getElementById("response-section");
-    if (responseSection) {
-      responseSection.innerHTML = "<pre>Awaiting API Response...</pre>";
-    }
-  }
-  // clear the lastRequestDetails so view/save/export always correspond to a *fresh* request for this selection.
+  updateRequestDependentButtons(false);
+  updateResponseDependentButtons(false);
+  clearApiResponse();
+
+  // Request details must always correspond to a newly sent request
   lastRequestDetails = null;
 
-  if (selectedKey === "__VIEW_MY_APIS__") {
-    await populateApiDropdownMyApis();
-    clearParameters?.();
-    clearDevLinkBanner();
-    applyDynamicStyles?.();
-    return;
-  }
-  if (selectedKey === "__VIEW_PUBLIC_APIS__") {
-    await populateApiDropdownPublic();
-    clearDevLinkBanner();
-    clearParameters?.();
-    applyDynamicStyles?.();
-    return;
-  }
-  // open my apis manager overlay
-  if (selectedKey === "__MANAGE_MY_APIS__") {
-    await openMyApisManager();
-    // reset selector back to placeholder so it doesn't look like a real API
-    const sel = document.getElementById("api-selector");
-    if (sel) sel.value = "";
-    return;
-  }
-  if (!selectedKey || selectedKey === "__EMPTY__") return;
+  if (!selectedKey) return;
 
-  clearParameters?.();
+  clearParameters();
+  clearDevLinkBanner();
 
-  // saved item?
-  if (HERMES_MYAPIS_MODE && selectedKey.startsWith("myapi:")) {
-    const id = selectedKey.slice(6);
-    const list = await getSavedMyApis();
-    const item = list.find((x) => x.id === id);
-    // render like Ad-Hoc
-    await renderSavedAsAdHoc(item);
-    applyDynamicStyles?.();
-    return;
-  }
-
-  // public library item
   await populatePathParameters(selectedKey);
   await populateQueryParameters(selectedKey);
   await populateBodyParameters(selectedKey);
-  applyDynamicStyles?.();
-}
 
-// Helper to render saved My API into ad-hoc UI
-async function renderSavedAsAdHoc(item) {
-  const queryContainer = document.getElementById("query-parameters-container");
-  const bodyContainer = document.getElementById("body-parameters-container");
-  if (!queryContainer || !bodyContainer) return;
-
-  // endpoint field (Ad-Hoc style)
-  queryContainer.innerHTML = "";
-  const qh = document.createElement("div");
-  qh.className = "parameter-header";
-  qh.textContent = "Endpoint URL with Query Parameters";
-  queryContainer.appendChild(qh);
-
-  const ep = document.createElement("input");
-  ep.type = "text";
-  ep.id = "adhoc-endpoint";
-  ep.classList.add("query-param-input");
-  ep.placeholder = "/v1/endpoint?queryParam=value";
-  ep.value = item?.endpoint || "";
-  queryContainer.appendChild(ep);
-
-  // body field for post methods only
-  bodyContainer.innerHTML = "";
-  if (String(item?.method).toUpperCase() === "POST") {
-    const bh = document.createElement("div");
-    bh.className = "parameter-header";
-    bh.textContent = "Full JSON Body";
-    bodyContainer.appendChild(bh);
-
-    const ta = document.createElement("textarea");
-    ta.id = "adhoc-body";
-    ta.className = "json-textarea";
-    ta.placeholder = "Enter full JSON body here...";
-    ta.value = item?.body || "";
-    bodyContainer.appendChild(ta);
-    ensureBodyFontControls(bh);
-  }
-}
-
-// Save request button
-async function onSaveRequestClick() {
-  try {
-    const sel = document.getElementById("api-selector");
-    const selectedKey = sel?.value || "";
-
-    let method = "GET";
-    let endpoint = "";
-    let bodyStr = "";
-
-    if (HERMES_MYAPIS_MODE && selectedKey.startsWith("myapi:")) {
-      // editing an existing saved item → read current inputs
-      const id = selectedKey.slice(6);
-      const list = await getSavedMyApis();
-      const item = list.find((x) => x.id === id);
-      if (!item) return;
-
-      method = item.method.toUpperCase();
-      endpoint = (
-        document.getElementById("adhoc-endpoint")?.value || ""
-      ).trim();
-      if (method === "POST") {
-        bodyStr = (document.getElementById("adhoc-body")?.value || "").trim();
-      }
-
-      const name = prompt(
-        "Rename and save: (120 Character Limit)",
-        item.name
-      )?.trim();
-      if (!name) return;
-      const MAX_NAME = 120;
-      if (name.length > MAX_NAME) {
-        alert(
-          `Name is too long (${name.length}). Please keep it under ${MAX_NAME} characters.`
-        );
-        return;
-      }
-      item.name = name;
-      item.method = method;
-      item.endpoint = endpoint;
-      item.body = bodyStr;
-      item.updatedAt = new Date().toISOString();
-      await setSavedMyApis(list);
-
-      setButtonTempText?.(document.getElementById("save-request"), "Saved!");
-      return;
-    }
-
-    // ad-hoc get/post → build from fields
-    if (selectedKey === "adHocGet" || selectedKey === "adHocPost") {
-      method = selectedKey === "adHocPost" ? "POST" : "GET";
-      endpoint = (
-        document.getElementById("adhoc-endpoint")?.value || ""
-      ).trim();
-      if (!endpoint) {
-        alert("Please enter an endpoint to save.");
-        return;
-      }
-      if (method === "POST") {
-        bodyStr = (document.getElementById("adhoc-body")?.value || "").trim();
-      }
-    } else {
-      // public library item → build url with query params and body from your current ui
-      const apiLib = await loadApiLibrary();
-      const api = apiLib[selectedKey];
-      if (!api) {
-        alert("Selected API not found.");
-        return;
-      }
-
-      method = (api.method || "GET").toUpperCase();
-      endpoint = api.url;
-      // Replace path params
-      try {
-        endpoint = buildUrlWithPathParams(api.url, api);
-      } catch (e) {
-        alert(e.message || "Missing path parameters.");
-        return;
-      }
-
-      if (method === "GET") {
-        const params = new URLSearchParams();
-        document
-          .querySelectorAll("#query-parameters-container .query-param-input")
-          .forEach((inp) => {
-            const v = (inp.value || "").trim();
-            if (!v) return;
-            const k = (inp.id || "").replace(/^query-/, "") || inp.name || "";
-            if (k) params.append(k, v);
-          });
-        const qs = params.toString();
-        if (qs) endpoint += "?" + qs;
-      } else if (method === "POST" && api.requestProfile) {
-        const tmpl = JSON.parse(JSON.stringify(api.requestProfile));
-        const bodyHost = document.getElementById("body-parameters-container");
-        const inputs = Array.from(bodyHost.querySelectorAll("[data-path]"));
-        mapUserInputsToRequestProfile(tmpl, inputs);
-        bodyStr = JSON.stringify(tmpl, null, 2);
-      }
-    }
-
-    const defaultName = `${method} ${endpoint.split("?")[0] || ""}`;
-    const name = prompt(
-      "Save request as: (120 Character Limit)",
-      defaultName
-    )?.trim();
-    if (!name) return;
-
-    const MAX_NAME = 120;
-    if (name.length > MAX_NAME) {
-      alert(
-        `Name is too long (${name.length}). Please keep it under ${MAX_NAME} characters.`
-      );
-      return;
-    }
-
-    const list = await getSavedMyApis();
-    const entry = {
-      id: genId(),
-      name,
-      method,
-      endpoint,
-      body: bodyStr,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    list.push(entry);
-    await setSavedMyApis(list);
-
-    // switch to My APIs mode, repopulate, select the new one, and render
-    await populateApiDropdownMyApis();
-    const newKey = `myapi:${entry.id}`;
-    const dd = document.getElementById("api-selector");
-    dd.value = newKey;
-    await handleApiSelection(newKey);
-    applyDynamicStyles?.();
-
-    setButtonTempText?.(document.getElementById("save-request"), "Saved!");
-  } catch (e) {
-    console.error(e);
-    setButtonFailText?.(document.getElementById("save-request"), "Save Failed");
-  }
+  applyDynamicStyles();
 }
 
 // Reset parameters button
@@ -4090,7 +3825,8 @@ async function resetCurrentApiParameters() {
   }
 
   // 2) clear current param ui
-  if (typeof clearParameters === "function") {
+  clearParameters();
+  /*if (typeof clearParameters === "function") {
     clearParameters();
   } else {
     const q = document.getElementById("query-parameters-container");
@@ -4099,11 +3835,6 @@ async function resetCurrentApiParameters() {
     if (q) q.innerHTML = "";
     if (b) b.innerHTML = "";
     if (p) p.innerHTML = "";
-  }
-
-  // (optional) clear the last response panel
-  /*if (typeof clearApiResponse === "function") {
-    clearApiResponse();
   }*/
 
   // 3) repopulate from library defaults
@@ -4282,119 +4013,12 @@ async function executeApiCall() {
       Authorization: "Bearer <AccessToken>",
     };
 
-    // detect saved my api entry (myapi:<id>)
-    let savedEntry = null;
-    if (selectedApiKey.startsWith("myapi:")) {
-      const id = selectedApiKey.slice(6);
-      const { hermes_myapis } = await new Promise((resolve) =>
-        chrome.storage.local.get(["hermes_myapis"], resolve)
-      );
-      const list = hermes_myapis || [];
-      savedEntry = list.find((x) => x.id === id) || null;
-      if (!savedEntry) {
-        alert("Saved request not found.");
-        stopAnimation();
-        setButtonFailText(
-          button,
-          "Request Missing",
-          2000,
-          animation?.originalText || originalText
-        );
-        return;
-      }
-    }
-
-    // shared variables
+    // Shared request variables
     let fullUrl = "";
     let requestBody = null;
     let requestMethod = "GET";
 
-    // branch A: saved My API (ad-hoc style)
-    if (savedEntry) {
-      requestMethod = String(savedEntry.method || "GET").toUpperCase();
-
-      const epUi = document.getElementById("adhoc-endpoint")?.value?.trim();
-      const bodyUi = document.getElementById("adhoc-body")?.value;
-
-      const endpoint = (epUi || savedEntry.endpoint || "").trim();
-      if (!endpoint) {
-        alert("Please provide an endpoint URL.");
-        stopAnimation();
-        setButtonFailText(
-          button,
-          "Missing Endpoint",
-          2000,
-          animation?.originalText || originalText
-        );
-        return;
-      }
-      fullUrl = clientData.apiurl + endpoint;
-
-      if (requestMethod === "POST") {
-        const raw = (
-          typeof bodyUi === "string" ? bodyUi : savedEntry.body || ""
-        ).trim();
-        if (!raw) {
-          alert("Please provide a JSON body.");
-          stopAnimation();
-          setButtonFailText(
-            button,
-            "Missing Body",
-            2000,
-            animation?.originalText || originalText
-          );
-          return;
-        }
-        try {
-          requestBody = JSON.parse(raw);
-          pruneRequestBody(requestBody);
-        } catch {
-          alert("Invalid JSON body. Please correct it.");
-          stopAnimation();
-          setButtonFailText(
-            button,
-            "Bad JSON",
-            2000,
-            animation?.originalText || originalText
-          );
-          return;
-        }
-      }
-
-      lastRequestDetails = {
-        method: requestMethod,
-        url: fullUrl,
-        headers: redactedHeaders,
-        body: requestBody ? JSON.stringify(requestBody, null, 2) : null,
-      };
-
-      updateRequestDependentButtons(true);
-
-      const response = await fetch(fullUrl, {
-        method: requestMethod,
-        headers: requestHeaders,
-        body: lastRequestDetails.body,
-      });
-
-      const responseText = await response.text();
-      let result;
-      try {
-        result = JSON.parse(responseText);
-      } catch {
-        result = { error: responseText };
-      }
-
-      displayApiResponse(result, selectedApiKey);
-
-      stopAnimation();
-      const baseText = animation?.originalText || originalText;
-      if (response.ok) setButtonTempText(button, "Success!", 2000, baseText);
-      else setButtonFailText(button, "Failed!", 2000, baseText);
-
-      return;
-    }
-
-    // branch B: public library path
+    // Load selected API definition
     const apiLibrary = await loadApiLibrary();
     const selectedApi = apiLibrary[selectedApiKey];
     if (!selectedApi) {
@@ -4625,7 +4249,6 @@ async function displayApiResponse(response, apiKey) {
   const isNonLibraryKey =
     typeof apiKey === "string" &&
     (apiKey === "Error" ||
-      apiKey.startsWith("myapi:") ||
       apiKey === "adHocGet" ||
       apiKey === "adHocPost");
 
@@ -4784,7 +4407,6 @@ function updateRequestDependentButtons(enabled) {
     "view-request-details",
     "save-request-definition",
     "export-bruno-request",
-    "save-request",
   ];
 
   ids.forEach((id) => {
@@ -4900,13 +4522,6 @@ async function saveRequestDefinition() {
       // public API: use library entry's "name"
       if (selectedKey && apiLibrary[selectedKey]) {
         defaultName = apiLibrary[selectedKey].name || "";
-      }
-      // My API: use saved My API name
-      else if (selectedKey.startsWith("myapi:")) {
-        const myApis = await getSavedMyApis();
-        const id = selectedKey.slice(6);
-        const item = myApis.find((x) => x.id === id);
-        if (item?.name) defaultName = item.name;
       }
     } catch {
       // silent fallback to method + path
@@ -5061,13 +4676,6 @@ async function saveBrunoRequest() {
       // public API: use library entry's "name"
       if (selectedKey && apiLibrary[selectedKey]) {
         defaultName = apiLibrary[selectedKey].name || "";
-      }
-      // My API: use saved My API name
-      else if (selectedKey.startsWith("myapi:")) {
-        const myApis = await getSavedMyApis();
-        const id = selectedKey.slice(6);
-        const item = myApis.find((x) => x.id === id);
-        if (item?.name) defaultName = item.name;
       }
     } catch {
       // silent: fallback to method + path
@@ -5809,253 +5417,6 @@ async function exportApiResponseToCSV(response, apiKey) {
 }
 // ================================= //
 
-// ===== MANAGE MY API'S OVERLAY FUNCTIONS ===== //
-let MYAPIS_MANAGER_WIRED = false;
-
-// Date time stamp
-function formatStamp(iso) {
-  if (!iso) return "";
-  try {
-    return new Date(iso).toLocaleString();
-  } catch {
-    return iso;
-  }
-}
-
-// Dedupe My API
-function dedupeById(list) {
-  const seen = new Set();
-  const out = [];
-  for (const x of list || []) {
-    if (!x?.id) continue;
-    if (seen.has(x.id)) continue;
-    seen.add(x.id);
-    out.push(x);
-  }
-  return out;
-}
-
-// Manage My API's button
-function toggleManagerButtons() {
-  const listEl = document.getElementById("myapis-list");
-  const anyChecked = !!listEl?.querySelector(
-    'input[type="checkbox"].row-check:checked'
-  );
-  const delSelBtn = document.getElementById("myapis-delete-selected");
-  if (delSelBtn) delSelBtn.disabled = !anyChecked;
-}
-
-// Selectable options for Manage My API's with dynamic event listeners
-function wireMyApisManagerOnce() {
-  // debug: if the DOM somehow has duplicate controls, warn once.
-  const dbgIds = [
-    "myapis-list",
-    "myapis-select-all",
-    "myapis-delete-selected",
-    "myapis-delete-all",
-    "myapis-cancel",
-  ];
-  const dups = dbgIds
-    .map((id) => [id, document.querySelectorAll(`#${CSS.escape(id)}`).length])
-    .filter(([_, n]) => n > 1);
-  if (dups.length) {
-    console.warn("My APIs manager: duplicate controls in DOM:", dups);
-  }
-
-  const listHost = document.getElementById("myapis-list");
-  const selAll = document.getElementById("myapis-select-all");
-  const delSelBtn = document.getElementById("myapis-delete-selected");
-  const delAllBtn = document.getElementById("myapis-delete-all");
-  const cancelBtn = document.getElementById("myapis-cancel");
-
-  // ----- delegated checkbox change on list -----
-  if (listHost && !listHost.dataset.wired) {
-    listHost.addEventListener("change", (e) => {
-      const t = e.target;
-      if (!(t instanceof HTMLInputElement)) return;
-      if (!t.classList.contains("row-check")) return;
-      toggleManagerButtons();
-    });
-    listHost.dataset.wired = "1";
-  }
-
-  // ----- select All -----
-  if (selAll && !selAll.dataset.wired) {
-    selAll.addEventListener("change", () => {
-      listHost?.querySelectorAll("input.row-check").forEach((cb) => {
-        cb.checked = selAll.checked;
-      });
-      toggleManagerButtons();
-    });
-    selAll.dataset.wired = "1";
-  }
-
-  // ----- delete selected -----
-  if (delSelBtn && !delSelBtn.dataset.wired) {
-    delSelBtn.addEventListener("click", onDeleteSelectedClick);
-    delSelBtn.dataset.wired = "1";
-  }
-
-  // ----- delete all -----
-  if (delAllBtn && !delAllBtn.dataset.wired) {
-    delAllBtn.addEventListener("click", onDeleteAllClick);
-    delAllBtn.dataset.wired = "1";
-  }
-
-  // ----- close -----
-  if (cancelBtn && !cancelBtn.dataset.wired) {
-    cancelBtn.addEventListener("click", () => closeMyApisManager());
-    cancelBtn.dataset.wired = "1";
-  }
-
-  MYAPIS_MANAGER_WIRED = true;
-}
-
-// Render My APIs Manager overlay
-async function renderMyApisManager() {
-  const list = dedupeById(await getSavedMyApis()); // normalize duplicates
-  const host = document.getElementById("myapis-list");
-  if (!host) return;
-  host.innerHTML = "";
-
-  const selAll = document.getElementById("myapis-select-all");
-  const delSelBtn = document.getElementById("myapis-delete-selected");
-
-  if (!list.length) {
-    host.innerHTML = `<div class="myapis-row"><div></div><div class="meta"><div class="title">(No saved APIs)</div></div></div>`;
-    // ensure toolbar is reset in the empty case
-    if (selAll) selAll.checked = false;
-    delSelBtn?.setAttribute("disabled", "true");
-    return;
-  }
-
-  list.forEach((item) => {
-    const row = document.createElement("div");
-    row.className = "myapis-row";
-
-    const left = document.createElement("div");
-    const cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.className = "row-check";
-    cb.dataset.id = item.id;
-    left.appendChild(cb);
-
-    const meta = document.createElement("div");
-    meta.className = "meta";
-
-    const title = document.createElement("div");
-    title.className = "title";
-    title.textContent = `${item.name} (${String(item.method).toUpperCase()})`;
-
-    const subtitle = document.createElement("div");
-    subtitle.className = "subtitle";
-    subtitle.textContent = item.endpoint || "";
-
-    const stamp = document.createElement("div");
-    stamp.className = "stamp";
-    stamp.textContent = `Updated: ${formatStamp(
-      item.updatedAt || item.createdAt
-    )}`;
-
-    meta.appendChild(title);
-    meta.appendChild(subtitle);
-    meta.appendChild(stamp);
-
-    row.appendChild(left);
-    row.appendChild(meta);
-    host.appendChild(row);
-  });
-
-  // reset toolbar state after render
-  if (selAll) selAll.checked = false;
-  toggleManagerButtons();
-}
-
-// Open My APIs Manager overlay
-async function openMyApisManager() {
-  wireMyApisManagerOnce(); // attach exactly once
-  await renderMyApisManager();
-
-  const overlay = document.getElementById("manage-myapis-overlay");
-  if (overlay) overlay.hidden = false;
-
-  // reset controls each open
-  const selAll = document.getElementById("myapis-select-all");
-  if (selAll) selAll.checked = false;
-  document
-    .getElementById("myapis-delete-selected")
-    ?.setAttribute("disabled", "true");
-}
-
-// Close My APIs Manager overlay
-function closeMyApisManager() {
-  const overlay = document.getElementById("manage-myapis-overlay");
-  if (overlay) overlay.hidden = true;
-
-  const selAll = document.getElementById("myapis-select-all");
-  if (selAll) selAll.checked = false;
-  document
-    .getElementById("myapis-delete-selected")
-    ?.setAttribute("disabled", "true");
-}
-
-// If current selection was among deleted entries, populate first remaining entry or placeholder
-function clearSelectionIfDeleted(deletedIds) {
-  const sel = document.getElementById("api-selector");
-  if (!sel) return;
-  const val = sel.value || "";
-  if (!val.startsWith("myapi:")) return;
-  const curId = val.slice(6);
-  if (!deletedIds.includes(curId)) return;
-
-  // fallback: placeholder or first remaining item if any
-  sel.value = "";
-  clearParameters?.();
-  clearApiResponse?.();
-  applyDynamicStyles?.();
-}
-
-// Delete selected My API's
-async function onDeleteSelectedClick() {
-  const ids = Array.from(
-    document.querySelectorAll("#myapis-list input.row-check:checked")
-  ).map((cb) => cb.dataset.id);
-  if (!ids.length) return;
-
-  if (
-    !confirm(
-      `Delete ${ids.length} selected saved API(s)? This cannot be undone.`
-    )
-  )
-    return;
-
-  const curList = await getSavedMyApis();
-  const next = dedupeById(curList).filter((x) => !ids.includes(x.id));
-  await setSavedMyApis(next);
-
-  await populateApiDropdownMyApis();
-  clearSelectionIfDeleted(ids);
-  await renderMyApisManager();
-}
-
-// Delete all My API's
-async function onDeleteAllClick() {
-  const curList = dedupeById(await getSavedMyApis());
-  if (!curList.length) return;
-
-  if (
-    !confirm(
-      `Delete ALL (${curList.length}) saved APIs? This cannot be undone.`
-    )
-  )
-    return;
-
-  await setSavedMyApis([]);
-  await populateApiDropdownMyApis();
-  clearSelectionIfDeleted(curList.map((x) => x.id));
-  await renderMyApisManager();
-}
-// ============================================= //
 
 // ===== SESSION FUNCTIONS ===== //
 // Remove -nosso from client URL
@@ -6990,7 +6351,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   onAsync("reset-params", "click", onResetParamsClick);
   onAsync("copy-api-response", "click", copyApiResponse);
   on("view-request-details", "click", showRequestDetails);
-  onAsync("save-request", "click", onSaveRequestClick);
   onAsync("save-request-definition", "click", saveRequestDefinition);
   onAsync("export-bruno-request", "click", saveBrunoRequest);
   onAsync("export-env", "click", exportEnvironmentDefinition);
@@ -7000,22 +6360,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // popout response
   on("popout-response", "click", popoutResponse);
-
-  // wire escape my api ui
-  document.addEventListener("keydown", (e) => {
-    const overlay = document.getElementById("manage-myapis-overlay");
-    if (e.key === "Escape" && overlay && !overlay.hidden) {
-      closeMyApisManager();
-    }
-  });
-
-  // hermeslink button handlers (these pass the button element, so keep inline)
-  /*const returnButton = document.getElementById("hermes-return-to-tab");
-  if (returnButton) {
-    returnButton.addEventListener("click", () =>
-      handleReturnToLinkedTab(returnButton)
-    );
-  }*/
 
   onAsync("hermes-check-connection", "click", checkHermesConnectionClick);
   const relinkButton = document.getElementById("hermes-relink-tab");

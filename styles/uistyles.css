@@ -1130,7 +1130,6 @@ select.body-boolean-input {
 }
 
 /* Manage My APIs & Settings overlays share base styling */
-#manage-myapis-overlay,
 #settings-overlay {
   position: fixed;
   inset: 0;
@@ -1140,12 +1139,10 @@ select.body-boolean-input {
   z-index: 100000;
 }
 
-#manage-myapis-overlay:not([hidden]),
 #settings-overlay:not([hidden]) {
   display: grid;
 }
 
-#manage-myapis-overlay .overlay-card,
 #settings-overlay .overlay-card {
   background: var(--primary-color, #fff);
   color: var(--accent-color, #000);
@@ -1217,57 +1214,6 @@ select.body-boolean-input {
   flex: 1;
 }
 
-/* ========= My APIs Overlay ========= */
-.myapis-toolbar {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin: 6px 0 10px;
-  flex-wrap: wrap;
-}
-
-.myapis-toolbar .spacer {
-  flex: 1;
-}
-
-.myapis-list {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 6px;
-}
-
-.myapis-row {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 8px;
-  align-items: start;
-  padding: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 8px;
-  background: var(--primary-color, #fafafa);
-}
-
-.myapis-row .meta {
-  display: grid;
-  gap: 2px;
-}
-
-.myapis-row .title {
-  font-weight: 600;
-  font-size: 13px;
-  line-height: 1.3;
-}
-
-.myapis-row .subtitle {
-  font-size: 12px;
-  opacity: 0.85;
-  word-break: break-all;
-}
-
-.myapis-row .stamp {
-  font-size: 11px;
-  opacity: 0.7;
-}
 
 /* =================
    Inactive Tab States
