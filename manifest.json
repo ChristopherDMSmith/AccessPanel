@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "AccessPanel",
-  "version": "1.0.1",
-  "description": "A browser extension for API access and token management in WFM.",
+  "version": "2.0.0",
+  "description": "A browser side panel for WFM tenant context, API access, token management, and technical utilities.",
 
   "action": {
     "default_title": "AccessPanel",

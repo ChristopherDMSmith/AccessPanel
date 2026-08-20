@@ -1,232 +1,232 @@
 {
-	"name": "AccessPanel",
-	"details": {
-		"description": "WFM API Access and Token Management",
-		"version": "1.0.1",
-		"release_date": "2026-01-14",
-		"author": "Christopher Smith",
-		"contact": "https://github.com/ChristopherDMSmith",
-		"urls": {
-			"authenticationDoc": "https://adp-developer.mykronos.com/wfmgr/docs/authentication-and-security-doc",
-			"developerPortal": "https://adp-developer.mykronos.com/wfmgr/reference/welcome-to-the-adp-workforce-manager-api",
-			"boomiPortal": "ihub#/integrationTemplatesDesigner?ctxt=designIntegrationTemplates&pageId=58",
-			"installIntegrations": "metaui#/list/integration/?ctxt=configureIntegrations&pageId=57",
-			"runIntegrations": "ihub#/integrations?pageId=593",
-			"wfmConnections": "metaui#/list/integration_connection_definition?ctxt=connections&pageId=567",
-			"wfmSftp": "ihub-setup#/sftpFilesBrowser?pageId=665",
-			"reportIssues": "https://github.com/ChristopherDMSmith/AccessPanel/issues",
-			"readMe": "https://github.com/ChristopherDMSmith/AccessPanel/blob/main/README.md",
-			"license": "https://github.com/ChristopherDMSmith/AccessPanel/blob/main/LICENSE",
-			"privacy": "https://github.com/ChristopherDMSmith/AccessPanel/blob/main/PRIVACY.md"
-		},
-		"working_directory": {
-			"accesspanel": {
-				"type": "directory",
-				"path": "/accesspanel",
-				"contents": {
-					"apilibrary": {
-						"type": "directory",
-						"path": "/accesspanel/apilibrary",
-						"contents": {
-							"apilibrary.json": {
-								"type": "file",
-								"path": "/accesspanel/apilibrary/apilibrary.json"
-							},
-							"exampleapilibrary.json": {
-								"type": "file",
-								"path": "/accesspanel/apilibrary/exampleapilibrary.json"
-							},
-							"symbolicperiods.json": {
-								"type": "file",
-								"path": "/accesspanel/apilibrary/symbolicperiods.json"
-							}
-						}
-					},
-					"fonts": {
-						"type": "directory",
-						"path": "/accesspanel/fonts",
-						"contents": {
-							"Inter_28pt-Black.ttf": {
-								"type": "file",
-								"path": "/accesspanel/apilibrary/Inter_28pt-Black.ttf"
-							},
-							"Inter_28pt-Bold.ttf": {
-								"type": "file",
-								"path": "/accesspanel/apilibrary/Inter_28pt-Bold.ttf"
-							},
-							"Inter_28pt-Medium.ttf": {
-								"type": "file",
-								"path": "/accesspanel/apilibrary/Inter_28pt-Medium.ttf"
-							},
-							"Inter_28pt-Regular.ttf": {
-								"type": "file",
-								"path": "/accesspanel/apilibrary/Inter_28pt-Regular.ttf"
-							}
-						}
-					},
-					"icons": {
-						"type": "directory",
-						"path": "/accesspanel/icons",
-						"contents": {
-							"bruno-save.png": {
-								"type": "file",
-								"path": "/accesspanel/icons/bruno-save.png"
-							},
-							"collection-save.png": {
-								"type": "file",
-								"path": "/accesspanel/icons/collection-save.png"
-							},
-							"copy.png": {
-								"type": "file",
-								"path": "/accesspanel/icons/copy.png"
-							},
-							"download.png": {
-								"type": "file",
-								"path": "/accesspanel/icons/download.png"
-							},
-							"env-save.png": {
-								"type": "file",
-								"path": "/accesspanel/icons/env-save.png"
-							},
-							"export-csv.png": {
-								"type": "file",
-								"path": "/accesspanel/icons/export-csv.png"
-							},
-							"external-link.png": {
-								"type": "file",
-								"path": "/accesspanel/icons/external-link.png"
-							},
-							"eyeclosed.png": {
-								"type": "file",
-								"path": "/accesspanel/icons/eyeclosed.png"
-							},
-							"eyeopen.png": {
-								"type": "file",
-								"path": "/accesspanel/icons/eyeopen.png"
-							},
-							"icon.png": {
-								"type": "file",
-								"path": "/accesspanel/icons/icon.png"
-							},
-							"icon.svg": {
-								"type": "file",
-								"path": "/accesspanel/icons/icon.svg"
-							},
-							"icon16.png": {
-								"type": "file",
-								"path": "/accesspanel/icons/icon16.png"
-							},
-							"icon32.png": {
-								"type": "file",
-								"path": "/accesspanel/icons/icon32.png"
-							},
-							"icon64.png": {
-								"type": "file",
-								"path": "/accesspanel/icons/icon64.png"
-							},
-							"icon128.png": {
-								"type": "file",
-								"path": "/accesspanel/icons/icon128.png"
-							},
-							"icon256.png": {
-								"type": "file",
-								"path": "/accesspanel/icons/icon256.png"
-							},
-							"icon512.png": {
-								"type": "file",
-								"path": "/accesspanel/icons/icon512.png"
-							},
-							"reload-app.png": {
-								"type": "file",
-								"path": "/accesspanel/icons/reload-app.png"
-							},
-							"request-view.png": {
-								"type": "file",
-								"path": "/accesspanel/icons/request-view.png"
-							},
-							"reset-arrow.png": {
-								"type": "file",
-								"path": "/accesspanel/icons/reset-arrow.png"
-							},
-							"save.png": {
-								"type": "file",
-								"path": "/accesspanel/icons/save.png"
-							}
-						}
-					},
-					"scripts": {
-						"type": "directory",
-						"path": "/accesspanel/scripts",
-						"contents": {
-							"main.js": {
-								"type": "file",
-								"path": "/accesspanel/scripts/main.js"
-							},
-							"bg.js": {
-								"type": "file",
-								"path": "/accesspanel/scripts/bg.js"
-							}
-						}
-					},
-					"styles": {
-						"type": "directory",
-						"path": "/accesspanel/styles",
-						"contents": {
-							"uistyles.css": {
-								"type": "file",
-								"path": "/accesspanel/styles/uistyles.css"
-							}
-						}
-					},
-					"themes": {
-						"type": "directory",
-						"path": "/accesspanel/themes",
-						"contents": {
-							"themes.html": {
-								"type": "file",
-								"path": "/accesspanel/themes/themes.html"
-							},
-							"themes.json": {
-								"type": "file",
-								"path": "/accesspanel/themes/themes.json"
-							}
-						}
-					},
-					"accesspanel.html": {
-						"type": "file",
-						"path": "/accesspanel/accesspanel.html"
-					},
-					"accesspanel.json": {
-						"type": "file",
-						"path": "/accesspanel/accesspanel.json"
-					},
-					"LICENSE.md": {
-						"type": "file",
-						"path": "/accesspanel/LICENSE.md"
-					},
-					"manifest.json": {
-						"type": "file",
-						"path": "/accesspanel/manifest.json"
-					},
-					"PRIVACY.md": {
-						"type": "file",
-						"path": "/accesspanel/PRIVACY.md"
-					},
-					"README.md": {
-						"type": "file",
-						"path": "/accesspanel/README.md"
-					}
-				}
-			}
-		},
-		"releasenotes": {
-			"1.0.0": {
-				"0": "Initial release after Hermes proto-type"
-			},
-			"1.0.1": {
-				"0": "Updated manifest version to 1.0.1",
-				"1": "Updates to bg.js to better control sidepanel and prevent unexpected closures"
-			}
-		}
-	}
+  "name": "AccessPanel",
+  "details": {
+    "description": "WFM Tenant Context, API Access, Token Management, and Technical Utilities",
+    "version": "2.0.0",
+    "release_date": "2026-08-19",
+    "author": "Christopher Smith",
+    "contact": "https://github.com/ChristopherDMSmith",
+    "urls": {
+      "authenticationDoc": "https://adp-developer.mykronos.com/wfmgr/docs/authentication-and-security-doc",
+      "developerPortal": "https://adp-developer.mykronos.com/wfmgr/reference/welcome-to-the-adp-workforce-manager-api",
+      "boomiPortal": "ihub#/integrationTemplatesDesigner?ctxt=designIntegrationTemplates&pageId=58",
+      "installIntegrations": "metaui#/list/integration/?ctxt=configureIntegrations&pageId=57",
+      "runIntegrations": "ihub#/integrations?pageId=593",
+      "wfmConnections": "metaui#/list/integration_connection_definition?ctxt=connections&pageId=567",
+      "wfmSftp": "ihub-setup#/sftpFilesBrowser?pageId=665",
+      "reportIssues": "https://github.com/ChristopherDMSmith/AccessPanel/issues",
+      "readMe": "https://github.com/ChristopherDMSmith/AccessPanel/blob/main/README.md",
+      "changeLog": "https://github.com/ChristopherDMSmith/AccessPanel/blob/main/CHANGELOG.md",
+      "license": "https://github.com/ChristopherDMSmith/AccessPanel/blob/main/LICENSE",
+      "privacy": "https://github.com/ChristopherDMSmith/AccessPanel/blob/main/PRIVACY.md"
+    },
+    "working_directory": {
+      "accesspanel": {
+        "type": "directory",
+        "path": "/AccessPanel",
+        "contents": {
+          "apilibrary": {
+            "type": "directory",
+            "path": "/AccessPanel/apilibrary",
+            "contents": {
+              "apilibrary.json": {
+                "type": "file",
+                "path": "/AccessPanel/apilibrary/apilibrary.json"
+              },
+              "exampleapilibrary.json": {
+                "type": "file",
+                "path": "/AccessPanel/apilibrary/exampleapilibrary.json"
+              },
+              "symbolicperiods.json": {
+                "type": "file",
+                "path": "/AccessPanel/apilibrary/symbolicperiods.json"
+              }
+            }
+          },
+          "fonts": {
+            "type": "directory",
+            "path": "/AccessPanel/fonts",
+            "contents": {
+              "Inter_28pt-Black.ttf": {
+                "type": "file",
+                "path": "/AccessPanel/fonts/Inter_28pt-Black.ttf"
+              },
+              "Inter_28pt-Bold.ttf": {
+                "type": "file",
+                "path": "/AccessPanel/fonts/Inter_28pt-Bold.ttf"
+              },
+              "Inter_28pt-Medium.ttf": {
+                "type": "file",
+                "path": "/AccessPanel/fonts/Inter_28pt-Medium.ttf"
+              },
+              "Inter_28pt-Regular.ttf": {
+                "type": "file",
+                "path": "/AccessPanel/fonts/Inter_28pt-Regular.ttf"
+              }
+            }
+          },
+          "icons": {
+            "type": "directory",
+            "path": "/AccessPanel/icons",
+            "contents": {
+              "copy.png": {
+                "type": "file",
+                "path": "/AccessPanel/icons/copy.png"
+              },
+              "download.png": {
+                "type": "file",
+                "path": "/AccessPanel/icons/download.png"
+              },
+              "export-csv.png": {
+                "type": "file",
+                "path": "/AccessPanel/icons/export-csv.png"
+              },
+              "external-link.png": {
+                "type": "file",
+                "path": "/AccessPanel/icons/external-link.png"
+              },
+              "eyeclosed.png": {
+                "type": "file",
+                "path": "/AccessPanel/icons/eyeclosed.png"
+              },
+              "eyeopen.png": {
+                "type": "file",
+                "path": "/AccessPanel/icons/eyeopen.png"
+              },
+              "icon.png": {
+                "type": "file",
+                "path": "/AccessPanel/icons/icon.png"
+              },
+              "icon.svg": {
+                "type": "file",
+                "path": "/AccessPanel/icons/icon.svg"
+              },
+              "icon16.png": {
+                "type": "file",
+                "path": "/AccessPanel/icons/icon16.png"
+              },
+              "icon32.png": {
+                "type": "file",
+                "path": "/AccessPanel/icons/icon32.png"
+              },
+              "icon64.png": {
+                "type": "file",
+                "path": "/AccessPanel/icons/icon64.png"
+              },
+              "icon128.png": {
+                "type": "file",
+                "path": "/AccessPanel/icons/icon128.png"
+              },
+              "icon256.png": {
+                "type": "file",
+                "path": "/AccessPanel/icons/icon256.png"
+              },
+              "icon512.png": {
+                "type": "file",
+                "path": "/AccessPanel/icons/icon512.png"
+              },
+              "reload-app.png": {
+                "type": "file",
+                "path": "/AccessPanel/icons/reload-app.png"
+              },
+              "request-view.png": {
+                "type": "file",
+                "path": "/AccessPanel/icons/request-view.png"
+              },
+              "reset-arrow.png": {
+                "type": "file",
+                "path": "/AccessPanel/icons/reset-arrow.png"
+              }
+            }
+          },
+          "scripts": {
+            "type": "directory",
+            "path": "/AccessPanel/scripts",
+            "contents": {
+              "bg.js": {
+                "type": "file",
+                "path": "/AccessPanel/scripts/bg.js"
+              },
+              "main.js": {
+                "type": "file",
+                "path": "/AccessPanel/scripts/main.js"
+              }
+            }
+          },
+          "styles": {
+            "type": "directory",
+            "path": "/AccessPanel/styles",
+            "contents": {
+              "uistyles.css": {
+                "type": "file",
+                "path": "/AccessPanel/styles/uistyles.css"
+              }
+            }
+          },
+          "themes": {
+            "type": "directory",
+            "path": "/AccessPanel/themes",
+            "contents": {
+              "themes.json": {
+                "type": "file",
+                "path": "/AccessPanel/themes/themes.json"
+              }
+            }
+          },
+          "accesspanel.html": {
+            "type": "file",
+            "path": "/AccessPanel/accesspanel.html"
+          },
+          "accesspanel.json": {
+            "type": "file",
+            "path": "/AccessPanel/accesspanel.json"
+          },
+          "CHANGELOG.md": {
+            "type": "file",
+            "path": "/AccessPanel/CHANGELOG.md"
+          },
+          "LICENSE": {
+            "type": "file",
+            "path": "/AccessPanel/LICENSE"
+          },
+          "manifest.json": {
+            "type": "file",
+            "path": "/AccessPanel/manifest.json"
+          },
+          "PRIVACY.md": {
+            "type": "file",
+            "path": "/AccessPanel/PRIVACY.md"
+          },
+          "README.md": {
+            "type": "file",
+            "path": "/AccessPanel/README.md"
+          }
+        }
+      }
+    },
+    "releasenotes": {
+      "1.0.0": {
+        "0": "Initial release after Hermes prototype"
+      },
+      "1.0.1": {
+        "0": "Updated manifest version to 1.0.1",
+        "1": "Updated background session handling to better control the side panel and prevent unexpected closures"
+      },
+      "2.0.0": {
+        "0": "Hardened sensitive credential and token storage using session-scoped browser storage",
+        "1": "Added migration cleanup for sensitive data retained by previous releases",
+        "2": "Added an explicit Content Security Policy and restricted WFM communication to HTTPS",
+        "3": "Removed legacy clipboard fallbacks that triggered antivirus heuristic detections",
+        "4": "Removed webpage DOM scraping, script injection, and the scripting browser permission",
+        "5": "Replaced document.write and innerHTML usage with DOM-safe rendering",
+        "6": "Removed saved My APIs and persistent custom request definitions",
+        "7": "Removed Postman, Bruno, and environment export functionality",
+        "8": "Removed Pull From TMS and automatic Incognito token scraping",
+        "9": "Added manual session Access Token support, including API Library use in Incognito mode",
+        "10": "Simplified and corrected collapsible UI behavior",
+        "11": "Reduced browser and host permissions to required functionality only",
+        "12": "Corrected the Developer Portal link for Timekeeping - Retrieve Punches"
+      }
+    }
+  }
 }
